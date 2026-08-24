@@ -28,7 +28,7 @@ The proposed base path is `/api/v1`. JSON responses use a consistent envelope, a
 | Method | Route | Access | Purpose |
 | --- | --- | --- | --- |
 | GET | `/health` | Public | Process liveness |
-| GET | `/ready` | Public/internal | Database and Redis readiness |
+| GET | `/ready` | Public/internal | MongoDB readiness |
 | GET | `/api/docs` | Configurable | Swagger UI |
 | GET | `/api/openapi.json` | Configurable | OpenAPI specification |
 

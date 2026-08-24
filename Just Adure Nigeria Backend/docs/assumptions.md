@@ -15,11 +15,11 @@ These assumptions let implementation proceed without choosing branding or logist
 ## Working assumptions
 
 1. The repository root is this currently empty workspace, and the requested monorepo will be created directly here.
-2. pnpm workspaces will manage packages. A task runner will coordinate `lint`, `typecheck`, `test`, and `build` without coupling applications.
+2. npm will manage dependencies for the backend, frontend, and shared package. Root scripts will coordinate `lint`, `typecheck`, `test`, and `build` without coupling applications.
 3. The first production target is a single Nigerian storefront using `NGN`; data still records currency explicitly.
 4. Prices and fees are stored in kobo as integers.
 5. Product condition grades are seeded as Like New, Excellent, Good, and Fair. Administrators may manage their display names, explanations, ordering, and active state; stable internal codes preserve historical reporting.
-6. PostgreSQL-configured state/city delivery zones are the first delivery provider. No logistics vendor is selected yet.
+6. MongoDB-configured state/city delivery zones are the first delivery provider. No logistics vendor is selected yet.
 7. Guest carts use an opaque, HTTP-only session cookie. Guest order links use revocable high-entropy access tokens whose hashes are stored.
 8. Stock is reserved for a configurable short payment window. The initial default will be 15 minutes and will live in validated environment configuration.
 9. Admin accounts are invitation-created by a super administrator; there is no public admin registration.

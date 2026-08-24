@@ -2,24 +2,23 @@
 
 ## 1. Architectural style
 
-The platform uses a client-server architecture in a TypeScript monorepo. The Next.js application owns presentation, browser interactions, SEO rendering, and the customer/admin user experience. The Express application owns authentication, authorization, business rules, persistence, payments, email dispatch, image-upload authorization, and integrations.
+The platform uses a client-server architecture in a JavaScript client-server project. The React/Vite application owns presentation, browser interactions, SEO rendering, and the customer/admin user experience. The Express application owns authentication, authorization, business rules, persistence, payments, email dispatch, image-upload authorization, and integrations.
 
-The Next.js application will not contain the main backend business logic in route handlers. It communicates with the Express API over HTTPS.
+The React/Vite application will not contain the main backend business logic in route handlers. It communicates with the Express API over HTTPS.
 
 ```text
 Browser
   |
   | HTTPS + secure cookies
   v
-Next.js web application
+React/Vite web application
   |
   | REST/JSON
   v
 Express API ---------------- Cloudinary
   |    |  |                  Paystack
   |    |  +----------------- Brevo
-  |    +-------------------- Redis
-  +------------------------- PostgreSQL
+  +------------------------- MongoDB
 ```
 
 ## 2. Monorepo boundaries
@@ -37,7 +36,7 @@ Express API ---------------- Cloudinary
 ### `Just Adure Nigeria Backend`
 
 - Express application and REST endpoints
-- Prisma database access
+- Mongoose database access
 - Authentication and role-based authorization
 - Product, inventory, cart, checkout, order, coupon, review, and delivery rules
 - Paystack initialization, verification, callback, and webhook processing
@@ -46,20 +45,11 @@ Express API ---------------- Cloudinary
 - OpenAPI document and Swagger UI
 - Scheduled or queued maintenance jobs
 
-### `Just Adure Nigeria Backend/packages/shared`
-
-- Stable request and response types
-- Zod validation schemas that are safe to share with browsers
-- Enums and constants such as order statuses and condition grades
-- No server secrets, Prisma client, or Node-only business logic
-
 ## 3. Runtime components
 
-PostgreSQL is the source of truth for users, products, stock, carts, orders, payments, coupons, reviews, delivery configuration, email logs, and audit records. Financial and inventory operations use database transactions.
+MongoDB is the source of truth for users, products, stock, carts, orders, payments, coupons, reviews, delivery configuration, email logs, and audit records. Financial and inventory operations use MongoDB sessions and transactions where multi-document consistency is required.
 
-Redis is used only for cached public catalogue queries, rate-limit counters, short-lived verification/reset state, checkout idempotency locks, and optional job coordination. Redis is not the source of truth for orders, payments, or stock.
-
-Cloudinary stores product images. PostgreSQL stores each image's public identifier, secure URL, dimensions, order, and metadata. The API authorizes uploads and constrains file type, size, and transformations.
+Cloudinary stores product images. MongoDB stores each image's public identifier, secure URL, dimensions, order, and metadata. The API authorizes uploads and constrains file type, size, and transformations.
 
 ## 4. Authentication model
 
@@ -112,9 +102,9 @@ interface DeliveryProvider {
 ## 8. Caching and invalidation
 
 - Public catalogue GET endpoints may be cached by normalized query.
-- Product, category, brand, image, price, or stock changes invalidate relevant keys and Next.js tags.
+- Product, category, brand, image, price, or stock changes invalidate relevant keys and frontend cache keys.
 - Customer-specific responses, carts, checkout, orders, and payments are never publicly cached.
-- Next.js fetch caching is used only for public content with explicit revalidation.
+- Browser/API caching is used only where it is safe and explicit.
 
 ## 9. Errors, logging, and operations
 
@@ -126,4 +116,4 @@ interface DeliveryProvider {
 
 ## 10. Deployment model
 
-The web app, API, PostgreSQL, and Redis are separate services. HTTPS terminates at the hosting edge or load balancer. Database migrations run as a controlled release step rather than automatically on every process start. Webhook endpoints use the public API URL and retain the raw body required for signature verification.
+The web app, API, and MongoDB are separate services. HTTPS terminates at the hosting edge or load balancer. Database indexes and seed data are applied as controlled release steps rather than automatically on every process start. Webhook endpoints use the public API URL and retain the raw body required for signature verification.

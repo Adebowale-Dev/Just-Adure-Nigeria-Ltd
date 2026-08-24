@@ -1,9 +1,26 @@
-import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTypeScript from "eslint-config-next/typescript";
+import eslint from "@eslint/js";
+import globals from "globals";
 
-export default defineConfig([
-  ...nextVitals,
-  ...nextTypeScript,
-  globalIgnores([".next/**", "coverage/**", "next-env.d.ts"]),
-]);
+export default [
+  { ignores: [".next/**", "coverage/**", "node_modules/**"] },
+  eslint.configs.recommended,
+  {
+    files: ["**/*.{js,jsx,ts,tsx}"],
+    languageOptions: {
+      ecmaVersion: "latest",
+      sourceType: "module",
+      parserOptions: {
+        ecmaFeatures: { jsx: true },
+      },
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        ...globals.vitest,
+      },
+    },
+    rules: {
+      "no-unused-vars": ["error", { "argsIgnorePattern": "^_|^[A-Z]", "varsIgnorePattern": "^[A-Z]" }],
+    },
+  },
+];
+

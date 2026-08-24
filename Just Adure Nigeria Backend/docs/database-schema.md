@@ -1,6 +1,6 @@
 # Proposed Database Schema
 
-This document describes the intended Prisma entities and the constraints that matter most. Exact Prisma syntax will be added in Milestone 1.
+This document describes the intended MongoDB collections, embedded documents, and constraints that matter most. Mongoose schemas provide runtime validation and indexes.
 
 ## Identity
 
@@ -32,11 +32,11 @@ Stores name, slug, SKU, brand, category, optional subcategory, selling price, op
 
 Money is stored as integer kobo, never floating-point naira.
 
-The initial PostgreSQL migration adds check constraints for positive prices and payment amounts, non-negative totals, valid order arithmetic, positive quantities, one-to-five review ratings, valid delivery-day ranges, and reserved stock that never exceeds physical stock.
+Mongoose validation enforces positive prices and payment amounts, non-negative totals, valid order arithmetic, positive quantities, one-to-five review ratings, valid delivery-day ranges, and reserved stock rules. Multi-document writes that affect money, orders, or stock should use MongoDB transactions.
 
 ### ProductImage
 
-Belongs to a product and stores Cloudinary public ID, secure URL, width, height, alt text, sort order, and primary-image status. A unique `(productId, sortOrder)` constraint keeps ordering deterministic.
+Embedded inside a product and stores Cloudinary public ID, secure URL, width, height, alt text, sort order, and primary-image status.
 
 ### Category
 
@@ -52,7 +52,7 @@ Stores a stable code, display name, customer-facing description, display order, 
 
 ### ProductSpecification
 
-Stores product facts as label/value pairs with group name and sort order. This supports different specification sets for phones, laptops, televisions, consoles, and appliances.
+Embedded inside a product as label/value pairs with group name and sort order. This supports different specification sets for phones, laptops, televisions, consoles, and appliances.
 
 ### InventoryMovement
 

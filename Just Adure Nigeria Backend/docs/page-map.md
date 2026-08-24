@@ -1,6 +1,6 @@
 # Web Page Map
 
-The web application uses Next.js route groups so public, account, checkout, and admin layouts remain distinct without changing public URLs.
+The web application uses React/Vite routes and view components so public, account, checkout, and admin experiences remain distinct without changing public URLs.
 
 ## Public storefront
 

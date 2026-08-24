@@ -1,14 +1,4 @@
-import type { LucideIcon } from "lucide-react";
-
-export function TrustCard({
-  icon: Icon,
-  title,
-  description,
-}: {
-  icon: LucideIcon;
-  title: string;
-  description: string;
-}) {
+export function TrustCard({ icon: Icon, title, description }) {
   return (
     <article className="rounded-[1.35rem] border border-white/10 bg-white/6 p-5">
       <Icon className="size-6 text-[var(--accent)]" aria-hidden="true" />

@@ -1,48 +1,30 @@
-import type { Metadata } from "next";
-import type { ReactNode } from "react";
+import "../globals.css";
 import { Providers } from "@/components/providers";
-import { SiteHeader } from "@/components/site-header";
-import "./globals.css";
 
 const storeName = process.env.NEXT_PUBLIC_STORE_NAME || "Just Adure Nigeria Ltd";
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-export const metadata: Metadata = {
+export const metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: `${storeName} | Tested UK-Used Tech in Nigeria`,
+    default: `${storeName} | UK-used products in Nigeria`,
     template: `%s | ${storeName}`,
   },
-  description:
-    "Shop carefully tested UK-used phones, laptops, televisions, consoles, appliances, and accessories in Nigeria.",
-  applicationName: storeName,
+  description: "Shop tested UK-used products in Nigerian naira with honest condition notes, secure checkout and delivery tracking.",
   openGraph: {
-    type: "website",
-    locale: "en_NG",
+    title: storeName,
+    description: "Tested UK-used products with clear condition grades and Nigerian delivery.",
+    url: siteUrl,
     siteName: storeName,
+    type: "website",
   },
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
-  const organizationData = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: storeName,
-    url: siteUrl,
-    email: process.env.NEXT_PUBLIC_STORE_EMAIL || "hello@example.com",
-  };
-
+export default function RootLayout({ children }) {
   return (
-    <html lang="en-NG">
-      <body>
-        <Providers>
-          <SiteHeader />
-          {children}
-        </Providers>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationData) }}
-        />
+    <html lang="en-NG" suppressHydrationWarning>
+      <body suppressHydrationWarning>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

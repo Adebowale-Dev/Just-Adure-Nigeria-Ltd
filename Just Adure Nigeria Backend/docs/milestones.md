@@ -24,19 +24,19 @@ Exit checks:
 
 Deliverables:
 
-- pnpm workspace, shared TypeScript configuration, linting, formatting, and task runner
-- `Just Adure Nigeria Ltd Frontend`, `Just Adure Nigeria Backend`, `Just Adure Nigeria Backend/packages/shared`, and backend documentation scaffolding
-- PostgreSQL and Redis local development services through Docker Compose
-- Prisma schema, initial migration, realistic seed data, and database scripts
+- npm package setup, JavaScript configuration, linting, formatting, and task runner
+- `Just Adure Nigeria Ltd Frontend`, `Just Adure Nigeria Backend`, and backend documentation scaffolding
+- MongoDB-backed local development
+- Mongoose catalogue models, realistic seed data, and database scripts
 - Typed environment validation and safe `.env.example` files
 - Express health/readiness endpoints, error envelope, request IDs, structured logging, and Swagger foundation
-- Next.js design tokens, base layouts, accessible component foundation, and Just Adure Nigeria Ltd branding configuration
+- React/Vite design tokens, base layouts, accessible component foundation, and Just Adure Nigeria Ltd branding configuration
 
 Verification:
 
 - Install from a clean checkout
-- Apply migration and seed successfully
-- Run lint, type checking, API unit smoke tests, and production builds
+- Seed MongoDB successfully
+- Run lint, API unit smoke tests, and production builds
 - Confirm no secret values are tracked
 
 ## Milestone 2: Authentication and authorization
@@ -164,7 +164,7 @@ Deliverables:
 
 - Unit, API integration, authorization, checkout, inventory, webhook, component, and Playwright suites
 - Security headers, CORS, rate limits, request limits, upload rules, redaction, dependency review, and abuse-case review
-- Complete README, environment reference, migration/seed instructions, Swagger guide, provider setup, architecture summary, and deployment guide
+- Complete README, environment reference, seed/index instructions, Swagger guide, provider setup, architecture summary, and deployment guide
 
 Verification:
 
@@ -191,5 +191,5 @@ Completion checks:
 - Concurrency controls prevent overselling.
 - Required Brevo emails are dispatched idempotently.
 - Administrators can manage all requested operational data.
-- Authorization, migrations, seeds, tests, lint, types, and builds pass.
+- Authorization, seeds, tests, lint, types, and builds pass.
 - Setup and deployment documentation is complete and contains no secrets.
