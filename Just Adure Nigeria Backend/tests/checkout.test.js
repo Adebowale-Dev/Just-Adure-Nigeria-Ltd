@@ -1,8 +1,9 @@
-﻿import request from "supertest";
+import request from "supertest";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { app } from "../src/app.js";
 import { connectMongo, disconnectMongo } from "../src/config/mongo.js";
 import { Cart } from "../src/models/cart.js";
+import { Coupon } from "../src/models/coupon.js";
 import { Brand, Category, ConditionGrade, DeliveryZone, Product } from "../src/models/catalogue.js";
 import { Order } from "../src/models/order.js";
 
@@ -14,6 +15,7 @@ function normalizeCookies(cookieHeader) {
 async function clearCollections() {
   await Promise.all([
     Order.deleteMany({}),
+    Coupon.deleteMany({}),
     Cart.deleteMany({}),
     Product.deleteMany({}),
     DeliveryZone.deleteMany({}),
@@ -163,6 +165,62 @@ describe("checkout API", () => {
     expect(order.reservations[0]).toMatchObject({ quantity: 1 });
   });
 
+  it("applies valid coupon discounts using backend totals", async () => {
+    const product = await seedProduct(1);
+    await seedDeliveryZone();
+    await Coupon.create({
+      code: "SAVE10",
+      name: "Launch discount",
+      type: "percentage",
+      percentage: 10,
+      minOrderAmountKobo: 100_000_00,
+      maxDiscountKobo: 80_000_00,
+      isActive: true,
+    });
+
+    const add = await request(app)
+      .post("/api/v1/cart/items")
+      .send({ productId: String(product._id), quantity: 1 })
+      .expect(200);
+
+    const response = await request(app)
+      .post("/api/v1/checkout")
+      .set("Cookie", normalizeCookies(add.headers["set-cookie"]))
+      .send(checkoutPayload({ couponCode: "save10" }))
+      .expect(201);
+
+    expect(response.body.data.order).toMatchObject({
+      subtotalKobo: 675_000_00,
+      discountKobo: 67_500_00,
+      deliveryFeeKobo: 5_000_00,
+      totalKobo: 612_500_00,
+      coupon: { code: "SAVE10" },
+    });
+
+    const order = await Order.findOne({ orderNumber: response.body.data.order.orderNumber }).lean();
+    expect(order).toMatchObject({ couponCode: "SAVE10", discountKobo: 67_500_00 });
+  });
+
+  it("rejects disabled coupons before reserving inventory", async () => {
+    const product = await seedProduct(1);
+    await seedDeliveryZone();
+    await Coupon.create({ code: "OFF", name: "Disabled", type: "fixed", valueKobo: 10_000_00, isActive: false });
+
+    const add = await request(app)
+      .post("/api/v1/cart/items")
+      .send({ productId: String(product._id), quantity: 1 })
+      .expect(200);
+
+    const response = await request(app)
+      .post("/api/v1/checkout")
+      .set("Cookie", normalizeCookies(add.headers["set-cookie"]))
+      .send(checkoutPayload({ couponCode: "OFF" }))
+      .expect(409);
+
+    const updatedProduct = await Product.findById(product._id).lean();
+    expect(response.body.error.code).toBe("COUPON_DISABLED");
+    expect(updatedProduct.reservedQuantity).toBe(0);
+  });
   it("rejects checkout when the cart is empty", async () => {
     await seedDeliveryZone();
 

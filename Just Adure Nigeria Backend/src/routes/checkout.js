@@ -1,4 +1,4 @@
-﻿import { randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { Router } from "express";
 import mongoose from "mongoose";
 import { z } from "zod";
@@ -8,6 +8,9 @@ import { authCookieNames } from "../middleware/auth.js";
 import { Cart } from "../models/cart.js";
 import { DeliveryZone, Product } from "../models/catalogue.js";
 import { Order } from "../models/order.js";
+import { applyCouponToTotals, serializeCoupon } from "../services/coupons.js";
+import { notifyOrderReceived } from "../services/email.js";
+import { notifyAdmins, notifyCustomer } from "../services/notifications.js";
 import { verifyToken } from "../utils/token.js";
 
 export const checkoutRouter = Router();
@@ -39,7 +42,7 @@ const deliveryFeeSchema = z.object({
 const checkoutSchema = z.object({
   customer: addressSchema,
   deliveryMethod: z.enum(["delivery", "pickup"]).default("delivery"),
-  couponCode: z.string().trim().max(60).optional(),
+  couponCode: z.string().trim().max(60).transform((value) => value || undefined).optional(),
   orderNotes: z.string().trim().max(500).optional(),
 });
 
@@ -234,7 +237,13 @@ checkoutRouter.post("/checkout", async (request, response, next) => {
 
     const items = cart.items.map(snapshotCartItem);
     const subtotalKobo = items.reduce((total, item) => total + item.lineSubtotalKobo, 0);
-    const discountKobo = 0;
+    const { coupon, discountKobo } = await applyCouponToTotals({
+      couponCode: input.couponCode,
+      items,
+      subtotalKobo,
+      userId,
+      customerEmail: input.customer.email,
+    });
     const totalKobo = subtotalKobo - discountKobo + deliveryFeeKobo;
     const expiresAt = new Date(Date.now() + env.STOCK_RESERVATION_MINUTES * 60 * 1000);
     const reservations = await reserveProducts(items, expiresAt);
@@ -246,6 +255,8 @@ checkoutRouter.post("/checkout", async (request, response, next) => {
       items,
       subtotalKobo,
       discountKobo,
+      couponId: coupon?._id,
+      couponCode: coupon?.code,
       deliveryFeeKobo,
       totalKobo,
       currency: "NGN",
@@ -261,6 +272,10 @@ checkoutRouter.post("/checkout", async (request, response, next) => {
     cart.items.splice(0, cart.items.length);
     await cart.save();
 
+    await notifyOrderReceived(order);
+    await notifyCustomer(userId, { type: "order", title: "Order created", message: `Your order ${order.orderNumber} is awaiting payment.`, resourceType: "order", resourceId: String(order._id), actionUrl: `/order-tracking?orderNumber=${encodeURIComponent(order.orderNumber)}` });
+    await notifyAdmins({ type: "order", title: "New order awaiting payment", message: `${order.customer.email} created order ${order.orderNumber}.`, resourceType: "order", resourceId: String(order._id), actionUrl: "/admin" });
+
     response.status(201).json({
       data: {
         order: {
@@ -271,6 +286,7 @@ checkoutRouter.post("/checkout", async (request, response, next) => {
           currency: order.currency,
           subtotalKobo: order.subtotalKobo,
           discountKobo: order.discountKobo,
+          coupon: coupon ? serializeCoupon(coupon) : null,
           deliveryFeeKobo: order.deliveryFeeKobo,
           totalKobo: order.totalKobo,
           reservationExpiresAt: expiresAt,

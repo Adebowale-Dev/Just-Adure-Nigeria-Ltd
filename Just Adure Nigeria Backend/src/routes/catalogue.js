@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 import { z } from "zod";
 import { AppError } from "../errors/app-error.js";
 import { Brand, Category, ConditionGrade, Product, productAvailability } from "../models/catalogue.js";
+import { Review } from "../models/review.js";
+import { serializeReview } from "./reviews.js";
 export const catalogueRouter = Router();
 const listProductsQuerySchema = z.object({
     q: z.string().trim().min(1).max(120).optional(),
@@ -236,7 +238,9 @@ catalogueRouter.get("/products/:slug", async (request, response, next) => {
         if (!product) {
             throw new AppError(404, "PRODUCT_NOT_FOUND", "The requested product was not found.");
         }
-        response.json({ data: { product: serializeProduct(product) } });
+        const reviews = await Review.find({ productId: product._id, status: "approved" }).sort({ createdAt: -1 }).limit(20).lean();
+        const reviewAverage = reviews.length > 0 ? reviews.reduce((total, review) => total + review.rating, 0) / reviews.length : 0;
+        response.json({ data: { product: { ...serializeProduct(product), reviews: reviews.map(serializeReview), reviewSummary: { averageRating: reviewAverage, reviewCount: reviews.length } } } });
     }
     catch (error) {
         next(error);

@@ -1,0 +1,1 @@
+export function BasicPage({ title }) { return <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8"><p className="section-kicker">Coming soon</p><h1 className="mt-4 font-serif text-5xl font-bold capitalize tracking-[-.05em]">{title}</h1><p className="mt-4 max-w-2xl text-[var(--muted)]">This page is prepared for a future milestone.</p></main>; }

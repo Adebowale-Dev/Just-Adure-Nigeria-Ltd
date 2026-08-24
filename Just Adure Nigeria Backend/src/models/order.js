@@ -1,4 +1,4 @@
-﻿import mongoose from "mongoose";
+import mongoose from "mongoose";
 
 const { Schema } = mongoose;
 
@@ -82,6 +82,8 @@ const orderSchema = new Schema(
     items: { type: [orderItemSchema], required: true, default: [] },
     subtotalKobo: { type: Number, required: true, min: 0 },
     discountKobo: { type: Number, required: true, min: 0, default: 0 },
+    couponId: { type: Schema.Types.ObjectId, ref: "Coupon" },
+    couponCode: { type: String, trim: true, uppercase: true },
     deliveryFeeKobo: { type: Number, required: true, min: 0 },
     totalKobo: { type: Number, required: true, min: 0 },
     currency: { type: String, required: true, default: "NGN" },

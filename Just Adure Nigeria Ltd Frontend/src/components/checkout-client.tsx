@@ -1,6 +1,6 @@
 import { useEffect, useState, useTransition } from "react";
-import { AlertTriangle, BadgeCheck, LockKeyhole, PackageCheck, Truck } from "lucide-react";
-import { calculateDeliveryFee, createCheckoutOrder, getCart } from "@/lib/api.js";
+import { AlertTriangle, BadgeCheck, CreditCard, LockKeyhole, PackageCheck, Tag, Truck } from "lucide-react";
+import { calculateDeliveryFee, createCheckoutOrder, getCart, initializePaystackPayment } from "@/lib/api.js";
 import { formatNaira } from "@/lib/utils.js";
 
 const initialForm = {
@@ -12,6 +12,7 @@ const initialForm = {
   state: "Lagos",
   city: "Ikeja",
   deliveryInstructions: "",
+  couponCode: "",
   orderNotes: "",
 };
 
@@ -21,6 +22,7 @@ export function CheckoutClient() {
   const [deliveryQuote, setDeliveryQuote] = useState(null);
   const [createdOrder, setCreatedOrder] = useState(null);
   const [error, setError] = useState("");
+  const [paymentMessage, setPaymentMessage] = useState("");
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -62,6 +64,7 @@ export function CheckoutClient() {
     startTransition(async () => {
       try {
         setError("");
+        setPaymentMessage("");
         const order = await createCheckoutOrder({
           customer: {
             name: form.name,
@@ -74,6 +77,7 @@ export function CheckoutClient() {
             deliveryInstructions: form.deliveryInstructions || undefined,
           },
           deliveryMethod: "delivery",
+          couponCode: form.couponCode || undefined,
           orderNotes: form.orderNotes || undefined,
         });
         setCreatedOrder(order);
@@ -84,8 +88,27 @@ export function CheckoutClient() {
     });
   }
 
-  const deliveryFeeKobo = deliveryQuote?.deliveryFeeKobo ?? 0;
-  const finalTotalKobo = (cart?.subtotalKobo ?? 0) + deliveryFeeKobo - (cart?.discountKobo ?? 0);
+  function startPaystackPayment() {
+    if (!createdOrder?.id) return;
+    startTransition(async () => {
+      try {
+        setError("");
+        setPaymentMessage("Connecting securely to Paystack...");
+        const payment = await initializePaystackPayment({ orderId: createdOrder.id });
+        if (!payment.authorizationUrl) throw new Error("Paystack did not return a checkout URL.");
+        window.location.href = payment.authorizationUrl;
+      } catch (paymentError) {
+        setPaymentMessage("");
+        setError(paymentError instanceof Error ? paymentError.message : "Could not start Paystack payment.");
+      }
+    });
+  }
+
+  const deliveryFeeKobo = createdOrder?.deliveryFeeKobo ?? deliveryQuote?.deliveryFeeKobo ?? 0;
+  const subtotalKobo = createdOrder?.subtotalKobo ?? cart?.subtotalKobo ?? 0;
+  const discountKobo = createdOrder?.discountKobo ?? cart?.discountKobo ?? 0;
+  const finalTotalKobo = createdOrder?.totalKobo ?? subtotalKobo + deliveryFeeKobo - discountKobo;
+  const activeCoupon = createdOrder?.coupon ?? null;
 
   return (
     <main className="min-h-screen">
@@ -106,7 +129,9 @@ export function CheckoutClient() {
 
           {error ? <div className="mt-6 rounded-2xl border border-[var(--accent)]/30 bg-[#fff8ed] p-4 text-sm font-bold text-[var(--ink)]"><AlertTriangle className="mb-2 size-5 text-[var(--accent-dark)]" />{error}</div> : null}
 
-          {createdOrder ? <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5"><BadgeCheck className="mb-3 size-6 text-emerald-700" /><p className="font-black">Pending order created: {createdOrder.orderNumber}</p><p className="mt-2 text-sm leading-6 text-emerald-900">Inventory has been temporarily reserved. Paystack payment initialization is the next milestone.</p></div> : null}
+          {createdOrder ? <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5"><BadgeCheck className="mb-3 size-6 text-emerald-700" /><p className="font-black">Pending order created: {createdOrder.orderNumber}</p><p className="mt-2 text-sm leading-6 text-emerald-900">Inventory has been temporarily reserved. Continue to Paystack to complete payment securely.</p></div> : null}
+          {createdOrder ? <button className="cta-primary mt-4 w-full" disabled={isPending} type="button" onClick={startPaystackPayment}><CreditCard className="size-4" /> {isPending ? "Opening Paystack..." : "Pay with Paystack"}</button> : null}
+          {paymentMessage ? <p className="mt-3 text-center text-sm font-bold text-[var(--accent-dark)]">{paymentMessage}</p> : null}
 
           <div className="mt-8 grid gap-5 sm:grid-cols-2">
             <label className="grid gap-2 text-sm font-bold">Full name<input name="name" value={form.name} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label>
@@ -117,6 +142,7 @@ export function CheckoutClient() {
             <label className="grid gap-2 text-sm font-bold">Apartment or landmark<input name="addressLine2" value={form.addressLine2} onChange={updateField} className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label>
             <label className="grid gap-2 text-sm font-bold">City or LGA<input name="city" value={form.city} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label>
             <label className="grid gap-2 text-sm font-bold sm:col-span-2">Delivery instructions<textarea name="deliveryInstructions" value={form.deliveryInstructions} onChange={updateField} rows={3} className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label>
+            <label className="grid gap-2 text-sm font-bold sm:col-span-2">Coupon code<input name="couponCode" value={form.couponCode} onChange={updateField} placeholder="Example: LAUNCH10" className="rounded-2xl border border-black/10 px-4 py-3 uppercase outline-none focus:border-[var(--accent-dark)]" /></label>
             <label className="grid gap-2 text-sm font-bold sm:col-span-2">Order notes<textarea name="orderNotes" value={form.orderNotes} onChange={updateField} rows={3} className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label>
           </div>
 
@@ -133,12 +159,13 @@ export function CheckoutClient() {
             {cart?.items.map((item) => <div key={item.productId} className="rounded-2xl bg-white/8 p-4"><p className="font-black">{item.name}</p><p className="mt-1 text-sm text-white/60">Qty {item.quantity} x {formatNaira(item.unitPriceKobo)}</p></div>)}
           </div>
           <div className="mt-6 grid gap-3 border-t border-white/10 pt-5 text-sm">
-            <div className="flex justify-between"><span className="text-white/65">Subtotal</span><strong>{formatNaira(cart?.subtotalKobo ?? 0)}</strong></div>
-            <div className="flex justify-between"><span className="text-white/65">Discount</span><strong>{formatNaira(cart?.discountKobo ?? 0)}</strong></div>
-            <div className="flex justify-between"><span className="text-white/65">Delivery</span><strong>{deliveryQuote ? formatNaira(deliveryFeeKobo) : "Checking..."}</strong></div>
+            <div className="flex justify-between"><span className="text-white/65">Subtotal</span><strong>{formatNaira(subtotalKobo)}</strong></div>
+            <div className="flex justify-between"><span className="text-white/65">Discount</span><strong>{formatNaira(discountKobo)}</strong></div>
+            {activeCoupon ? <div className="flex items-center justify-between rounded-2xl bg-emerald-400/15 px-3 py-2 text-emerald-100"><span className="inline-flex items-center gap-2"><Tag className="size-4" /> Coupon</span><strong>{activeCoupon.code}</strong></div> : null}
+            <div className="flex justify-between"><span className="text-white/65">Delivery</span><strong>{deliveryQuote || createdOrder ? formatNaira(deliveryFeeKobo) : "Checking..."}</strong></div>
           </div>
           <div className="mt-6 flex items-baseline justify-between border-t border-white/10 pt-5"><span className="font-black">Total</span><strong className="text-2xl">{formatNaira(finalTotalKobo)}</strong></div>
-          <div className="mt-6 rounded-2xl bg-white/8 p-4 text-sm leading-6 text-white/70"><Truck className="mb-2 size-5 text-[var(--accent)]" />Paystack redirect comes next. For now, this step proves stock reservation and trusted backend totals.</div>
+          <div className="mt-6 rounded-2xl bg-white/8 p-4 text-sm leading-6 text-white/70"><Truck className="mb-2 size-5 text-[var(--accent)]" />After payment, Paystack redirects back to the payment result page and the backend verifies the transaction before marking the order as paid.</div>
         </aside>
       </section>
     </main>

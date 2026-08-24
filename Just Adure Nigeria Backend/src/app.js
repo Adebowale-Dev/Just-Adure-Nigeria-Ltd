@@ -1,4 +1,4 @@
-﻿import compression from "compression";
+import compression from "compression";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
@@ -11,10 +11,21 @@ import { logger } from "./config/logger.js";
 import { openApiDocument } from "./config/swagger.js";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler.js";
 import { requestContext } from "./middleware/request-context.js";
+import { adminRouter } from "./routes/admin.js";
 import { authRouter } from "./routes/auth.js";
 import { catalogueRouter } from "./routes/catalogue.js";
 import { cartRouter } from "./routes/cart.js";
 import { checkoutRouter } from "./routes/checkout.js";
+import { ordersRouter } from "./routes/orders.js";
+import { notificationsRouter } from "./routes/notifications.js";
+import { paymentsRouter } from "./routes/payments.js";
+import { reviewsRouter } from "./routes/reviews.js";
+import { returnsRouter } from "./routes/returns.js";
+import { supportRouter } from "./routes/support.js";
+import { wishlistRouter } from "./routes/wishlist.js";
+import { homepageRouter } from "./routes/homepage.js";
+import { storeSettingsRouter } from "./routes/store-settings.js";
+import { stockAlertsRouter } from "./routes/stock-alerts.js";
 import { paystackWebhookRouter } from "./routes/paystack-webhook.js";
 import { systemRouter } from "./routes/system.js";
 export const app = express();
@@ -55,9 +66,20 @@ app.use("/api/v1", rateLimit({
 }));
 app.use(systemRouter);
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1", catalogueRouter);
 app.use("/api/v1", cartRouter);
 app.use("/api/v1", checkoutRouter);
+app.use("/api/v1", ordersRouter);
+app.use("/api/v1", notificationsRouter);
+app.use("/api/v1", paymentsRouter);
+app.use("/api/v1", reviewsRouter);
+app.use("/api/v1", returnsRouter);
+app.use("/api/v1", supportRouter);
+app.use("/api/v1", wishlistRouter);
+app.use("/api/v1", homepageRouter);
+app.use("/api/v1", storeSettingsRouter);
+app.use("/api/v1", stockAlertsRouter);
 app.get("/api/openapi.json", (_request, response) => response.json(openApiDocument));
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(openApiDocument, {
     customSiteTitle: "Just Adure Nigeria Ltd API",

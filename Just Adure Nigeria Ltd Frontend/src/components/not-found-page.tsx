@@ -1,0 +1,1 @@
+export function NotFoundPage() { return <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8"><p className="section-kicker">404</p><h1 className="mt-4 font-serif text-5xl font-bold tracking-[-.05em]">Page not found</h1><a href="/shop" className="cta-primary mt-8">Back to shop</a></main>; }

@@ -18,12 +18,12 @@ describe("API foundation", () => {
         });
         expect(response.body.requestId).toBeTruthy();
     });
-    it("does not pretend that Paystack processing is already implemented", async () => {
+    it("rejects unsigned Paystack webhook requests", async () => {
         const response = await request(app)
             .post("/api/v1/webhooks/paystack")
             .set("content-type", "application/json")
             .send(JSON.stringify({ event: "charge.success" }))
-            .expect(501);
-        expect(response.body.error.code).toBe("PAYMENT_INTEGRATION_NOT_ENABLED");
+            .expect(401);
+        expect(response.body.error.code).toBe("INVALID_PAYSTACK_SIGNATURE");
     });
 });

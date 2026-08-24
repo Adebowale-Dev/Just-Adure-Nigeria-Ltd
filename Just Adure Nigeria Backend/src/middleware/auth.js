@@ -2,6 +2,20 @@ import { env } from "../config/env.js";
 import { AppError } from "../errors/app-error.js";
 import { User } from "../models/user.js";
 import { verifyToken } from "../utils/token.js";
+export const rolePermissionMap = {
+  super_admin: ["*"],
+  admin: ["*"],
+  inventory_manager: ["dashboard:view", "reports:view", "products:read", "inventory:manage"],
+  order_manager: ["dashboard:view", "reports:view", "orders:read", "orders:update", "returns:manage"],
+  customer_support: ["dashboard:view", "orders:read", "support:manage", "returns:manage", "reviews:moderate"],
+  content_manager: ["dashboard:view", "products:read", "products:manage", "coupons:manage", "reviews:moderate"],
+};
+
+function userHasPermission(user, permission) {
+  if (!user) return false;
+  if (user.permissions?.includes("*") || user.permissions?.includes(permission)) return true;
+  return user.roles?.some((role) => rolePermissionMap[role]?.includes("*") || rolePermissionMap[role]?.includes(permission));
+}
 export const authCookieNames = {
     access: "ja_access_token",
     refresh: "ja_refresh_token",
@@ -45,4 +59,18 @@ export function requireRoles(...allowedRoles) {
         }
         next();
     };
+}
+export function requirePermissions(...requiredPermissions) {
+  return (request, _response, next) => {
+    if (!request.user) {
+      next(new AppError(401, "AUTH_REQUIRED", "Please log in to continue."));
+      return;
+    }
+    const allowed = requiredPermissions.some((permission) => userHasPermission(request.user, permission));
+    if (!allowed) {
+      next(new AppError(403, "INSUFFICIENT_PERMISSION", "You do not have permission to perform this action."));
+      return;
+    }
+    next();
+  };
 }

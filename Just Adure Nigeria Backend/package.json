@@ -1,44 +1,45 @@
-﻿{
-  "name": "@store/api",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "packageManager": "npm@11.12.1",
-  "engines": {
-    "node": ">=22.0.0"
-  },
-  "scripts": {
-    "build": "node scripts/check-syntax.js",
-    "dev": "node --watch src/server.js",
-    "start": "node src/server.js",
-    "lint": "eslint src tests scripts --max-warnings=0",
-    "test": "vitest run",
-    "seed": "node src/database/seed.js",
-    "db:seed": "npm.cmd run seed",
-    "dev:all": "concurrently -n backend,frontend \"npm.cmd run dev\" \"npm.cmd --prefix \\\"../Just Adure Nigeria Ltd Frontend\\\" run dev\"",
-    "check:all": "npm.cmd run lint && npm.cmd --prefix \"../Just Adure Nigeria Ltd Frontend\" run lint && npm.cmd run test && npm.cmd --prefix \"../Just Adure Nigeria Ltd Frontend\" run test && npm.cmd run build && npm.cmd --prefix \"../Just Adure Nigeria Ltd Frontend\" run build"
-  },
-  "dependencies": {
-    "compression": "^1.8.1",
-    "cookie-parser": "^1.4.7",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "express": "^5.1.0",
-    "express-rate-limit": "^8.2.1",
-    "helmet": "^8.1.0",
-    "mongoose": "^9.0.0",
-    "pino": "^10.1.0",
-    "pino-http": "^11.0.0",
-    "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1",
-    "zod": "^4.1.12"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.39.1",
-    "concurrently": "^9.2.1",
-    "eslint": "^9.39.1",
-    "globals": "^16.5.0",
-    "supertest": "^7.1.4",
-    "vitest": "^4.0.14"
-  }
+{
+    "name":  "@store/api",
+    "version":  "0.1.0",
+    "private":  true,
+    "type":  "module",
+    "packageManager":  "npm@11.12.1",
+    "engines":  {
+                    "node":  "\u003e=22.0.0"
+                },
+    "scripts":  {
+                    "build":  "node scripts/check-syntax.js",
+                    "dev":  "node --watch src/server.js",
+                    "start":  "node src/server.js",
+                    "lint":  "eslint src tests scripts --max-warnings=0",
+                    "test":  "node scripts/run-tests.js",
+                    "seed":  "node src/database/seed.js",
+                    "db:seed":  "npm.cmd run seed",
+                    "dev:all":  "concurrently -n backend,frontend \"npm.cmd run dev\" \"npm.cmd --prefix \\\"../Just Adure Nigeria Ltd Frontend\\\" run dev\"",
+                    "check:all":  "npm.cmd run lint \u0026\u0026 npm.cmd --prefix \"../Just Adure Nigeria Ltd Frontend\" run lint \u0026\u0026 npm.cmd run test \u0026\u0026 npm.cmd --prefix \"../Just Adure Nigeria Ltd Frontend\" run test \u0026\u0026 npm.cmd run build \u0026\u0026 npm.cmd --prefix \"../Just Adure Nigeria Ltd Frontend\" run build",
+                    "admin:create":  "node src/database/create-admin.js"
+                },
+    "dependencies":  {
+                         "compression":  "^1.8.1",
+                         "cookie-parser":  "^1.4.7",
+                         "cors":  "^2.8.5",
+                         "dotenv":  "^17.2.3",
+                         "express":  "^5.1.0",
+                         "express-rate-limit":  "^8.2.1",
+                         "helmet":  "^8.1.0",
+                         "mongoose":  "^9.0.0",
+                         "pino":  "^10.1.0",
+                         "pino-http":  "^11.0.0",
+                         "swagger-jsdoc":  "^6.2.8",
+                         "swagger-ui-express":  "^5.0.1",
+                         "zod":  "^4.1.12"
+                     },
+    "devDependencies":  {
+                            "@eslint/js":  "^9.39.1",
+                            "concurrently":  "^9.2.1",
+                            "eslint":  "^9.39.1",
+                            "globals":  "^16.5.0",
+                            "supertest":  "^7.1.4",
+                            "vitest":  "^4.0.14"
+                        }
 }
