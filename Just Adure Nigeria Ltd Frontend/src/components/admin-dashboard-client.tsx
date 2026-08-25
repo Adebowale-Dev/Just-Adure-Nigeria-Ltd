@@ -1,5 +1,5 @@
-import { useEffect, useState, useTransition } from "react";
-import { Activity, AlertTriangle, BarChart3, Boxes, ClipboardList, Image, MessageSquareText, PackageCheck, RotateCcw, Save, Settings, ShieldCheck, Star, Tags } from "lucide-react";
+﻿import { useEffect, useState, useTransition } from "react";
+import { Activity, AlertTriangle, BarChart3, Boxes, ClipboardList, Image, Mail, MessageSquareText, PackageCheck, RotateCcw, Save, Settings, ShieldCheck, Star, Tags } from "lucide-react";
 import {
   createAdminCoupon,
   getAdminCoupons,
@@ -13,6 +13,7 @@ import {
   getAdminStoreSettings,
   getAdminActivityLogs,
   getAdminHomepageContent,
+  getAdminNewsletterSubscribers,
   getAdminReturns,
   getAdminSupportTickets,
   updateAdminCoupon,
@@ -24,8 +25,13 @@ import {
   updateAdminStaff,
   updateAdminStoreSettings,
   updateAdminHomepageContent,
+  updateAdminNewsletterSubscriber,
   updateAdminSupportTicket,
 } from "@/lib/api.js";
+import { DeliveryZonesAdmin } from "@/components/delivery-zones-admin";
+import { ProductImagesAdmin } from "@/components/product-images-admin";
+import { ProductManagementAdmin } from "@/components/product-management-admin";
+import { CatalogueLookupsAdmin } from "@/components/catalogue-lookups-admin";
 import { formatNaira } from "@/lib/utils.js";
 
 const orderStatuses = ["paid", "processing", "ready_for_pickup", "ready_for_delivery", "shipped", "out_for_delivery", "delivered", "cancelled"];
@@ -227,6 +233,8 @@ export function AdminDashboardClient() {
   const [reviews, setReviews] = useState([]);
   const [returns, setReturns] = useState([]);
   const [supportTickets, setSupportTickets] = useState([]);
+  const [newsletterSubscribers, setNewsletterSubscribers] = useState([]);
+  const [newsletterSummary, setNewsletterSummary] = useState({ total: 0, subscribed: 0, unsubscribed: 0 });
   const [staff, setStaff] = useState([]);
   const [storeSettings, setStoreSettings] = useState(null);
   const [homepageContent, setHomepageContent] = useState(null);
@@ -272,6 +280,7 @@ export function AdminDashboardClient() {
         safeAdminLoad(getAdminStoreSettings(), null).then((settings) => { setStoreSettings(settings); setStoreSettingsForm(settingsToForm(settings)); });
         safeAdminLoad(getAdminActivityLogs(), []).then(setActivityLogs);
         safeAdminLoad(getAdminHomepageContent(), null).then((content) => { setHomepageContent(content); setHomepageContentForm(homepageContentToForm(content)); });
+        safeAdminLoad(getAdminNewsletterSubscribers(), { items: [], summary: { total: 0, subscribed: 0, unsubscribed: 0 } }).then((data) => { setNewsletterSubscribers(data.items ?? []); setNewsletterSummary(data.summary ?? { total: 0, subscribed: 0, unsubscribed: 0 }); });
         setError("");
       })
       .catch((loadError) => setError(loadError instanceof Error ? loadError.message : "Admin dashboard could not load."));
@@ -422,6 +431,21 @@ export function AdminDashboardClient() {
         loadAdminData();
       } catch (staffError) {
         setError(staffError instanceof Error ? staffError.message : "Staff update failed.");
+      }
+    });
+  }
+
+  function toggleNewsletterSubscriber(subscriber) {
+    startTransition(async () => {
+      try {
+        setMessage("");
+        setError("");
+        const nextStatus = subscriber.status === "subscribed" ? "unsubscribed" : "subscribed";
+        await updateAdminNewsletterSubscriber(subscriber.id, { status: nextStatus });
+        setMessage(`${subscriber.email} marked as ${nextStatus}.`);
+        loadAdminData();
+      } catch (subscriberError) {
+        setError(subscriberError instanceof Error ? subscriberError.message : "Newsletter subscriber update failed.");
       }
     });
   }
@@ -591,6 +615,10 @@ export function AdminDashboardClient() {
             <div className="rounded-2xl border border-black/8 bg-white p-5"><p className="font-black">Best sellers</p><div className="mt-4 grid gap-2 text-sm text-[var(--muted)]">{(reports?.bestSellingProducts ?? []).map((item) => <p key={item.sku} className="flex justify-between gap-4"><span>{item.name}</span><strong>{item.quantitySold}</strong></p>)}</div></div>
           </div>
         </section>
+        <CatalogueLookupsAdmin onLookupsChanged={loadAdminData} />
+
+        <ProductManagementAdmin products={products} onProductsChanged={loadAdminData} />
+
         <div className="mt-10 grid gap-8 xl:grid-cols-[1fr_1fr]">
           <section className="rounded-[2rem] border border-black/8 bg-white/80 p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
             <div className="flex items-center gap-3"><Boxes className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Inventory</h2></div>
@@ -610,6 +638,10 @@ export function AdminDashboardClient() {
         </div>
 
 
+
+        <ProductImagesAdmin products={products} onProductsChanged={loadAdminData} />
+
+        <DeliveryZonesAdmin />
 
         <section className="mt-8 rounded-[2rem] border border-black/8 bg-white/80 p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
           <div className="flex items-center gap-3"><MessageSquareText className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Support tickets</h2></div>
@@ -657,7 +689,24 @@ export function AdminDashboardClient() {
 
 
 
+
         <section className="mt-8 rounded-[2rem] border border-black/8 bg-white/80 p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <div className="flex items-center gap-3"><Mail className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Newsletter subscribers</h2></div>
+              <p className="mt-2 text-sm leading-6 text-[var(--muted)]">View opt-ins from the storefront footer and manage whether customers stay subscribed.</p>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center text-xs font-black uppercase tracking-[.1em]">
+              <span className="rounded-2xl bg-[#fbfaf6] px-3 py-2">Total {newsletterSummary.total}</span>
+              <span className="rounded-2xl bg-emerald-50 px-3 py-2 text-emerald-900">Active {newsletterSummary.subscribed}</span>
+              <span className="rounded-2xl bg-[#fff8ed] px-3 py-2 text-[var(--accent-dark)]">Off {newsletterSummary.unsubscribed}</span>
+            </div>
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {newsletterSubscribers.map((subscriber) => <article key={subscriber.id} className="rounded-2xl border border-black/8 bg-[#fbfaf6] p-4"><div className="flex items-start justify-between gap-4"><div><p className="font-black">{subscriber.email}</p><p className="mt-1 text-sm text-[var(--muted)]">{subscriber.name || "Guest subscriber"} | {subscriber.source}</p><p className="mt-1 text-xs font-black uppercase tracking-[.12em] text-[var(--muted)]">{subscriber.status} | {subscriber.subscribedAt ? new Date(subscriber.subscribedAt).toLocaleDateString() : "No date"}</p></div><button type="button" disabled={isPending} onClick={() => toggleNewsletterSubscriber(subscriber)} className="cta-outline py-2">{subscriber.status === "subscribed" ? "Unsubscribe" : "Resubscribe"}</button></div></article>)}
+            {newsletterSubscribers.length === 0 ? <p className="text-sm font-bold text-[var(--muted)]">No newsletter subscribers yet.</p> : null}
+          </div>
+        </section>        <section className="mt-8 rounded-[2rem] border border-black/8 bg-white/80 p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
           <div className="flex items-center gap-3"><Image className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Homepage content</h2></div>
           <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Manage hero copy and the first promotional banner on the storefront.</p>
           {homepageContent ? <form onSubmit={saveHomepageContent} className="mt-6 grid gap-4 md:grid-cols-2">
@@ -723,3 +772,5 @@ export function AdminDashboardClient() {
     </main>
   );
 }
+
+

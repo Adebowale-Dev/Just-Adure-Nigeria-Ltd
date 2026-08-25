@@ -1,15 +1,17 @@
-import mongoose from "mongoose";
+﻿import mongoose from "mongoose";
 import { Router } from "express";
 import { z } from "zod";
 import { AppError } from "../errors/app-error.js";
 import { requireAuth, requirePermissions, requireRoles } from "../middleware/auth.js";
-import { Brand, Category, ConditionGrade, Product, productAvailability } from "../models/catalogue.js";
+import { Brand, Category, ConditionGrade, DeliveryZone, Product, productAvailability } from "../models/catalogue.js";
 import { Coupon, couponTypes } from "../models/coupon.js";
 import { Order, orderStatuses } from "../models/order.js";
 import { Payment } from "../models/payment.js";
 import { Review, reviewStatuses } from "../models/review.js";
 import { ReturnRequest, returnRequestStatuses } from "../models/return-request.js";
 import { SupportTicket, supportTicketStatuses } from "../models/support-ticket.js";
+import { NewsletterSubscriber, newsletterSubscriberStatuses } from "../models/newsletter-subscriber.js";
+import { uploadProductImage } from "../services/cloudinary.js";
 import { serializeCoupon } from "../services/coupons.js";
 import { serializeReview } from "./reviews.js";
 import { serializeReturnRequest } from "./returns.js";
@@ -32,6 +34,57 @@ const orderStatusSchema = z.object({ status: z.enum(orderStatuses), note: z.stri
 const reviewModerationSchema = z.object({ status: z.enum(reviewStatuses), adminReply: z.string().trim().max(1000).optional() });
 const returnModerationSchema = z.object({ status: z.enum(returnRequestStatuses), adminNote: z.string().trim().max(1000).optional() });
 const supportTicketUpdateSchema = z.object({ status: z.enum(supportTicketStatuses), reply: z.string().trim().max(2000).optional(), internalNote: z.string().trim().max(1000).optional() });
+const newsletterStatusSchema = z.object({ status: z.enum(newsletterSubscriberStatuses) });
+const brandSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  slug: z.string().trim().min(2).max(120).optional(),
+  description: z.string().trim().max(500).optional(),
+  logoUrl: z.string().trim().url().or(z.literal("")).optional(),
+  isActive: z.boolean().default(true),
+});
+const brandUpdateSchema = brandSchema.partial();
+const categorySchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  slug: z.string().trim().min(2).max(120).optional(),
+  description: z.string().trim().max(500).optional(),
+  imageUrl: z.string().trim().url().or(z.literal("")).optional(),
+  seoTitle: z.string().trim().max(160).optional(),
+  seoDescription: z.string().trim().max(300).optional(),
+  parentId: objectIdSchema.optional(),
+  isActive: z.boolean().default(true),
+});
+const categoryUpdateSchema = categorySchema.partial();
+const conditionGradeSchema = z.object({
+  code: z.string().trim().min(2).max(60).transform((value) => value.toLowerCase()),
+  name: z.string().trim().min(2).max(120),
+  description: z.string().trim().min(2).max(500),
+  sortOrder: z.number().int().min(0).default(0),
+  isActive: z.boolean().default(true),
+});
+const conditionGradeUpdateSchema = conditionGradeSchema.partial();
+
+const deliveryZoneBaseSchema = z.object({
+  code: z.string().trim().min(2).max(60).transform((value) => value.toUpperCase()),
+  name: z.string().trim().min(2).max(120),
+  state: z.string().trim().min(2).max(80),
+  cityPattern: z.string().trim().max(160).optional(),
+  feeKobo: z.number().int().min(0),
+  minDeliveryDays: z.number().int().min(1),
+  maxDeliveryDays: z.number().int().min(1),
+  priority: z.number().int().min(0).default(0),
+  isActive: z.boolean().default(true),
+});
+const deliveryZoneSchema = deliveryZoneBaseSchema.refine((value) => value.maxDeliveryDays >= value.minDeliveryDays, {
+  message: "Maximum delivery days must be greater than or equal to minimum delivery days.",
+  path: ["maxDeliveryDays"],
+});
+const deliveryZoneUpdateSchema = deliveryZoneBaseSchema.partial().refine((value) => {
+  if (value.minDeliveryDays === undefined || value.maxDeliveryDays === undefined) return true;
+  return value.maxDeliveryDays >= value.minDeliveryDays;
+}, {
+  message: "Maximum delivery days must be greater than or equal to minimum delivery days.",
+  path: ["maxDeliveryDays"],
+});
 const homepageBannerSchema = z.object({
   title: z.string().trim().min(2).max(160),
   subtitle: z.string().trim().max(300).optional(),
@@ -134,6 +187,11 @@ const productSchema = z.object({
   specifications: z.array(specificationSchema).default([]),
 });
 const productUpdateSchema = productSchema.partial();
+const imageUploadSchema = z.object({
+  dataUri: z.string().trim().min(20),
+  altText: z.string().trim().min(2).max(160),
+});
+const productImageAttachSchema = imageSchema.extend({ isPrimary: z.boolean().default(false) });
 const couponBaseSchema = z.object({
   code: z.string().trim().min(2).max(60).transform((value) => value.toUpperCase()),
   name: z.string().trim().min(2).max(120),
@@ -176,6 +234,52 @@ function serializeLookup(record) {
   return { id: objectIdString(record._id), name: record.name, slug: record.slug, code: record.code };
 }
 
+function slugify(value) {
+  return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function serializeBrand(brand) {
+  return {
+    id: objectIdString(brand._id),
+    name: brand.name,
+    slug: brand.slug,
+    description: brand.description ?? "",
+    logoUrl: brand.logoUrl ?? "",
+    isActive: brand.isActive,
+    createdAt: brand.createdAt,
+    updatedAt: brand.updatedAt,
+  };
+}
+
+function serializeCategory(category) {
+  return {
+    id: objectIdString(category._id),
+    name: category.name,
+    slug: category.slug,
+    description: category.description ?? "",
+    imageUrl: category.imageUrl ?? "",
+    seoTitle: category.seoTitle ?? "",
+    seoDescription: category.seoDescription ?? "",
+    parentId: category.parentId ? objectIdString(category.parentId) : null,
+    isActive: category.isActive,
+    createdAt: category.createdAt,
+    updatedAt: category.updatedAt,
+  };
+}
+
+function serializeConditionGrade(grade) {
+  return {
+    id: objectIdString(grade._id),
+    code: grade.code,
+    name: grade.name,
+    description: grade.description,
+    sortOrder: grade.sortOrder,
+    isActive: grade.isActive,
+    createdAt: grade.createdAt,
+    updatedAt: grade.updatedAt,
+  };
+}
+
 function serializeProduct(product) {
   const availableQuantity = Math.max(0, Number(product.stockQuantity ?? 0) - Number(product.reservedQuantity ?? 0));
   return {
@@ -209,6 +313,37 @@ function serializeProduct(product) {
   };
 }
 
+
+function serializeNewsletterSubscriber(subscriber) {
+  return {
+    id: objectIdString(subscriber._id),
+    email: subscriber.email,
+    name: subscriber.name ?? null,
+    status: subscriber.status,
+    source: subscriber.source,
+    subscribedAt: subscriber.subscribedAt,
+    unsubscribedAt: subscriber.unsubscribedAt ?? null,
+    createdAt: subscriber.createdAt,
+    updatedAt: subscriber.updatedAt,
+  };
+}
+
+function serializeDeliveryZone(zone) {
+  return {
+    id: objectIdString(zone._id),
+    code: zone.code,
+    name: zone.name,
+    state: zone.state,
+    cityPattern: zone.cityPattern ?? "",
+    feeKobo: zone.feeKobo,
+    minDeliveryDays: zone.minDeliveryDays,
+    maxDeliveryDays: zone.maxDeliveryDays,
+    priority: zone.priority,
+    isActive: zone.isActive,
+    createdAt: zone.createdAt,
+    updatedAt: zone.updatedAt,
+  };
+}
 function serializeOrder(order) {
   return {
     id: objectIdString(order._id),
@@ -311,6 +446,235 @@ function availabilityForStock(stockQuantity, reservedQuantity, lowStockThreshold
   return "in_stock";
 }
 
+/**
+ * @openapi
+ * /api/v1/admin/catalogue-lookups:
+ *   get:
+ *     tags: [Admin]
+ *     summary: List categories, brands and condition grades for catalogue setup
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Catalogue lookups returned
+ */
+adminRouter.get("/catalogue-lookups", requirePermissions("products:read", "products:manage"), async (_request, response, next) => {
+  try {
+    const [categories, brands, conditionGrades] = await Promise.all([
+      Category.find({}).sort({ name: 1 }).lean(),
+      Brand.find({}).sort({ name: 1 }).lean(),
+      ConditionGrade.find({}).sort({ sortOrder: 1, name: 1 }).lean(),
+    ]);
+    response.json({ data: { categories: categories.map(serializeCategory), brands: brands.map(serializeBrand), conditionGrades: conditionGrades.map(serializeConditionGrade) } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+adminRouter.post("/brands", requirePermissions("products:manage"), async (request, response, next) => {
+  try {
+    const input = brandSchema.parse(request.body);
+    const brand = await Brand.create({ ...input, slug: input.slug || slugify(input.name) });
+    await logAdminActivity(request, { action: "brand.created", resourceType: "brand", resourceId: brand._id, details: { name: brand.name, slug: brand.slug } });
+    response.status(201).json({ data: { brand: serializeBrand(brand) } });
+  } catch (error) {
+    if (error?.code === 11000) next(new AppError(409, "BRAND_ALREADY_EXISTS", "A brand with that name or slug already exists."));
+    else next(error);
+  }
+});
+
+adminRouter.patch("/brands/:id", requirePermissions("products:manage"), async (request, response, next) => {
+  try {
+    const { id } = z.object({ id: objectIdSchema }).parse(request.params);
+    const input = brandUpdateSchema.parse(request.body);
+    const brand = await Brand.findByIdAndUpdate(id, { ...input, ...(input.name && !input.slug ? { slug: slugify(input.name) } : {}) }, { returnDocument: "after", runValidators: true });
+    if (!brand) throw new AppError(404, "BRAND_NOT_FOUND", "Brand was not found.");
+    await logAdminActivity(request, { action: "brand.updated", resourceType: "brand", resourceId: brand._id, details: { name: brand.name, slug: brand.slug, isActive: brand.isActive } });
+    response.json({ data: { brand: serializeBrand(brand) } });
+  } catch (error) {
+    if (error?.code === 11000) next(new AppError(409, "BRAND_ALREADY_EXISTS", "A brand with that name or slug already exists."));
+    else next(error);
+  }
+});
+
+adminRouter.post("/categories", requirePermissions("products:manage"), async (request, response, next) => {
+  try {
+    const input = categorySchema.parse(request.body);
+    const category = await Category.create({ ...input, slug: input.slug || slugify(input.name) });
+    await logAdminActivity(request, { action: "category.created", resourceType: "category", resourceId: category._id, details: { name: category.name, slug: category.slug } });
+    response.status(201).json({ data: { category: serializeCategory(category) } });
+  } catch (error) {
+    if (error?.code === 11000) next(new AppError(409, "CATEGORY_ALREADY_EXISTS", "A category with that slug already exists."));
+    else next(error);
+  }
+});
+
+adminRouter.patch("/categories/:id", requirePermissions("products:manage"), async (request, response, next) => {
+  try {
+    const { id } = z.object({ id: objectIdSchema }).parse(request.params);
+    const input = categoryUpdateSchema.parse(request.body);
+    const category = await Category.findByIdAndUpdate(id, { ...input, ...(input.name && !input.slug ? { slug: slugify(input.name) } : {}) }, { returnDocument: "after", runValidators: true });
+    if (!category) throw new AppError(404, "CATEGORY_NOT_FOUND", "Category was not found.");
+    await logAdminActivity(request, { action: "category.updated", resourceType: "category", resourceId: category._id, details: { name: category.name, slug: category.slug, isActive: category.isActive } });
+    response.json({ data: { category: serializeCategory(category) } });
+  } catch (error) {
+    if (error?.code === 11000) next(new AppError(409, "CATEGORY_ALREADY_EXISTS", "A category with that slug already exists."));
+    else next(error);
+  }
+});
+
+adminRouter.post("/condition-grades", requirePermissions("products:manage"), async (request, response, next) => {
+  try {
+    const input = conditionGradeSchema.parse(request.body);
+    const grade = await ConditionGrade.create(input);
+    await logAdminActivity(request, { action: "condition_grade.created", resourceType: "condition_grade", resourceId: grade._id, details: { code: grade.code, name: grade.name } });
+    response.status(201).json({ data: { conditionGrade: serializeConditionGrade(grade) } });
+  } catch (error) {
+    if (error?.code === 11000) next(new AppError(409, "CONDITION_GRADE_ALREADY_EXISTS", "A condition grade with that code already exists."));
+    else next(error);
+  }
+});
+
+adminRouter.patch("/condition-grades/:id", requirePermissions("products:manage"), async (request, response, next) => {
+  try {
+    const { id } = z.object({ id: objectIdSchema }).parse(request.params);
+    const input = conditionGradeUpdateSchema.parse(request.body);
+    const grade = await ConditionGrade.findByIdAndUpdate(id, input, { returnDocument: "after", runValidators: true });
+    if (!grade) throw new AppError(404, "CONDITION_GRADE_NOT_FOUND", "Condition grade was not found.");
+    await logAdminActivity(request, { action: "condition_grade.updated", resourceType: "condition_grade", resourceId: grade._id, details: { code: grade.code, name: grade.name, isActive: grade.isActive } });
+    response.json({ data: { conditionGrade: serializeConditionGrade(grade) } });
+  } catch (error) {
+    if (error?.code === 11000) next(new AppError(409, "CONDITION_GRADE_ALREADY_EXISTS", "A condition grade with that code already exists."));
+    else next(error);
+  }
+});
+/**
+ * @openapi
+ * /api/v1/admin/delivery-zones:
+ *   get:
+ *     tags: [Admin]
+ *     summary: List delivery zones and pickup coverage
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Delivery zones returned
+ */
+adminRouter.get("/delivery-zones", requirePermissions("orders:update", "dashboard:view"), async (_request, response, next) => {
+  try {
+    const zones = await DeliveryZone.find({}).sort({ state: 1, priority: -1, name: 1 }).lean();
+    response.json({ data: { items: zones.map(serializeDeliveryZone) } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @openapi
+ * /api/v1/admin/delivery-zones:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Create a delivery zone
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       201:
+ *         description: Delivery zone created
+ */
+adminRouter.post("/delivery-zones", requireRoles("admin", "super_admin", "order_manager"), async (request, response, next) => {
+  try {
+    const input = deliveryZoneSchema.parse(request.body);
+    const zone = await DeliveryZone.create(input);
+    await logAdminActivity(request, { action: "delivery_zone.created", resourceType: "delivery_zone", resourceId: zone._id, details: { code: zone.code, state: zone.state, feeKobo: zone.feeKobo } });
+    response.status(201).json({ data: { zone: serializeDeliveryZone(zone) } });
+  } catch (error) {
+    if (error?.code === 11000) next(new AppError(409, "DELIVERY_ZONE_ALREADY_EXISTS", "A delivery zone with that code already exists."));
+    else next(error);
+  }
+});
+
+/**
+ * @openapi
+ * /api/v1/admin/delivery-zones/{id}:
+ *   patch:
+ *     tags: [Admin]
+ *     summary: Update a delivery zone fee, location, timing or active status
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Delivery zone updated
+ */
+adminRouter.patch("/delivery-zones/:id", requireRoles("admin", "super_admin", "order_manager"), async (request, response, next) => {
+  try {
+    const { id } = z.object({ id: objectIdSchema }).parse(request.params);
+    const input = deliveryZoneUpdateSchema.parse(request.body);
+    const zone = await DeliveryZone.findByIdAndUpdate(id, input, { returnDocument: "after", runValidators: true });
+    if (!zone) throw new AppError(404, "DELIVERY_ZONE_NOT_FOUND", "Delivery zone was not found.");
+    await logAdminActivity(request, { action: "delivery_zone.updated", resourceType: "delivery_zone", resourceId: zone._id, details: { code: zone.code, state: zone.state, feeKobo: zone.feeKobo, isActive: zone.isActive } });
+    response.json({ data: { zone: serializeDeliveryZone(zone) } });
+  } catch (error) {
+    if (error?.code === 11000) next(new AppError(409, "DELIVERY_ZONE_ALREADY_EXISTS", "A delivery zone with that code already exists."));
+    else next(error);
+  }
+});
+/**
+ * @openapi
+ * /api/v1/admin/newsletter-subscribers:
+ *   get:
+ *     tags: [Admin]
+ *     summary: List newsletter subscribers for administrators
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Newsletter subscribers returned
+ */
+adminRouter.get("/newsletter-subscribers", requireRoles("admin", "super_admin", "content_manager"), async (request, response, next) => {
+  try {
+    const status = request.query.status ? String(request.query.status) : "";
+    const filter = newsletterSubscriberStatuses.includes(status) ? { status } : {};
+    const [subscribers, total, subscribed, unsubscribed] = await Promise.all([
+      NewsletterSubscriber.find(filter).sort({ createdAt: -1 }).limit(200).lean(),
+      NewsletterSubscriber.countDocuments({}),
+      NewsletterSubscriber.countDocuments({ status: "subscribed" }),
+      NewsletterSubscriber.countDocuments({ status: "unsubscribed" }),
+    ]);
+    response.json({ data: { items: subscribers.map(serializeNewsletterSubscriber), summary: { total, subscribed, unsubscribed } } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @openapi
+ * /api/v1/admin/newsletter-subscribers/{id}:
+ *   patch:
+ *     tags: [Admin]
+ *     summary: Update a newsletter subscriber status
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Newsletter subscriber updated
+ */
+adminRouter.patch("/newsletter-subscribers/:id", requireRoles("admin", "super_admin", "content_manager"), async (request, response, next) => {
+  try {
+    const { id } = z.object({ id: objectIdSchema }).parse(request.params);
+    const input = newsletterStatusSchema.parse(request.body);
+    const update = {
+      status: input.status,
+      unsubscribedAt: input.status === "unsubscribed" ? new Date() : null,
+      ...(input.status === "subscribed" ? { subscribedAt: new Date() } : {}),
+    };
+    const subscriber = await NewsletterSubscriber.findByIdAndUpdate(id, update, { returnDocument: "after", runValidators: true });
+    if (!subscriber) throw new AppError(404, "NEWSLETTER_SUBSCRIBER_NOT_FOUND", "Newsletter subscriber was not found.");
+    await logAdminActivity(request, { action: "newsletter_subscriber.updated", resourceType: "newsletter_subscriber", resourceId: subscriber._id, details: { email: subscriber.email, status: subscriber.status } });
+    response.json({ data: { subscriber: serializeNewsletterSubscriber(subscriber) } });
+  } catch (error) {
+    next(error);
+  }
+});
 /**
  * @openapi
  * /api/v1/admin/homepage-content:
@@ -638,6 +1002,119 @@ adminRouter.patch("/products/:id", requirePermissions("products:manage"), async 
   } catch (error) {
     if (error?.code === 11000) next(new AppError(409, "PRODUCT_ALREADY_EXISTS", "A product with that slug or SKU already exists."));
     else next(error);
+  }
+});
+
+/**
+ * @openapi
+ * /api/v1/admin/uploads/product-image:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Upload a product image to Cloudinary
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       201:
+ *         description: Product image uploaded
+ */
+adminRouter.post("/uploads/product-image", requirePermissions("products:manage"), async (request, response, next) => {
+  try {
+    const input = imageUploadSchema.parse(request.body);
+    const image = await uploadProductImage(input);
+    await logAdminActivity(request, { action: "product_image.uploaded", resourceType: "product_image", resourceId: image.cloudinaryPublicId, details: { secureUrl: image.secureUrl, altText: image.altText } });
+    response.status(201).json({ data: { image } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @openapi
+ * /api/v1/admin/products/{id}/images:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Attach an uploaded image to a product
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Product image attached
+ */
+adminRouter.post("/products/:id/images", requirePermissions("products:manage"), async (request, response, next) => {
+  try {
+    const { id } = z.object({ id: objectIdSchema }).parse(request.params);
+    const input = productImageAttachSchema.parse(request.body);
+    const product = await Product.findById(id);
+    if (!product) throw new AppError(404, "PRODUCT_NOT_FOUND", "Product was not found.");
+    if (input.isPrimary) product.images.forEach((image) => { image.isPrimary = false; });
+    product.images.push({ ...input, sortOrder: input.sortOrder ?? product.images.length, isPrimary: input.isPrimary || product.images.length === 0 });
+    await product.save();
+    await logAdminActivity(request, { action: "product_image.attached", resourceType: "product", resourceId: product._id, details: { sku: product.sku, cloudinaryPublicId: input.cloudinaryPublicId } });
+    const populated = await Product.findById(product._id).populate("brandId").populate("categoryId").populate("conditionGradeId").lean();
+    response.json({ data: { product: serializeProduct(populated) } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @openapi
+ * /api/v1/admin/products/{id}/images/{publicId}/primary:
+ *   patch:
+ *     tags: [Admin]
+ *     summary: Mark a product image as the main product image
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Primary product image updated
+ */
+adminRouter.patch("/products/:id/images/:publicId/primary", requirePermissions("products:manage"), async (request, response, next) => {
+  try {
+    const { id, publicId } = z.object({ id: objectIdSchema, publicId: z.string().trim().min(1) }).parse(request.params);
+    const decodedPublicId = decodeURIComponent(publicId);
+    const product = await Product.findById(id);
+    if (!product) throw new AppError(404, "PRODUCT_NOT_FOUND", "Product was not found.");
+    const target = product.images.find((image) => image.cloudinaryPublicId === decodedPublicId);
+    if (!target) throw new AppError(404, "PRODUCT_IMAGE_NOT_FOUND", "Product image was not found.");
+    product.images.forEach((image) => { image.isPrimary = image.cloudinaryPublicId === decodedPublicId; });
+    await product.save();
+    await logAdminActivity(request, { action: "product_image.primary_updated", resourceType: "product", resourceId: product._id, details: { sku: product.sku, cloudinaryPublicId: decodedPublicId } });
+    const populated = await Product.findById(product._id).populate("brandId").populate("categoryId").populate("conditionGradeId").lean();
+    response.json({ data: { product: serializeProduct(populated) } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @openapi
+ * /api/v1/admin/products/{id}/images/{publicId}:
+ *   delete:
+ *     tags: [Admin]
+ *     summary: Remove an image from a product catalogue record
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Product image removed
+ */
+adminRouter.delete("/products/:id/images/:publicId", requirePermissions("products:manage"), async (request, response, next) => {
+  try {
+    const { id, publicId } = z.object({ id: objectIdSchema, publicId: z.string().trim().min(1) }).parse(request.params);
+    const decodedPublicId = decodeURIComponent(publicId);
+    const product = await Product.findById(id);
+    if (!product) throw new AppError(404, "PRODUCT_NOT_FOUND", "Product was not found.");
+    const beforeCount = product.images.length;
+    product.images = product.images.filter((image) => image.cloudinaryPublicId !== decodedPublicId);
+    if (product.images.length === beforeCount) throw new AppError(404, "PRODUCT_IMAGE_NOT_FOUND", "Product image was not found.");
+    if (product.images.length > 0 && !product.images.some((image) => image.isPrimary)) product.images[0].isPrimary = true;
+    await product.save();
+    await logAdminActivity(request, { action: "product_image.removed", resourceType: "product", resourceId: product._id, details: { sku: product.sku, cloudinaryPublicId: decodedPublicId } });
+    const populated = await Product.findById(product._id).populate("brandId").populate("categoryId").populate("conditionGradeId").lean();
+    response.json({ data: { product: serializeProduct(populated) } });
+  } catch (error) {
+    next(error);
   }
 });
 
@@ -1139,3 +1616,7 @@ adminRouter.patch("/staff/:id", requireRoles("super_admin"), async (request, res
     next(error);
   }
 });
+
+
+
+

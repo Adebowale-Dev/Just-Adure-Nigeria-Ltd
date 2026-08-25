@@ -1,16 +1,21 @@
-import { readdirSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readdirSync } from "node:fs";
+import { isAbsolute, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 
 const testsDir = join(process.cwd(), "tests");
 const vitestEntry = join(process.cwd(), "node_modules", "vitest", "vitest.mjs");
-const testFiles = readdirSync(testsDir)
-  .filter((file) => file.endsWith(".test.js"))
-  .sort();
+const requestedFiles = process.argv.slice(2);
+const testFiles = requestedFiles.length > 0
+  ? requestedFiles.map((file) => isAbsolute(file) ? file : resolve(process.cwd(), file))
+  : readdirSync(testsDir).filter((file) => file.endsWith(".test.js")).sort().map((file) => join(testsDir, file));
 
 for (const file of testFiles) {
-  console.log(`\n--- ${file} ---`);
-  const result = spawnSync(process.execPath, [vitestEntry, "run", join(testsDir, file)], {
+  if (!existsSync(file)) {
+    console.error(`Test file not found: ${file}`);
+    process.exit(1);
+  }
+  console.log(`\n--- ${file.replace(`${testsDir}\\`, "").replace(`${testsDir}/`, "")} ---`);
+  const result = spawnSync(process.execPath, [vitestEntry, "run", file], {
     cwd: process.cwd(),
     stdio: "inherit",
   });

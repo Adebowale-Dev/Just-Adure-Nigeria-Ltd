@@ -1,11 +1,12 @@
-import mongoose from "mongoose";
+﻿import mongoose from "mongoose";
 import request from "supertest";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { app } from "../src/app.js";
 import { connectMongo, disconnectMongo } from "../src/config/mongo.js";
-import { Brand, Category, ConditionGrade, Product } from "../src/models/catalogue.js";
+import { Brand, Category, ConditionGrade, DeliveryZone, Product } from "../src/models/catalogue.js";
 import { AdminActivityLog } from "../src/models/admin-activity-log.js";
 import { HomepageContent } from "../src/models/homepage-content.js";
+import { NewsletterSubscriber } from "../src/models/newsletter-subscriber.js";
 import { Coupon } from "../src/models/coupon.js";
 import { Order } from "../src/models/order.js";
 import { Payment } from "../src/models/payment.js";
@@ -21,10 +22,12 @@ async function clearCollections() {
   await Promise.all([
     AdminActivityLog.deleteMany({}),
     HomepageContent.deleteMany({}),
+    NewsletterSubscriber.deleteMany({}),
     Payment.deleteMany({}),
     Coupon.deleteMany({}),
     Order.deleteMany({}),
     Product.deleteMany({}),
+    DeliveryZone.deleteMany({}),
     Brand.deleteMany({}),
     Category.deleteMany({}),
     ConditionGrade.deleteMany({}),
@@ -107,6 +110,9 @@ beforeEach(async () => {
 afterAll(async () => {
   await clearCollections();
   await disconnectMongo();
+
+
+
 });
 
 describe("admin API", () => {
@@ -406,4 +412,178 @@ describe("admin API", () => {
 
     const log = await AdminActivityLog.findOne({ action: "homepage_content.updated" }).lean();
     expect(log.details).toMatchObject({ bannerCount: 1 });
+  });
+  it("allows admins to manage catalogue categories, brands and condition grades", async () => {
+    const cookies = await createAdminCookies();
+
+    const category = await request(app)
+      .post("/api/v1/admin/categories")
+      .set("Cookie", cookies)
+      .send({ name: "Tablets", description: "UK-used tablets and iPads." })
+      .expect(201);
+    expect(category.body.data.category).toMatchObject({ name: "Tablets", slug: "tablets", isActive: true });
+
+    const brand = await request(app)
+      .post("/api/v1/admin/brands")
+      .set("Cookie", cookies)
+      .send({ name: "Samsung", description: "Samsung UK-used devices." })
+      .expect(201);
+    expect(brand.body.data.brand).toMatchObject({ name: "Samsung", slug: "samsung", isActive: true });
+
+    const grade = await request(app)
+      .post("/api/v1/admin/condition-grades")
+      .set("Cookie", cookies)
+      .send({ code: "VERY-GOOD", name: "Very Good", description: "Minor signs of use.", sortOrder: 2 })
+      .expect(201);
+    expect(grade.body.data.conditionGrade).toMatchObject({ code: "very-good", name: "Very Good", isActive: true });
+
+    await request(app)
+      .patch(`/api/v1/admin/categories/${category.body.data.category.id}`)
+      .set("Cookie", cookies)
+      .send({ isActive: false })
+      .expect(200);
+    await request(app)
+      .patch(`/api/v1/admin/brands/${brand.body.data.brand.id}`)
+      .set("Cookie", cookies)
+      .send({ isActive: false })
+      .expect(200);
+    await request(app)
+      .patch(`/api/v1/admin/condition-grades/${grade.body.data.conditionGrade.id}`)
+      .set("Cookie", cookies)
+      .send({ isActive: false })
+      .expect(200);
+
+    const lookups = await request(app).get("/api/v1/admin/catalogue-lookups").set("Cookie", cookies).expect(200);
+    expect(lookups.body.data.categories[0]).toMatchObject({ name: "Tablets", isActive: false });
+    expect(lookups.body.data.brands[0]).toMatchObject({ name: "Samsung", isActive: false });
+    expect(lookups.body.data.conditionGrades[0]).toMatchObject({ name: "Very Good", isActive: false });
+
+    const log = await AdminActivityLog.findOne({ action: "condition_grade.updated" }).lean();
+    expect(log.details).toMatchObject({ code: "very-good", isActive: false });
+  });
+  it("allows admins to upload and manage product images", async () => {
+    const cookies = await createAdminCookies();
+    const { product } = await seedProduct();
+    const tinyPng = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/lX3K0wAAAABJRU5ErkJggg==";
+
+    const upload = await request(app)
+      .post("/api/v1/admin/uploads/product-image")
+      .set("Cookie", cookies)
+      .send({ dataUri: tinyPng, altText: "Actual iPhone back panel" })
+      .expect(201);
+
+    expect(upload.body.data.image).toMatchObject({ altText: "Actual iPhone back panel" });
+    expect(upload.body.data.image.cloudinaryPublicId).toContain("just-adure/products/demo-");
+
+    const attach = await request(app)
+      .post(`/api/v1/admin/products/${String(product._id)}/images`)
+      .set("Cookie", cookies)
+      .send({ ...upload.body.data.image, isPrimary: true })
+      .expect(200);
+
+    expect(attach.body.data.product.images.some((image) => image.cloudinaryPublicId === upload.body.data.image.cloudinaryPublicId)).toBe(true);
+    expect(attach.body.data.product.images.find((image) => image.cloudinaryPublicId === upload.body.data.image.cloudinaryPublicId).isPrimary).toBe(true);
+
+    const originalImageId = product.images[0].cloudinaryPublicId;
+    const primary = await request(app)
+      .patch(`/api/v1/admin/products/${String(product._id)}/images/${encodeURIComponent(originalImageId)}/primary`)
+      .set("Cookie", cookies)
+      .expect(200);
+
+    expect(primary.body.data.product.images.find((image) => image.cloudinaryPublicId === originalImageId).isPrimary).toBe(true);
+
+    const removed = await request(app)
+      .delete(`/api/v1/admin/products/${String(product._id)}/images/${encodeURIComponent(upload.body.data.image.cloudinaryPublicId)}`)
+      .set("Cookie", cookies)
+      .expect(200);
+
+    expect(removed.body.data.product.images.some((image) => image.cloudinaryPublicId === upload.body.data.image.cloudinaryPublicId)).toBe(false);
+
+    const log = await AdminActivityLog.findOne({ action: "product_image.removed" }).lean();
+    expect(log.details).toMatchObject({ sku: "JAN-PHN-001", cloudinaryPublicId: upload.body.data.image.cloudinaryPublicId });
+  });
+  it("allows admins to manage delivery zones used by checkout", async () => {
+    const cookies = await createAdminCookies("order_manager", "delivery-manager@example.com");
+
+    const create = await request(app)
+      .post("/api/v1/admin/delivery-zones")
+      .set("Cookie", cookies)
+      .send({
+        code: "lag-main",
+        name: "Lagos Mainland",
+        state: "Lagos",
+        cityPattern: "Ikeja|Yaba|Surulere",
+        feeKobo: 4_500_00,
+        minDeliveryDays: 1,
+        maxDeliveryDays: 3,
+        priority: 5,
+      })
+      .expect(201);
+
+    expect(create.body.data.zone).toMatchObject({ code: "LAG-MAIN", state: "Lagos", feeKobo: 4_500_00, isActive: true });
+
+    const list = await request(app).get("/api/v1/admin/delivery-zones").set("Cookie", cookies).expect(200);
+    expect(list.body.data.items).toHaveLength(1);
+
+    const quote = await request(app)
+      .post("/api/v1/checkout/delivery-fee")
+      .send({ state: "Lagos", city: "Ikeja", deliveryMethod: "delivery" })
+      .expect(200);
+    expect(quote.body.data).toMatchObject({ deliveryFeeKobo: 4_500_00, zone: { name: "Lagos Mainland" } });
+
+    const update = await request(app)
+      .patch(`/api/v1/admin/delivery-zones/${create.body.data.zone.id}`)
+      .set("Cookie", cookies)
+      .send({ feeKobo: 6_000_00, isActive: false, minDeliveryDays: 2, maxDeliveryDays: 4 })
+      .expect(200);
+
+    expect(update.body.data.zone).toMatchObject({ feeKobo: 6_000_00, isActive: false, minDeliveryDays: 2, maxDeliveryDays: 4 });
+
+    await request(app)
+      .post("/api/v1/checkout/delivery-fee")
+      .send({ state: "Lagos", city: "Ikeja", deliveryMethod: "delivery" })
+      .expect(400);
+
+    const log = await AdminActivityLog.findOne({ action: "delivery_zone.updated" }).lean();
+    expect(log.details).toMatchObject({ code: "LAG-MAIN", feeKobo: 6_000_00, isActive: false });
+  });
+  it("allows admins to manage newsletter subscribers", async () => {
+    const cookies = await createAdminCookies();
+    const subscriber = await NewsletterSubscriber.create({
+      email: "newsletter@example.com",
+      name: "Newsletter Buyer",
+      source: "footer",
+      status: "subscribed",
+    });
+    await NewsletterSubscriber.create({
+      email: "paused@example.com",
+      name: "Paused Buyer",
+      source: "homepage",
+      status: "unsubscribed",
+      unsubscribedAt: new Date(),
+    });
+
+    const list = await request(app).get("/api/v1/admin/newsletter-subscribers").set("Cookie", cookies).expect(200);
+    expect(list.body.data.summary).toMatchObject({ total: 2, subscribed: 1, unsubscribed: 1 });
+    expect(list.body.data.items[0]).toHaveProperty("email");
+
+    const filtered = await request(app).get("/api/v1/admin/newsletter-subscribers?status=subscribed").set("Cookie", cookies).expect(200);
+    expect(filtered.body.data.items).toHaveLength(1);
+    expect(filtered.body.data.items[0]).toMatchObject({ email: "newsletter@example.com", status: "subscribed" });
+
+    const updated = await request(app)
+      .patch(`/api/v1/admin/newsletter-subscribers/${String(subscriber._id)}`)
+      .set("Cookie", cookies)
+      .send({ status: "unsubscribed" })
+      .expect(200);
+
+    expect(updated.body.data.subscriber).toMatchObject({ email: "newsletter@example.com", status: "unsubscribed" });
+    expect(updated.body.data.subscriber.unsubscribedAt).toBeTruthy();
+
+    const log = await AdminActivityLog.findOne({ action: "newsletter_subscriber.updated" }).lean();
+    expect(log.details).toMatchObject({ email: "newsletter@example.com", status: "unsubscribed" });
   });});
+
+
+
+

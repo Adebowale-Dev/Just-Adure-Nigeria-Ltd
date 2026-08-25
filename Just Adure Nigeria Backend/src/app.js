@@ -13,6 +13,7 @@ import { errorHandler, notFoundHandler } from "./middleware/error-handler.js";
 import { requestContext } from "./middleware/request-context.js";
 import { adminRouter } from "./routes/admin.js";
 import { authRouter } from "./routes/auth.js";
+import { accountRouter } from "./routes/account.js";
 import { catalogueRouter } from "./routes/catalogue.js";
 import { cartRouter } from "./routes/cart.js";
 import { checkoutRouter } from "./routes/checkout.js";
@@ -26,6 +27,7 @@ import { wishlistRouter } from "./routes/wishlist.js";
 import { homepageRouter } from "./routes/homepage.js";
 import { storeSettingsRouter } from "./routes/store-settings.js";
 import { stockAlertsRouter } from "./routes/stock-alerts.js";
+import { newsletterRouter } from "./routes/newsletter.js";
 import { paystackWebhookRouter } from "./routes/paystack-webhook.js";
 import { systemRouter } from "./routes/system.js";
 export const app = express();
@@ -66,6 +68,7 @@ app.use("/api/v1", rateLimit({
 }));
 app.use(systemRouter);
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1", accountRouter);
 app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1", catalogueRouter);
 app.use("/api/v1", cartRouter);
@@ -80,6 +83,7 @@ app.use("/api/v1", wishlistRouter);
 app.use("/api/v1", homepageRouter);
 app.use("/api/v1", storeSettingsRouter);
 app.use("/api/v1", stockAlertsRouter);
+app.use("/api/v1", newsletterRouter);
 app.get("/api/openapi.json", (_request, response) => response.json(openApiDocument));
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(openApiDocument, {
     customSiteTitle: "Just Adure Nigeria Ltd API",

@@ -12,10 +12,12 @@ export const openApiDocument = swaggerJsdoc({
         tags: [
             { name: "System", description: "Service health and readiness" },
             { name: "Authentication", description: "Customer and staff authentication" },
+            { name: "Account", description: "Customer profile and saved delivery addresses" },
             { name: "Admin", description: "Protected administration dashboard and management endpoints" },
             { name: "Catalogue", description: "Public products, categories, brands and condition grades" },
             { name: "Cart", description: "Guest and customer shopping cart" },
             { name: "Wishlist", description: "Saved customer products and move-to-cart actions" },
+            { name: "Newsletter", description: "Newsletter subscriptions and customer marketing opt-ins" },
             { name: "Checkout", description: "Delivery fee, pending orders, and inventory reservation" },
             { name: "Orders", description: "Customer order history and tracking" },
             { name: "Payments", description: "Paystack integration endpoints" },

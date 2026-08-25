@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { AccountClient } from "@/components/account-client";
 import { AdminDashboardClient } from "@/components/admin-dashboard-client";
 import { BasicPage } from "@/components/basic-page";
 import { CartClient } from "@/components/cart-client";
@@ -30,6 +31,8 @@ export default function App({ initialPath = "/" }) {
 
   if (pathname === "/") {
     page = <HomePage />;
+  } else if (pathname === "/account") {
+    page = <AccountClient />;
   } else if (pathname === "/admin") {
     page = <AdminDashboardClient />;
   } else if (pathname === "/shop") {
@@ -54,7 +57,7 @@ export default function App({ initialPath = "/" }) {
     page = <ShopPage defaultCategory={decodeURIComponent(pathname.replace("/category/", ""))} />;
   } else if (pathname.startsWith("/product/")) {
     page = <ProductDetailsPage slug={decodeURIComponent(pathname.replace("/product/", ""))} />;
-  } else if (["/about", "/faq", "/delivery-returns", "/privacy", "/terms", "/account"].includes(pathname)) {
+  } else if (["/about", "/faq", "/delivery-returns", "/privacy", "/terms"].includes(pathname)) {
     page = <BasicPage title={pathname.replace("/", "").replaceAll("-", " ")} />;
   } else {
     page = <NotFoundPage />;

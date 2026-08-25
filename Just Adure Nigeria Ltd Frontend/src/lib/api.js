@@ -1,4 +1,4 @@
-export const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
+﻿export const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
 
 async function apiGet(path) {
   const response = await fetch(`${apiUrl}${path}`, { headers: { Accept: "application/json" }, credentials: "include" });
@@ -42,6 +42,9 @@ export async function trackOrder(input) { const params = new URLSearchParams({ o
 export async function getMyOrders() { return (await cartRequest("/orders/my", { method: "GET" })).items; }
 export async function getAdminDashboard() { return (await cartRequest("/admin/dashboard", { method: "GET" })).stats; }
 export async function getAdminProducts() { return (await cartRequest("/admin/products", { method: "GET" })).items; }
+export async function createAdminProduct(input) { return (await cartRequest("/admin/products", { method: "POST", body: JSON.stringify(input) })).product; }
+export async function updateAdminProduct(productId, input) { return (await cartRequest(`/admin/products/${productId}`, { method: "PATCH", body: JSON.stringify(input) })).product; }
+export async function archiveAdminProduct(productId) { await cartRequest(`/admin/products/${productId}`, { method: "DELETE" }); }
 export async function updateAdminProductStock(productId, input) { return (await cartRequest(`/admin/products/${productId}/stock`, { method: "PATCH", body: JSON.stringify(input) })).product; }
 export async function getAdminOrders() { return (await cartRequest("/admin/orders", { method: "GET" })).items; }
 export async function updateAdminOrderStatus(orderId, input) { return (await cartRequest(`/admin/orders/${orderId}/status`, { method: "PATCH", body: JSON.stringify(input) })).order; }
@@ -80,3 +83,29 @@ export async function addWishlistItem(input) { return (await cartRequest("/wishl
 export async function removeWishlistItem(productId) { return (await cartRequest(`/wishlist/items/${productId}`, { method: "DELETE" })).wishlist; }
 export async function moveWishlistItemToCart(productId) { return (await cartRequest(`/wishlist/items/${productId}/move-to-cart`, { method: "POST" })).wishlist; }
 export async function subscribeBackInStockAlert(input) { return (await cartRequest("/stock-alerts", { method: "POST", body: JSON.stringify(input) })).alert; }
+export async function subscribeNewsletter(input) { return (await cartRequest("/newsletter/subscribe", { method: "POST", body: JSON.stringify(input) })).subscriber; }
+export async function getAccount() { return (await cartRequest("/account", { method: "GET" })).account; }
+export async function updateAccountProfile(input) { return (await cartRequest("/account", { method: "PATCH", body: JSON.stringify(input) })).account; }
+export async function addAccountAddress(input) { return (await cartRequest("/account/addresses", { method: "POST", body: JSON.stringify(input) })).account; }
+export async function updateAccountAddress(addressId, input) { return (await cartRequest(`/account/addresses/${addressId}`, { method: "PATCH", body: JSON.stringify(input) })).account; }
+export async function deleteAccountAddress(addressId) { return (await cartRequest(`/account/addresses/${addressId}`, { method: "DELETE" })).account; }
+
+export async function getAdminNewsletterSubscribers(params = new URLSearchParams()) { const query = params.toString(); return cartRequest(`/admin/newsletter-subscribers${query ? `?${query}` : ""}`, { method: "GET" }); }
+export async function updateAdminNewsletterSubscriber(subscriberId, input) { return (await cartRequest(`/admin/newsletter-subscribers/${subscriberId}`, { method: "PATCH", body: JSON.stringify(input) })).subscriber; }
+
+export async function getAdminDeliveryZones() { return (await cartRequest("/admin/delivery-zones", { method: "GET" })).items; }
+export async function createAdminDeliveryZone(input) { return (await cartRequest("/admin/delivery-zones", { method: "POST", body: JSON.stringify(input) })).zone; }
+export async function updateAdminDeliveryZone(zoneId, input) { return (await cartRequest(`/admin/delivery-zones/${zoneId}`, { method: "PATCH", body: JSON.stringify(input) })).zone; }
+
+export async function uploadAdminProductImage(input) { return (await cartRequest("/admin/uploads/product-image", { method: "POST", body: JSON.stringify(input) })).image; }
+export async function attachAdminProductImage(productId, input) { return (await cartRequest(`/admin/products/${productId}/images`, { method: "POST", body: JSON.stringify(input) })).product; }
+export async function setAdminProductPrimaryImage(productId, publicId) { return (await cartRequest(`/admin/products/${productId}/images/${encodeURIComponent(publicId)}/primary`, { method: "PATCH" })).product; }
+export async function removeAdminProductImage(productId, publicId) { return (await cartRequest(`/admin/products/${productId}/images/${encodeURIComponent(publicId)}`, { method: "DELETE" })).product; }
+
+export async function getAdminCatalogueLookups() { return cartRequest("/admin/catalogue-lookups", { method: "GET" }); }
+export async function createAdminBrand(input) { return (await cartRequest("/admin/brands", { method: "POST", body: JSON.stringify(input) })).brand; }
+export async function updateAdminBrand(brandId, input) { return (await cartRequest(`/admin/brands/${brandId}`, { method: "PATCH", body: JSON.stringify(input) })).brand; }
+export async function createAdminCategory(input) { return (await cartRequest("/admin/categories", { method: "POST", body: JSON.stringify(input) })).category; }
+export async function updateAdminCategory(categoryId, input) { return (await cartRequest(`/admin/categories/${categoryId}`, { method: "PATCH", body: JSON.stringify(input) })).category; }
+export async function createAdminConditionGrade(input) { return (await cartRequest("/admin/condition-grades", { method: "POST", body: JSON.stringify(input) })).conditionGrade; }
+export async function updateAdminConditionGrade(gradeId, input) { return (await cartRequest(`/admin/condition-grades/${gradeId}`, { method: "PATCH", body: JSON.stringify(input) })).conditionGrade; }

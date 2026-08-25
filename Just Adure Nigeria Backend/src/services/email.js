@@ -214,3 +214,15 @@ export async function notifyBackInStockEmail(user, product) {
     textContent: `${product.name} is back in stock. View it here: ${productUrl}`,
   });
 }
+export async function notifyNewsletterSubscription(subscriber) {
+  if (!subscriber?.email) return { status: "skipped" };
+  const shopUrl = `${env.WEB_URL}/shop`;
+  const htmlContent = `<!doctype html><html lang="en"><body style="margin:0;background:#f5f1ea;font-family:Arial,sans-serif;color:#1f2933;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f1ea;padding:24px 12px;"><tr><td align="center"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border-radius:18px;overflow:hidden;"><tr><td style="background:#12372a;color:#fff;padding:28px;"><div style="font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:#d8b56d;">Just Adure Nigeria Ltd</div><h1 style="margin:8px 0 0;font-size:26px;line-height:1.2;">Newsletter subscription confirmed</h1></td></tr><tr><td style="padding:28px;"><p style="font-size:16px;line-height:1.6;margin:0 0 18px;">Hi ${escapeHtml(subscriber.name || "there")}, thank you for subscribing. We will send honest UK-used product updates, restock notices and store offers.</p><p style="margin:24px 0 0;"><a href="${escapeHtml(shopUrl)}" style="display:inline-block;background:#d8b56d;color:#12372a;padding:12px 18px;border-radius:999px;text-decoration:none;font-weight:bold;">Browse products</a></p></td></tr><tr><td style="background:#f8fafc;padding:18px 28px;color:#64748b;font-size:13px;line-height:1.5;">You can contact support if you subscribed by mistake.</td></tr></table></td></tr></table></body></html>`;
+  return sendBrevoEmail({
+    to: { email: subscriber.email, name: subscriber.name || "Customer" },
+    subject: "You are subscribed to Just Adure Nigeria Ltd updates",
+    template: "newsletter_subscription_confirmation",
+    htmlContent,
+    textContent: `You are subscribed to Just Adure Nigeria Ltd updates. Browse products: ${shopUrl}`,
+  });
+}
