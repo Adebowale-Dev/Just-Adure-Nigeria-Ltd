@@ -1,5 +1,5 @@
 import "../globals.css";
-import { Providers } from "@/components/providers";
+import { Providers } from "@/components/layout/providers";
 
 const storeName = process.env.NEXT_PUBLIC_STORE_NAME || "Just Adure Nigeria Ltd";
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -29,3 +29,4 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
+

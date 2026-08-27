@@ -1,9 +1,11 @@
+﻿import { createHash, randomBytes } from "node:crypto";
 import { Router } from "express";
 import { z } from "zod";
 import { env } from "../config/env.js";
 import { AppError } from "../errors/app-error.js";
 import { authCookieNames, requireAuth } from "../middleware/auth.js";
 import { User } from "../models/user.js";
+import { notifyEmailVerification, notifyPasswordReset } from "../services/email.js";
 import { hashPassword, verifyPassword } from "../utils/password.js";
 import { signToken } from "../utils/token.js";
 export const authRouter = Router();
@@ -20,6 +22,16 @@ const registerSchema = z.object({
 const loginSchema = z.object({
     email: z.string().trim().email().toLowerCase(),
     password: z.string().min(1).max(128),
+});
+const emailSchema = z.object({
+    email: z.string().trim().email().toLowerCase(),
+});
+const tokenSchema = z.object({
+    token: z.string().trim().min(32),
+});
+const resetPasswordSchema = z.object({
+    token: z.string().trim().min(32),
+    password: z.string().min(8).max(128),
 });
 function authCookieOptions(maxAgeMs) {
     return {
@@ -46,6 +58,23 @@ function setAuthCookies(response, user) {
     response.cookie(authCookieNames.access, accessToken, authCookieOptions(env.ACCESS_TOKEN_TTL_MINUTES * 60 * 1000));
     response.cookie(authCookieNames.refresh, refreshToken, authCookieOptions(env.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000));
 }
+function createPlainToken() {
+    return randomBytes(32).toString("hex");
+}
+function hashAuthToken(token) {
+    return createHash("sha256").update(token).digest("hex");
+}
+function expiresIn(minutes) {
+    return new Date(Date.now() + minutes * 60 * 1000);
+}
+async function issueEmailVerification(user) {
+    const token = createPlainToken();
+    user.emailVerificationTokenHash = hashAuthToken(token);
+    user.emailVerificationTokenExpiresAt = expiresIn(24 * 60);
+    await user.save();
+    await notifyEmailVerification(user, token);
+    return token;
+}
 /**
  * @openapi
  * /api/v1/auth/register:
@@ -70,8 +99,9 @@ authRouter.post("/register", async (request, response, next) => {
             passwordHash: await hashPassword(input.password),
             roles: ["customer"],
         });
+        await issueEmailVerification(user);
         setAuthCookies(response, user);
-        response.status(201).json({ data: { user: publicUser(user) } });
+        response.status(201).json({ data: { user: publicUser(user), verificationRequired: true } });
     }
     catch (error) {
         next(error);
@@ -102,6 +132,116 @@ authRouter.post("/login", async (request, response, next) => {
         await user.save();
         setAuthCookies(response, user);
         response.json({ data: { user: publicUser(user) } });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+/**
+ * @openapi
+ * /api/v1/auth/resend-verification:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Resend a customer email verification link
+ *     responses:
+ *       200:
+ *         description: Verification email queued when account exists
+ */
+authRouter.post("/resend-verification", async (request, response, next) => {
+    try {
+        const input = emailSchema.parse(request.body);
+        const user = await User.findOne({ email: input.email }).select("+emailVerificationTokenHash +emailVerificationTokenExpiresAt");
+        if (user && !user.emailVerifiedAt && user.isActive) {
+            await issueEmailVerification(user);
+        }
+        response.json({ data: { message: "If the account exists and is not verified, a verification email has been sent." } });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+/**
+ * @openapi
+ * /api/v1/auth/verify-email:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Verify a customer email address
+ *     responses:
+ *       200:
+ *         description: Email verified
+ */
+authRouter.post("/verify-email", async (request, response, next) => {
+    try {
+        const input = tokenSchema.parse(request.body);
+        const user = await User.findOne({
+            emailVerificationTokenHash: hashAuthToken(input.token),
+            emailVerificationTokenExpiresAt: { $gt: new Date() },
+        }).select("+emailVerificationTokenHash +emailVerificationTokenExpiresAt");
+        if (!user || !user.isActive) {
+            throw new AppError(400, "INVALID_VERIFICATION_TOKEN", "This verification link is invalid or has expired.");
+        }
+        user.emailVerifiedAt = new Date();
+        user.emailVerificationTokenHash = undefined;
+        user.emailVerificationTokenExpiresAt = undefined;
+        await user.save();
+        response.json({ data: { user: publicUser(user), message: "Email address verified successfully." } });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+/**
+ * @openapi
+ * /api/v1/auth/forgot-password:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Request a password reset email
+ *     responses:
+ *       200:
+ *         description: Password reset email queued when account exists
+ */
+authRouter.post("/forgot-password", async (request, response, next) => {
+    try {
+        const input = emailSchema.parse(request.body);
+        const user = await User.findOne({ email: input.email }).select("+passwordResetTokenHash +passwordResetTokenExpiresAt");
+        if (user && user.isActive) {
+            const token = createPlainToken();
+            user.passwordResetTokenHash = hashAuthToken(token);
+            user.passwordResetTokenExpiresAt = expiresIn(60);
+            await user.save();
+            await notifyPasswordReset(user, token);
+        }
+        response.json({ data: { message: "If the account exists, a password reset email has been sent." } });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+/**
+ * @openapi
+ * /api/v1/auth/reset-password:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Reset a customer password
+ *     responses:
+ *       200:
+ *         description: Password reset successful
+ */
+authRouter.post("/reset-password", async (request, response, next) => {
+    try {
+        const input = resetPasswordSchema.parse(request.body);
+        const user = await User.findOne({
+            passwordResetTokenHash: hashAuthToken(input.token),
+            passwordResetTokenExpiresAt: { $gt: new Date() },
+        }).select("+passwordHash +passwordResetTokenHash +passwordResetTokenExpiresAt");
+        if (!user || !user.isActive) {
+            throw new AppError(400, "INVALID_RESET_TOKEN", "This password reset link is invalid or has expired.");
+        }
+        user.passwordHash = await hashPassword(input.password);
+        user.passwordResetTokenHash = undefined;
+        user.passwordResetTokenExpiresAt = undefined;
+        await user.save();
+        response.json({ data: { message: "Password reset successfully. You can now log in." } });
     }
     catch (error) {
         next(error);

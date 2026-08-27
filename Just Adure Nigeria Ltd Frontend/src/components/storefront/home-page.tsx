@@ -2,46 +2,46 @@
 
 import { useEffect, useState } from "react";
 import { ArrowRight, BadgeCheck, Camera, CreditCard, PackageCheck, ShieldCheck, Sparkles } from "lucide-react";
-import { ProductCard } from "@/components/product-card";
-import { TrustCard } from "@/components/trust-card";
+import { ProductCard } from "@/components/storefront/product-card";
+import { TrustCard } from "@/components/storefront/trust-card";
 import { getHomepage } from "@/lib/api.js";
 import { fallbackImage, productToCard } from "@/lib/product-card-mapper";
 
 const fallbackProducts = [
   {
-    name: "UK-used iPhone 13 Pro",
-    slug: "iphone-13-pro-uk-used",
-    priceKobo: 58500000,
-    previousPriceKobo: 63500000,
+    name: "Apple Desktop Computer",
+    slug: "apple-desktop-computer-uk-used",
+    priceKobo: 52000000,
+    previousPriceKobo: 56000000,
     condition: "Excellent",
     imageUrl: fallbackImage,
-    defectNote: "Minor frame marks, Face ID tested, battery health disclosed.",
+    defectNote: "Desktop display, ports and power checked before listing.",
     isSoldOut: false,
   },
   {
-    name: "Dell Latitude 7420",
-    slug: "dell-latitude-7420",
+    name: "Big Standing Fridge and Freezer",
+    slug: "big-standing-fridge-and-freezer-uk-used",
     priceKobo: 42000000,
-    condition: "Very Good",
-    imageUrl: fallbackImage,
-    defectNote: "Keyboard, webcam and ports tested before listing.",
-    isSoldOut: false,
-  },
-  {
-    name: "Samsung Galaxy S22 Ultra",
-    slug: "samsung-galaxy-s22-ultra",
-    priceKobo: 51000000,
     condition: "Good",
     imageUrl: fallbackImage,
-    defectNote: "Visible back-cover scratches clearly shown in product photos.",
+    defectNote: "Cooling, thermostat, seals and compressor tested.",
+    isSoldOut: false,
+  },
+  {
+    name: "2/3 Seater Leather Chair",
+    slug: "two-three-seater-leather-chair-uk-used",
+    priceKobo: 32000000,
+    condition: "Excellent",
+    imageUrl: fallbackImage,
+    defectNote: "Leather surface, seat support and frame inspected.",
     isSoldOut: false,
   },
 ];
 
 const fallbackCategories = [
-  { name: "Phones", slug: "phones", description: "UK-used smartphones with clear condition grades." },
-  { name: "Laptops", slug: "laptops", description: "Business laptops tested for work, school and travel." },
-  { name: "Tablets", slug: "tablets", description: "Portable devices with warranty and accessories listed." },
+  { name: "Computers", slug: "computers", description: "Desktop computers and monitors tested for everyday work." },
+  { name: "Home Appliances", slug: "home-appliances", description: "Fridges, freezers, washers and dryers checked before sale." },
+  { name: "Furniture", slug: "furniture", description: "UK-used chairs and home furniture inspected for condition." },
 ];
 
 export function HomePage() {
@@ -70,10 +70,10 @@ export function HomePage() {
           <div className="relative z-10 max-w-3xl animate-rise">
             <p className="section-kicker">UK-used products, honestly graded</p>
             <h1 className="mt-6 font-serif text-6xl font-bold leading-none tracking-[-.065em] text-[var(--ink)] sm:text-8xl">
-              {primaryBanner?.title ?? "Buy trusted UK-used gadgets in Nigeria."}
+              {primaryBanner?.title ?? "Buy trusted UK-used products in Nigeria."}
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-[var(--muted)]">
-              {primaryBanner?.subtitle ?? "Shop phones, laptops and accessories with real condition notes, verified stock, Paystack checkout and Nigerian naira pricing."}
+              {primaryBanner?.subtitle ?? "Shop computers, appliances, TVs, bicycles, furniture and accessories with real condition notes, verified stock, Paystack checkout and Nigerian naira pricing."}
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <a href={primaryBanner?.href || "/shop"} className="cta-primary">
@@ -141,3 +141,4 @@ export function HomePage() {
     </main>
   );
 }
+

@@ -1,4 +1,4 @@
-﻿import mongoose from "mongoose";
+import mongoose from "mongoose";
 import request from "supertest";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { app } from "../src/app.js";
@@ -10,6 +10,7 @@ import { NewsletterSubscriber } from "../src/models/newsletter-subscriber.js";
 import { Coupon } from "../src/models/coupon.js";
 import { Order } from "../src/models/order.js";
 import { Payment } from "../src/models/payment.js";
+import { ReturnRequest } from "../src/models/return-request.js";
 import { User } from "../src/models/user.js";
 import { hashPassword } from "../src/utils/password.js";
 
@@ -24,6 +25,7 @@ async function clearCollections() {
     HomepageContent.deleteMany({}),
     NewsletterSubscriber.deleteMany({}),
     Payment.deleteMany({}),
+    ReturnRequest.deleteMany({}),
     Coupon.deleteMany({}),
     Order.deleteMany({}),
     Product.deleteMany({}),
@@ -264,15 +266,34 @@ describe("admin API", () => {
       status: "successful",
       customerEmail: order.customer.email,
     });
+    await ReturnRequest.create({
+      requestNumber: "RET-REPORT-001",
+      orderId: order._id,
+      orderNumber: order.orderNumber,
+      customerName: order.customer.name,
+      customerEmail: order.customer.email,
+      reason: "not_as_described",
+      details: "Refund captured for reporting.",
+      items: [{ productId: order.items[0].productId, sku: order.items[0].sku, name: order.items[0].name, quantity: 1 }],
+      status: "refunded",
+      refundAmountKobo: 125_000_00,
+      refundReference: "RFND-REPORT-001",
+      refundProcessedAt: new Date(),
+    });
 
     const report = await request(app).get("/api/v1/admin/reports?range=today&paymentStatus=successful").set("Cookie", cookies).expect(200);
-    expect(report.body.data.summary).toMatchObject({ totalOrders: 1, paidOrders: 1, totalRevenueKobo: 680_000_00 });
+    expect(report.body.data.summary).toMatchObject({ totalOrders: 1, paidOrders: 1, totalRevenueKobo: 680_000_00, totalRefundedKobo: 125_000_00 });
     expect(report.body.data.bestSellingProducts[0]).toMatchObject({ sku: "JAN-PHN-001", quantitySold: 1 });
 
     const csv = await request(app).get("/api/v1/admin/reports/orders.csv?range=today").set("Cookie", cookies).expect(200);
     expect(csv.headers["content-type"]).toContain("text/csv");
     expect(csv.text).toContain("Order Number");
     expect(csv.text).toContain("JAN-ADMIN-001");
+
+    const paymentsCsv = await request(app).get("/api/v1/admin/reports/payments.csv?range=today&paymentStatus=successful").set("Cookie", cookies).expect(200);
+    expect(paymentsCsv.headers["content-type"]).toContain("text/csv");
+    expect(paymentsCsv.text).toContain("Reference");
+    expect(paymentsCsv.text).toContain("JAN-REPORT-001");
   });
   it("enforces scoped staff permissions", async () => {
     const inventoryCookies = await createAdminCookies("inventory_manager", "inventory@example.com");
@@ -583,6 +604,7 @@ describe("admin API", () => {
     const log = await AdminActivityLog.findOne({ action: "newsletter_subscriber.updated" }).lean();
     expect(log.details).toMatchObject({ email: "newsletter@example.com", status: "unsubscribed" });
   });});
+
 
 
 

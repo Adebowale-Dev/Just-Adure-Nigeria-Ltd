@@ -1,9 +1,10 @@
-import mongoose from "mongoose";
+﻿import mongoose from "mongoose";
 import request from "supertest";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { app } from "../src/app.js";
 import { connectMongo, disconnectMongo } from "../src/config/mongo.js";
 import { Order } from "../src/models/order.js";
+import { Payment } from "../src/models/payment.js";
 import { ReturnRequest } from "../src/models/return-request.js";
 import { User } from "../src/models/user.js";
 import { hashPassword } from "../src/utils/password.js";
@@ -14,7 +15,7 @@ function normalizeCookies(cookieHeader) {
 }
 
 async function clearCollections() {
-  await Promise.all([ReturnRequest.deleteMany({}), Order.deleteMany({}), User.deleteMany({})]);
+  await Promise.all([ReturnRequest.deleteMany({}), Payment.deleteMany({}), Order.deleteMany({}), User.deleteMany({})]);
 }
 
 async function createAdminCookies() {
@@ -87,8 +88,26 @@ describe("returns and refunds", () => {
     expect(updatedOrder.orderStatus).toBe("return_requested");
   });
 
-  it("allows an admin to approve and mark a return as refunded", async () => {
+  it("requires refund details before an admin marks a return as refunded", async () => {
     const order = await seedDeliveredOrder();
+    const create = await request(app)
+      .post(`/api/v1/orders/${String(order._id)}/returns`)
+      .send({ email: "customer@example.com", reason: "defective", details: "The device stopped charging after delivery." })
+      .expect(201);
+    const cookies = await createAdminCookies();
+
+    const response = await request(app)
+      .patch(`/api/v1/admin/returns/${create.body.data.returnRequest.id}`)
+      .set("Cookie", cookies)
+      .send({ status: "refunded", adminNote: "Missing amount." })
+      .expect(400);
+
+    expect(response.body.error.code).toBe("INVALID_REFUND_AMOUNT");
+  });
+
+  it("allows an admin to record a full refund and updates the payment safely", async () => {
+    const order = await seedDeliveredOrder();
+    await Payment.create({ orderId: order._id, orderNumber: order.orderNumber, reference: "JAN-PAY-REFUND-001", amountKobo: order.totalKobo, currency: "NGN", status: "successful", customerEmail: "customer@example.com" });
     const create = await request(app)
       .post(`/api/v1/orders/${String(order._id)}/returns`)
       .send({ email: "customer@example.com", reason: "defective", details: "The device stopped charging after delivery." })
@@ -104,12 +123,42 @@ describe("returns and refunds", () => {
     const refunded = await request(app)
       .patch(`/api/v1/admin/returns/${create.body.data.returnRequest.id}`)
       .set("Cookie", cookies)
-      .send({ status: "refunded", adminNote: "Refund confirmed manually." })
+      .send({ status: "refunded", adminNote: "Refund confirmed manually.", refundAmountKobo: order.totalKobo, refundReference: "PSTK-REF-001" })
       .expect(200);
 
-    expect(refunded.body.data.returnRequest).toMatchObject({ status: "refunded", adminNote: "Refund confirmed manually." });
+    expect(refunded.body.data.returnRequest).toMatchObject({ status: "refunded", adminNote: "Refund confirmed manually.", refundAmountKobo: order.totalKobo, refundReference: "PSTK-REF-001" });
     const updatedOrder = await Order.findById(order._id).lean();
     expect(updatedOrder).toMatchObject({ orderStatus: "refunded", paymentStatus: "refunded" });
+    const payment = await Payment.findOne({ orderId: order._id }).lean();
+    expect(payment).toMatchObject({ status: "refunded", gatewayResponse: "Refund recorded manually: PSTK-REF-001" });
+
+    const duplicate = await request(app)
+      .patch(`/api/v1/admin/returns/${create.body.data.returnRequest.id}`)
+      .set("Cookie", cookies)
+      .send({ status: "refunded", adminNote: "Duplicate refund.", refundAmountKobo: order.totalKobo, refundReference: "PSTK-REF-002" })
+      .expect(409);
+    expect(duplicate.body.error.code).toBe("RETURN_ALREADY_REFUNDED");
+  });
+
+  it("records partial refunds without marking the payment fully refunded", async () => {
+    const order = await seedDeliveredOrder();
+    await Payment.create({ orderId: order._id, orderNumber: order.orderNumber, reference: "JAN-PAY-PARTIAL-001", amountKobo: order.totalKobo, currency: "NGN", status: "successful", customerEmail: "customer@example.com" });
+    const create = await request(app)
+      .post(`/api/v1/orders/${String(order._id)}/returns`)
+      .send({ email: "customer@example.com", reason: "not_as_described", details: "One accessory was missing from the delivered package." })
+      .expect(201);
+    const cookies = await createAdminCookies();
+
+    await request(app)
+      .patch(`/api/v1/admin/returns/${create.body.data.returnRequest.id}`)
+      .set("Cookie", cookies)
+      .send({ status: "refunded", adminNote: "Partial refund for missing accessory.", refundAmountKobo: 50_000_00, refundReference: "PSTK-PARTIAL-001" })
+      .expect(200);
+
+    const updatedOrder = await Order.findById(order._id).lean();
+    expect(updatedOrder).toMatchObject({ orderStatus: "refunded", paymentStatus: "partially_refunded" });
+    const payment = await Payment.findOne({ orderId: order._id }).lean();
+    expect(payment.status).toBe("partially_refunded");
   });
 
   it("rejects return requests for unpaid orders", async () => {
@@ -123,3 +172,4 @@ describe("returns and refunds", () => {
     expect(response.body.error.code).toBe("ORDER_NOT_PAID");
   });
 });
+

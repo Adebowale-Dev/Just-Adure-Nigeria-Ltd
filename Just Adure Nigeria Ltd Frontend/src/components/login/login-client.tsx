@@ -34,7 +34,7 @@ export function LoginClient() {
           window.location.href = "/admin";
           return;
         }
-        setMessage("Login successful. Customer dashboard will be completed in a later milestone.");
+        window.location.href = "/account";
       } catch (loginError) {
         setError(loginError instanceof Error ? loginError.message : "Login failed.");
       }
@@ -47,7 +47,7 @@ export function LoginClient() {
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <p className="section-kicker">Secure login</p>
           <h1 className="mt-4 font-serif text-5xl font-bold leading-none tracking-[-.06em] sm:text-7xl">Access your account.</h1>
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-[var(--muted)]">Admins and staff can sign in here to manage inventory, orders and store operations.</p>
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-[var(--muted)]">Customers can sign in here to manage orders, profile details and delivery addresses. Admins and staff will be sent to the admin dashboard.</p>
         </div>
       </section>
 
@@ -62,15 +62,21 @@ export function LoginClient() {
             <label className="grid gap-2 text-sm font-bold">Password<input name="password" type="password" value={form.password} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label>
           </div>
           <button disabled={isPending} className="cta-primary mt-8 w-full disabled:opacity-50" type="submit"><LogIn className="size-4" /> {isPending ? "Signing in..." : "Sign in"}</button>
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-sm font-bold text-[var(--muted)]">
+            <a className="text-[var(--accent-dark)]" href="/register">Create customer account</a>
+            <a className="text-[var(--accent-dark)]" href="/forgot-password">Forgot password?</a>
+          </div>
         </form>
 
         <aside className="rounded-[2rem] bg-[var(--ink)] p-8 text-white shadow-[0_24px_70px_rgba(28,34,31,.18)]">
           <ShieldCheck className="size-8 text-[var(--accent)]" />
           <h2 className="mt-5 font-serif text-4xl font-bold tracking-[-.04em]">Admin setup</h2>
-          <p className="mt-4 leading-7 text-white/70">Create the first super admin from the backend terminal with `npm run admin:create`, then login here. Staff accounts should be created by a super administrator.</p>
+          <p className="mt-4 leading-7 text-white/70">Create the first super admin from the backend terminal with 
+pm run admin:create`, then login here. Staff accounts should be created by a super administrator.</p>
           <a href="/admin" className="cta-primary mt-8 bg-[var(--accent)] text-[var(--ink)]">Go to admin dashboard</a>
         </aside>
       </section>
     </main>
   );
 }
+

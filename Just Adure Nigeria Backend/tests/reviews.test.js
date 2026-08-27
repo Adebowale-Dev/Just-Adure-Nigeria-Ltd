@@ -1,4 +1,4 @@
-import request from "supertest";
+﻿import request from "supertest";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { app } from "../src/app.js";
 import { connectMongo, disconnectMongo } from "../src/config/mongo.js";
@@ -126,6 +126,19 @@ describe("product reviews", () => {
     expect(productDetails.body.data.product.reviews[0]).toMatchObject({ title: "Exactly as described", isVerifiedPurchase: true });
   });
 
+
+  it("submits non-buyer reviews without a verified purchase badge", async () => {
+    const product = await seedProduct();
+    const customerCookies = await createUserCookies({ email: "browser@example.com" });
+
+    const response = await request(app)
+      .post(`/api/v1/products/${String(product._id)}/reviews`)
+      .set("Cookie", customerCookies)
+      .send({ rating: 4, title: "Looks honest", comment: "The listing has clear condition details." })
+      .expect(201);
+
+    expect(response.body.data.review).toMatchObject({ status: "pending", rating: 4, isVerifiedPurchase: false });
+  });
   it("requires login before submitting a review", async () => {
     const product = await seedProduct();
 

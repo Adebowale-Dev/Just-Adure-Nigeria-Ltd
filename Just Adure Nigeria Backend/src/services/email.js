@@ -226,3 +226,29 @@ export async function notifyNewsletterSubscription(subscriber) {
     textContent: `You are subscribed to Just Adure Nigeria Ltd updates. Browse products: ${shopUrl}`,
   });
 }
+
+export async function notifyEmailVerification(user, token) {
+  if (!user?.email || !token) return { status: "skipped" };
+  const verifyUrl = `${env.WEB_URL}/verify-email?token=${encodeURIComponent(token)}`;
+  const htmlContent = `<!doctype html><html lang="en"><body style="margin:0;background:#f5f1ea;font-family:Arial,sans-serif;color:#1f2933;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f1ea;padding:24px 12px;"><tr><td align="center"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border-radius:18px;overflow:hidden;"><tr><td style="background:#12372a;color:#fff;padding:28px;"><div style="font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:#d8b56d;">Just Adure Nigeria Ltd</div><h1 style="margin:8px 0 0;font-size:26px;line-height:1.2;">Verify your email</h1></td></tr><tr><td style="padding:28px;"><p style="font-size:16px;line-height:1.6;margin:0 0 18px;">Hi ${escapeHtml(user.name)}, welcome to Just Adure Nigeria Ltd. Please confirm this email address so we can protect your account and order updates.</p><p style="margin:24px 0 0;"><a href="${escapeHtml(verifyUrl)}" style="display:inline-block;background:#d8b56d;color:#12372a;padding:12px 18px;border-radius:999px;text-decoration:none;font-weight:bold;">Verify email</a></p><p style="margin:18px 0 0;color:#64748b;font-size:13px;line-height:1.6;">This link expires in 24 hours.</p></td></tr></table></td></tr></table></body></html>`;
+  return sendBrevoEmail({
+    to: { email: user.email, name: user.name },
+    subject: "Verify your Just Adure Nigeria Ltd account",
+    template: "email_verification_customer",
+    htmlContent,
+    textContent: `Verify your Just Adure Nigeria Ltd account: ${verifyUrl}`,
+  });
+}
+
+export async function notifyPasswordReset(user, token) {
+  if (!user?.email || !token) return { status: "skipped" };
+  const resetUrl = `${env.WEB_URL}/reset-password?token=${encodeURIComponent(token)}`;
+  const htmlContent = `<!doctype html><html lang="en"><body style="margin:0;background:#f5f1ea;font-family:Arial,sans-serif;color:#1f2933;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f1ea;padding:24px 12px;"><tr><td align="center"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border-radius:18px;overflow:hidden;"><tr><td style="background:#12372a;color:#fff;padding:28px;"><div style="font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:#d8b56d;">Just Adure Nigeria Ltd</div><h1 style="margin:8px 0 0;font-size:26px;line-height:1.2;">Reset your password</h1></td></tr><tr><td style="padding:28px;"><p style="font-size:16px;line-height:1.6;margin:0 0 18px;">Hi ${escapeHtml(user.name)}, use the button below to choose a new password for your account.</p><p style="margin:24px 0 0;"><a href="${escapeHtml(resetUrl)}" style="display:inline-block;background:#d8b56d;color:#12372a;padding:12px 18px;border-radius:999px;text-decoration:none;font-weight:bold;">Reset password</a></p><p style="margin:18px 0 0;color:#64748b;font-size:13px;line-height:1.6;">This link expires in 1 hour. If you did not request it, you can ignore this email.</p></td></tr></table></td></tr></table></body></html>`;
+  return sendBrevoEmail({
+    to: { email: user.email, name: user.name },
+    subject: "Reset your Just Adure Nigeria Ltd password",
+    template: "password_reset_customer",
+    htmlContent,
+    textContent: `Reset your Just Adure Nigeria Ltd password: ${resetUrl}`,
+  });
+}

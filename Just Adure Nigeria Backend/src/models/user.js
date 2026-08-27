@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+﻿import mongoose from "mongoose";
 const { Schema } = mongoose;
 export const userRoles = [
     "customer",
@@ -28,11 +28,17 @@ const userSchema = new Schema({
     roles: { type: [String], enum: userRoles, required: true, default: ["customer"] },
     permissions: { type: [String], required: true, default: [] },
     emailVerifiedAt: { type: Date },
+    emailVerificationTokenHash: { type: String, select: false },
+    emailVerificationTokenExpiresAt: { type: Date, select: false },
+    passwordResetTokenHash: { type: String, select: false },
+    passwordResetTokenExpiresAt: { type: Date, select: false },
     isActive: { type: Boolean, required: true, default: true },
     addresses: { type: [addressSchema], required: true, default: [] },
     lastLoginAt: { type: Date },
 }, { timestamps: true });
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ roles: 1, isActive: 1 });
+userSchema.index({ emailVerificationTokenHash: 1 }, { sparse: true });
+userSchema.index({ passwordResetTokenHash: 1 }, { sparse: true });
 export const User = mongoose.models.User ||
     mongoose.model("User", userSchema);

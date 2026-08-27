@@ -1,4 +1,4 @@
-import request from "supertest";
+﻿import request from "supertest";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { app } from "../src/app.js";
 import { connectMongo, disconnectMongo } from "../src/config/mongo.js";
@@ -61,6 +61,28 @@ describe("support tickets", () => {
     expect(notification.title).toBe("New support ticket");
   });
 
+
+  it("creates a product enquiry ticket with the product slug", async () => {
+    const response = await request(app)
+      .post("/api/v1/support/contact")
+      .send({
+        type: "product_enquiry",
+        name: "Ade Customer",
+        email: "customer@example.com",
+        phone: "08012345678",
+        subject: "Product enquiry: iPhone 13 Pro 256GB",
+        productSlug: "iphone-13-pro-256gb",
+        message: "Please confirm whether this exact UK-used unit includes a charger.",
+      })
+      .expect(201);
+
+    expect(response.body.data.ticket).toMatchObject({
+      type: "product_enquiry",
+      productSlug: "iphone-13-pro-256gb",
+      status: "open",
+      email: "customer@example.com",
+    });
+  });
   it("allows customers to look up a ticket by number and email", async () => {
     const created = await request(app)
       .post("/api/v1/support/contact")
@@ -75,6 +97,36 @@ describe("support tickets", () => {
     expect(lookup.body.data.ticket).toMatchObject({ ticketNumber: created.body.data.ticket.ticketNumber, status: "open" });
   });
 
+
+  it("allows a customer to reply to their support ticket", async () => {
+    const created = await request(app)
+      .post("/api/v1/support/contact")
+      .send({ name: "Ade Customer", email: "customer@example.com", subject: "Order support", message: "I need help with my order delivery update." })
+      .expect(201);
+
+    const reply = await request(app)
+      .post("/api/v1/support/tickets/reply")
+      .send({ ticketNumber: created.body.data.ticket.ticketNumber, email: "customer@example.com", name: "Ade Customer", message: "Here is the extra delivery detail you requested." })
+      .expect(200);
+
+    expect(reply.body.data.ticket.replies.at(-1)).toMatchObject({ authorType: "customer", authorName: "Ade Customer", message: "Here is the extra delivery detail you requested." });
+    const notification = await Notification.findOne({ audience: "admin", title: "Customer replied to support ticket" }).lean();
+    expect(notification).toBeTruthy();
+  });
+
+  it("does not allow a customer to reply to another email address ticket", async () => {
+    const created = await request(app)
+      .post("/api/v1/support/contact")
+      .send({ name: "Ade Customer", email: "customer@example.com", subject: "Order support", message: "I need help with my order delivery update." })
+      .expect(201);
+
+    const response = await request(app)
+      .post("/api/v1/support/tickets/reply")
+      .send({ ticketNumber: created.body.data.ticket.ticketNumber, email: "wrong@example.com", message: "Trying to access another ticket." })
+      .expect(404);
+
+    expect(response.body.error.code).toBe("SUPPORT_TICKET_NOT_FOUND");
+  });
   it("allows admins to list and reply to support tickets", async () => {
     const created = await request(app)
       .post("/api/v1/support/contact")
@@ -95,3 +147,4 @@ describe("support tickets", () => {
     expect(updated.body.data.ticket.replies[0]).toMatchObject({ authorType: "admin", message: "Please share the exact product link." });
   });
 });
+

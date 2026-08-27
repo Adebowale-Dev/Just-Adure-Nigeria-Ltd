@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Activity, AlertTriangle, BarChart3, Boxes, ClipboardList, Image, Mail, MessageSquareText, PackageCheck, RotateCcw, Save, Settings, ShieldCheck, Star, Tags } from "lucide-react";
 import {
   createAdminCoupon,
@@ -8,6 +8,7 @@ import {
   getAdminProducts,
   getAdminReports,
   getAdminOrdersReportCsvUrl,
+  getAdminPaymentsReportCsvUrl,
   getAdminReviews,
   getAdminStaff,
   getAdminStoreSettings,
@@ -28,10 +29,10 @@ import {
   updateAdminNewsletterSubscriber,
   updateAdminSupportTicket,
 } from "@/lib/api.js";
-import { DeliveryZonesAdmin } from "@/components/delivery-zones-admin";
-import { ProductImagesAdmin } from "@/components/product-images-admin";
-import { ProductManagementAdmin } from "@/components/product-management-admin";
-import { CatalogueLookupsAdmin } from "@/components/catalogue-lookups-admin";
+import { DeliveryZonesAdmin } from "@/components/admin/delivery-zones-admin";
+import { ProductImagesAdmin } from "@/components/admin/product-images-admin";
+import { ProductManagementAdmin } from "@/components/admin/product-management-admin";
+import { CatalogueLookupsAdmin } from "@/components/admin/catalogue-lookups-admin";
 import { formatNaira } from "@/lib/utils.js";
 
 const orderStatuses = ["paid", "processing", "ready_for_pickup", "ready_for_delivery", "shipped", "out_for_delivery", "delivered", "cancelled"];
@@ -41,12 +42,13 @@ const supportStatuses = ["open", "in_progress", "waiting_for_customer", "resolve
 const staffRoles = ["admin", "inventory_manager", "order_manager", "customer_support", "content_manager"];
 const staffPermissions = ["dashboard:view", "reports:view", "products:read", "products:manage", "inventory:manage", "orders:read", "orders:update", "coupons:manage", "reviews:moderate", "returns:manage", "support:manage"];
 const emptyReport = {
-  summary: { totalRevenueKobo: 0, currentMonthRevenueKobo: 0, totalOrders: 0, paidOrders: 0, pendingOrders: 0, cancelledOrders: 0, productsInStock: 0, lowStockProducts: 0, outOfStockProducts: 0 },
+  summary: { totalRevenueKobo: 0, currentMonthRevenueKobo: 0, totalOrders: 0, paidOrders: 0, pendingOrders: 0, cancelledOrders: 0, totalRefundedKobo: 0, productsInStock: 0, lowStockProducts: 0, outOfStockProducts: 0 },
   ordersByStatus: {},
   paymentsByStatus: {},
   revenueByDate: [],
   recentOrders: [],
   recentPayments: [],
+  recentRefunds: [],
   bestSellingProducts: [],
 };
 
@@ -533,7 +535,15 @@ export function AdminDashboardClient() {
         const draft = returnDrafts[returnRequest.id] ?? {};
         const status = draft.status ?? returnRequest.status;
         const adminNote = draft.adminNote ?? returnRequest.adminNote ?? undefined;
-        await updateAdminReturn(returnRequest.id, { status, adminNote });
+        const refundAmountNaira = draft.refundAmountNaira ?? (returnRequest.refundAmountKobo ? String(returnRequest.refundAmountKobo / 100) : "");
+        const refundReference = draft.refundReference ?? returnRequest.refundReference ?? undefined;
+        await updateAdminReturn(returnRequest.id, {
+          status,
+          adminNote,
+          ...(status === "refunded"
+            ? { refundAmountKobo: Math.round(Number(refundAmountNaira) * 100), refundReference }
+            : {}),
+        });
         setMessage(`Return ${returnRequest.requestNumber} moved to ${statusLabel(status)}.`);
         loadAdminData();
       } catch (returnError) {
@@ -593,14 +603,14 @@ export function AdminDashboardClient() {
         <section className="mt-8 rounded-[2rem] border border-black/8 bg-[#fbfaf6] p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div><div className="flex items-center gap-3"><BarChart3 className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Reports and statistics</h2></div><p className="mt-2 text-sm leading-6 text-[var(--muted)]">Filter sales, orders and payment activity without loading the full database.</p></div>
-            <a href={getAdminOrdersReportCsvUrl(buildReportParams(reportFilters))} className="cta-outline" target="_blank" rel="noreferrer">Export orders CSV</a>
+            <div className="flex flex-wrap gap-3"><a href={getAdminOrdersReportCsvUrl(buildReportParams(reportFilters))} className="cta-outline" target="_blank" rel="noreferrer">Export orders CSV</a><a href={getAdminPaymentsReportCsvUrl(buildReportParams(reportFilters))} className="cta-outline" target="_blank" rel="noreferrer">Export payments CSV</a></div>
           </div>
           <form onSubmit={refreshReports} className="mt-6 grid gap-4 md:grid-cols-5">
             <label className="grid gap-2 text-sm font-bold">Range<select name="range" value={reportFilters.range} onChange={updateReportFilter} className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none"><option value="today">Today</option><option value="week">This week</option><option value="month">This month</option><option value="custom">Custom</option></select></label>
             <label className="grid gap-2 text-sm font-bold">From<input name="dateFrom" type="date" value={reportFilters.dateFrom} onChange={updateReportFilter} className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none" /></label>
             <label className="grid gap-2 text-sm font-bold">To<input name="dateTo" type="date" value={reportFilters.dateTo} onChange={updateReportFilter} className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none" /></label>
             <label className="grid gap-2 text-sm font-bold">Order status<select name="orderStatus" value={reportFilters.orderStatus} onChange={updateReportFilter} className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none"><option value="">All</option>{orderStatuses.map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}</select></label>
-            <label className="grid gap-2 text-sm font-bold">Payment<select name="paymentStatus" value={reportFilters.paymentStatus} onChange={updateReportFilter} className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none"><option value="">All</option><option value="pending">Pending</option><option value="successful">Successful</option><option value="failed">Failed</option><option value="abandoned">Abandoned</option><option value="refunded">Refunded</option></select></label>
+            <label className="grid gap-2 text-sm font-bold">Payment<select name="paymentStatus" value={reportFilters.paymentStatus} onChange={updateReportFilter} className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none"><option value="">All</option><option value="pending">Pending</option><option value="successful">Successful</option><option value="failed">Failed</option><option value="abandoned">Abandoned</option><option value="refunded">Refunded</option><option value="partially_refunded">Partially refunded</option></select></label>
             <button type="submit" disabled={isPending} className="cta-primary md:col-span-5">Refresh report</button>
           </form>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -613,6 +623,8 @@ export function AdminDashboardClient() {
             <div className="rounded-2xl border border-black/8 bg-white p-5"><p className="font-black">Orders by status</p><div className="mt-4 grid gap-2 text-sm text-[var(--muted)]">{Object.entries(reports?.ordersByStatus ?? {}).filter(([, count]) => Number(count) > 0).map(([status, count]) => <p key={status} className="flex justify-between gap-4"><span>{statusLabel(status)}</span><strong>{Number(count)}</strong></p>)}</div></div>
             <div className="rounded-2xl border border-black/8 bg-white p-5"><p className="font-black">Daily revenue</p><div className="mt-4 grid gap-2 text-sm text-[var(--muted)]">{(reports?.revenueByDate ?? []).slice(0, 7).map((item) => <p key={item.date} className="flex justify-between gap-4"><span>{item.date}</span><strong>{formatNaira(item.revenueKobo)}</strong></p>)}</div></div>
             <div className="rounded-2xl border border-black/8 bg-white p-5"><p className="font-black">Best sellers</p><div className="mt-4 grid gap-2 text-sm text-[var(--muted)]">{(reports?.bestSellingProducts ?? []).map((item) => <p key={item.sku} className="flex justify-between gap-4"><span>{item.name}</span><strong>{item.quantitySold}</strong></p>)}</div></div>
+            <div className="rounded-2xl border border-black/8 bg-white p-5"><p className="font-black">Payments by status</p><div className="mt-4 grid gap-2 text-sm text-[var(--muted)]">{Object.entries(reports?.paymentsByStatus ?? {}).filter(([, count]) => Number(count) > 0).map(([status, count]) => <p key={status} className="flex justify-between gap-4"><span>{statusLabel(status)}</span><strong>{Number(count)}</strong></p>)}</div></div>
+            <div className="rounded-2xl border border-black/8 bg-white p-5"><p className="font-black">Recent refunds</p><div className="mt-4 grid gap-2 text-sm text-[var(--muted)]">{(reports?.recentRefunds ?? []).slice(0, 5).map((refund) => <p key={refund.id} className="flex justify-between gap-4"><span>{refund.orderNumber}</span><strong>{formatNaira(refund.refundAmountKobo)}</strong></p>)}</div></div>
           </div>
         </section>
         <CatalogueLookupsAdmin onLookupsChanged={loadAdminData} />
@@ -653,7 +665,7 @@ export function AdminDashboardClient() {
         <section className="mt-8 rounded-[2rem] border border-black/8 bg-[var(--ink)] p-6 text-white shadow-[0_24px_70px_rgba(28,34,31,.18)]">
           <div className="flex items-center gap-3"><RotateCcw className="size-5 text-[var(--accent)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Returns and refunds</h2></div>
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
-            {returns.slice(0, 8).map((returnRequest) => <article key={returnRequest.id} className="rounded-2xl bg-white/8 p-5"><p className="font-black">{returnRequest.requestNumber}</p><p className="mt-1 text-sm text-white/60">{returnRequest.orderNumber} | {returnRequest.customerEmail} | {statusLabel(returnRequest.reason)}</p><div className="mt-3 grid gap-2 text-sm text-white/70">{returnRequest.items.map((item) => <p key={`${returnRequest.id}-${item.sku}`}>{item.name} | Qty {item.quantity}</p>)}</div><p className="mt-4 text-sm leading-6 text-white/75">{returnRequest.details}</p><div className="mt-4 grid gap-3"><select value={returnDrafts[returnRequest.id]?.status ?? returnRequest.status} onChange={(event) => updateReturnDraft(returnRequest.id, "status", event.target.value)} className="rounded-xl border border-white/10 bg-white px-3 py-2 font-black text-[var(--ink)] outline-none">{returnStatuses.map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}</select><textarea value={returnDrafts[returnRequest.id]?.adminNote ?? returnRequest.adminNote ?? ""} onChange={(event) => updateReturnDraft(returnRequest.id, "adminNote", event.target.value)} rows={3} placeholder="Admin note for this return" className="rounded-xl border border-white/10 bg-white px-3 py-2 text-sm text-[var(--ink)] outline-none" /><button type="button" disabled={isPending} onClick={() => saveReturn(returnRequest)} className="cta-primary bg-[var(--accent)] text-[var(--ink)]"><RotateCcw className="size-4" /> Update return</button></div></article>)}
+            {returns.slice(0, 8).map((returnRequest) => <article key={returnRequest.id} className="rounded-2xl bg-white/8 p-5"><p className="font-black">{returnRequest.requestNumber}</p><p className="mt-1 text-sm text-white/60">{returnRequest.orderNumber} | {returnRequest.customerEmail} | {statusLabel(returnRequest.reason)}</p><div className="mt-3 grid gap-2 text-sm text-white/70">{returnRequest.items.map((item) => <p key={`${returnRequest.id}-${item.sku}`}>{item.name} | Qty {item.quantity}</p>)}</div><p className="mt-4 text-sm leading-6 text-white/75">{returnRequest.details}</p><div className="mt-4 grid gap-3"><select value={returnDrafts[returnRequest.id]?.status ?? returnRequest.status} onChange={(event) => updateReturnDraft(returnRequest.id, "status", event.target.value)} className="rounded-xl border border-white/10 bg-white px-3 py-2 font-black text-[var(--ink)] outline-none">{returnStatuses.map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}</select><textarea value={returnDrafts[returnRequest.id]?.adminNote ?? returnRequest.adminNote ?? ""} onChange={(event) => updateReturnDraft(returnRequest.id, "adminNote", event.target.value)} rows={3} placeholder="Admin note for this return" className="rounded-xl border border-white/10 bg-white px-3 py-2 text-sm text-[var(--ink)] outline-none" />{returnRequest.refundAmountKobo ? <p className="text-xs font-black text-[var(--accent)]">Refund recorded: {formatNaira(returnRequest.refundAmountKobo)} | {returnRequest.refundReference ?? "No reference"}</p> : null}<input value={returnDrafts[returnRequest.id]?.refundAmountNaira ?? (returnRequest.refundAmountKobo ? String(returnRequest.refundAmountKobo / 100) : "")} onChange={(event) => updateReturnDraft(returnRequest.id, "refundAmountNaira", event.target.value)} type="number" min="1" step="1" placeholder="Refund amount in naira" className="rounded-xl border border-white/10 bg-white px-3 py-2 text-sm text-[var(--ink)] outline-none" /><input value={returnDrafts[returnRequest.id]?.refundReference ?? returnRequest.refundReference ?? ""} onChange={(event) => updateReturnDraft(returnRequest.id, "refundReference", event.target.value)} placeholder="Refund reference or Paystack note" className="rounded-xl border border-white/10 bg-white px-3 py-2 text-sm text-[var(--ink)] outline-none" /><button type="button" disabled={isPending} onClick={() => saveReturn(returnRequest)} className="cta-primary bg-[var(--accent)] text-[var(--ink)]"><RotateCcw className="size-4" /> Update return</button></div></article>)}
             {returns.length === 0 ? <p className="text-sm font-bold text-white/60">No return requests yet.</p> : null}
           </div>
         </section>
@@ -772,5 +784,13 @@ export function AdminDashboardClient() {
     </main>
   );
 }
+
+
+
+
+
+
+
+
 
 

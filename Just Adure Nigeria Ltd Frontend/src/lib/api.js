@@ -1,4 +1,4 @@
-﻿export const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
+export const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
 
 async function apiGet(path) {
   const response = await fetch(`${apiUrl}${path}`, { headers: { Accept: "application/json" }, credentials: "include" });
@@ -68,6 +68,7 @@ export async function updateAdminSupportTicket(ticketId, input) { return (await 
 
 export async function getAdminReports(params = new URLSearchParams()) { const query = params.toString(); return cartRequest(`/admin/reports${query ? `?${query}` : ""}`, { method: "GET" }); }
 export function getAdminOrdersReportCsvUrl(params = new URLSearchParams()) { const query = params.toString(); return `${apiUrl}/admin/reports/orders.csv${query ? `?${query}` : ""}`; }
+export function getAdminPaymentsReportCsvUrl(params = new URLSearchParams()) { const query = params.toString(); return `${apiUrl}/admin/reports/payments.csv${query ? `?${query}` : ""}`; }
 export async function getAdminStaff() { return (await cartRequest("/admin/staff", { method: "GET" })).items; }
 export async function createAdminStaff(input) { return (await cartRequest("/admin/staff", { method: "POST", body: JSON.stringify(input) })).staff; }
 export async function updateAdminStaff(staffId, input) { return (await cartRequest(`/admin/staff/${staffId}`, { method: "PATCH", body: JSON.stringify(input) })).staff; }
@@ -109,3 +110,13 @@ export async function createAdminCategory(input) { return (await cartRequest("/a
 export async function updateAdminCategory(categoryId, input) { return (await cartRequest(`/admin/categories/${categoryId}`, { method: "PATCH", body: JSON.stringify(input) })).category; }
 export async function createAdminConditionGrade(input) { return (await cartRequest("/admin/condition-grades", { method: "POST", body: JSON.stringify(input) })).conditionGrade; }
 export async function updateAdminConditionGrade(gradeId, input) { return (await cartRequest(`/admin/condition-grades/${gradeId}`, { method: "PATCH", body: JSON.stringify(input) })).conditionGrade; }
+export async function registerUser(input) { return (await cartRequest("/auth/register", { method: "POST", body: JSON.stringify(input) })).user; }
+export async function resendEmailVerification(input) { return cartRequest("/auth/resend-verification", { method: "POST", body: JSON.stringify(input) }); }
+export async function verifyEmailToken(token) { return cartRequest("/auth/verify-email", { method: "POST", body: JSON.stringify({ token }) }); }
+export async function requestPasswordReset(input) { return cartRequest("/auth/forgot-password", { method: "POST", body: JSON.stringify(input) }); }
+export async function resetPassword(input) { return cartRequest("/auth/reset-password", { method: "POST", body: JSON.stringify(input) }); }
+export async function getMyOrder(orderId) { return (await cartRequest(`/orders/my/${encodeURIComponent(orderId)}`, { method: "GET" })).order; }
+export async function cancelMyOrder(orderId, input = {}) { return (await cartRequest(`/orders/my/${encodeURIComponent(orderId)}/cancel`, { method: "PATCH", body: JSON.stringify(input) })).order; }
+export async function submitProductReview(productId, input) { return (await cartRequest(`/products/${encodeURIComponent(productId)}/reviews`, { method: "POST", body: JSON.stringify(input) })).review; }
+export async function replySupportTicket(input) { return (await cartRequest("/support/tickets/reply", { method: "POST", body: JSON.stringify(input) })).ticket; }
+

@@ -1,14 +1,16 @@
-import { useState, useTransition } from "react";
-import { AlertTriangle, MessageSquareText, Search } from "lucide-react";
-import { createSupportTicket, lookupSupportTicket } from "@/lib/api.js";
+﻿import { useState, useTransition } from "react";
+import { AlertTriangle, MessageSquareText, Search, Send } from "lucide-react";
+import { createSupportTicket, lookupSupportTicket, replySupportTicket } from "@/lib/api.js";
 
 const initialForm = { type: "contact", name: "", email: "", phone: "", subject: "", orderNumber: "", productSlug: "", message: "" };
 
 export function ContactClient() {
   const [form, setForm] = useState(initialForm);
   const [lookup, setLookup] = useState({ ticketNumber: "", email: "" });
+  const [replyMessage, setReplyMessage] = useState("");
   const [ticket, setTicket] = useState(null);
   const [lookupTicket, setLookupTicket] = useState(null);
+  const [statusMessage, setStatusMessage] = useState("");
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -27,6 +29,7 @@ export function ContactClient() {
     startTransition(async () => {
       try {
         setError("");
+        setStatusMessage("");
         const created = await createSupportTicket({ ...form, phone: form.phone || undefined, orderNumber: form.orderNumber || undefined, productSlug: form.productSlug || undefined });
         setTicket(created);
         setForm(initialForm);
@@ -41,10 +44,27 @@ export function ContactClient() {
     startTransition(async () => {
       try {
         setError("");
+        setStatusMessage("");
         setLookupTicket(await lookupSupportTicket(lookup));
       } catch (lookupError) {
         setLookupTicket(null);
         setError(lookupError instanceof Error ? lookupError.message : "Could not find that support ticket.");
+      }
+    });
+  }
+
+  function submitReply(event) {
+    event.preventDefault();
+    startTransition(async () => {
+      try {
+        setError("");
+        setStatusMessage("");
+        const updated = await replySupportTicket({ ...lookup, name: lookupTicket?.name, message: replyMessage });
+        setLookupTicket(updated);
+        setReplyMessage("");
+        setStatusMessage("Reply added to your support ticket.");
+      } catch (replyError) {
+        setError(replyError instanceof Error ? replyError.message : "Could not add your reply.");
       }
     });
   }
@@ -84,7 +104,8 @@ export function ContactClient() {
             <label className="grid gap-2 text-sm font-bold">Email<input name="email" type="email" value={lookup.email} onChange={updateLookup} required className="rounded-2xl border border-white/10 bg-white px-4 py-3 text-[var(--ink)] outline-none" /></label>
             <button type="submit" disabled={isPending} className="cta-primary bg-[var(--accent)] text-[var(--ink)]">Track ticket</button>
           </form>
-          {lookupTicket ? <div className="mt-6 rounded-2xl bg-white/8 p-4"><p className="font-black">{lookupTicket.subject}</p><p className="mt-1 text-sm text-white/65">Status: {lookupTicket.status.replaceAll("_", " ")}</p><div className="mt-4 grid gap-3">{lookupTicket.replies.map((reply) => <p key={reply._id ?? reply.createdAt} className="rounded-xl bg-white/8 p-3 text-sm text-white/75">{reply.message}</p>)}</div></div> : null}
+          {statusMessage ? <p className="mt-5 rounded-2xl border border-emerald-300/40 bg-emerald-500/10 p-4 text-sm font-bold text-emerald-100">{statusMessage}</p> : null}
+          {lookupTicket ? <div className="mt-6 rounded-2xl bg-white/8 p-4"><p className="font-black">{lookupTicket.subject}</p><p className="mt-1 text-sm text-white/65">Status: {lookupTicket.status.replaceAll("_", " ")}</p><div className="mt-4 grid gap-3">{lookupTicket.replies.map((reply) => <p key={reply._id ?? reply.createdAt} className="rounded-xl bg-white/8 p-3 text-sm text-white/75"><span className="block font-black text-white">{reply.authorName ?? reply.authorType}</span>{reply.message}</p>)}</div><form onSubmit={submitReply} className="mt-5 grid gap-3"><label className="grid gap-2 text-sm font-bold">Add reply<textarea value={replyMessage} onChange={(event) => setReplyMessage(event.target.value)} required minLength={2} rows={4} className="rounded-2xl border border-white/10 bg-white px-4 py-3 text-[var(--ink)] outline-none" /></label><button type="submit" disabled={isPending} className="cta-primary bg-[var(--accent)] text-[var(--ink)]"><Send className="size-4" /> {isPending ? "Sending..." : "Send reply"}</button></form></div> : null}
         </aside>
       </section>
     </main>

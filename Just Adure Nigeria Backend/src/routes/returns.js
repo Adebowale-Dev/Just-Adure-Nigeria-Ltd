@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+﻿import { randomUUID } from "node:crypto";
 import { Router } from "express";
 import mongoose from "mongoose";
 import { z } from "zod";
@@ -35,6 +35,9 @@ export function serializeReturnRequest(request) {
     items: request.items,
     status: request.status,
     adminNote: request.adminNote ?? null,
+    refundAmountKobo: request.refundAmountKobo ?? null,
+    refundReference: request.refundReference ?? null,
+    refundProcessedAt: request.refundProcessedAt ?? null,
     resolvedAt: request.resolvedAt ?? null,
     createdAt: request.createdAt,
     updatedAt: request.updatedAt,
@@ -98,3 +101,4 @@ returnsRouter.post("/orders/:orderId/returns", async (request, response, next) =
     next(error);
   }
 });
+

@@ -1,9 +1,12 @@
-﻿import { createHash } from "node:crypto";
+import { createHash } from "node:crypto";
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { env } from "../config/env.js";
 import { AppError } from "../errors/app-error.js";
 
 const allowedMimeTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const maxImageBytes = 5 * 1024 * 1024;
+const localUploadDirectory = path.resolve(process.cwd(), "public", "uploads", "products");
 
 function isPlaceholderConfig() {
   return [env.CLOUDINARY_CLOUD_NAME, env.CLOUDINARY_API_KEY, env.CLOUDINARY_API_SECRET].some((value) => value.includes("placeholder"));
@@ -32,11 +35,26 @@ export async function uploadProductImage({ dataUri, altText, folder = "just-adur
   const safeAltText = altText.trim();
   if (safeAltText.length < 2) throw new AppError(400, "ALT_TEXT_REQUIRED", "Product image alt text is required.");
 
-  if (env.NODE_ENV === "test" || isPlaceholderConfig()) {
+  if (env.NODE_ENV === "test") {
     const digest = createHash("sha1").update(buffer).digest("hex").slice(0, 12);
     return {
       cloudinaryPublicId: `${folder}/demo-${digest}`,
       secureUrl: `https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}/image/upload/demo-${digest}.jpg`,
+      width: 1200,
+      height: 900,
+      altText: safeAltText,
+    };
+  }
+
+  if (isPlaceholderConfig()) {
+    const extension = mimeType.split("/")[1].replace("jpeg", "jpg");
+    const digest = createHash("sha1").update(`${safeAltText}:${buffer.toString("base64")}`).digest("hex").slice(0, 16);
+    const fileName = `${Date.now()}-${digest}.${extension}`;
+    await mkdir(localUploadDirectory, { recursive: true });
+    await writeFile(path.join(localUploadDirectory, fileName), buffer);
+    return {
+      cloudinaryPublicId: `local/products/${fileName}`,
+      secureUrl: `${env.API_URL}/uploads/products/${fileName}`,
       width: 1200,
       height: 900,
       altText: safeAltText,
@@ -67,3 +85,4 @@ export async function uploadProductImage({ dataUri, altText, folder = "just-adur
     altText: safeAltText,
   };
 }
+

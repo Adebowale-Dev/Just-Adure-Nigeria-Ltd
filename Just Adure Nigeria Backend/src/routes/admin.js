@@ -1,4 +1,4 @@
-﻿import mongoose from "mongoose";
+import mongoose from "mongoose";
 import { Router } from "express";
 import { z } from "zod";
 import { AppError } from "../errors/app-error.js";
@@ -32,7 +32,7 @@ const objectIdSchema = z.string().trim().refine((value) => mongoose.Types.Object
 const stockUpdateSchema = z.object({ stockQuantity: z.number().int().min(0), lowStockThreshold: z.number().int().min(0).optional() });
 const orderStatusSchema = z.object({ status: z.enum(orderStatuses), note: z.string().trim().max(300).optional() });
 const reviewModerationSchema = z.object({ status: z.enum(reviewStatuses), adminReply: z.string().trim().max(1000).optional() });
-const returnModerationSchema = z.object({ status: z.enum(returnRequestStatuses), adminNote: z.string().trim().max(1000).optional() });
+const returnModerationSchema = z.object({ status: z.enum(returnRequestStatuses), adminNote: z.string().trim().max(1000).optional(), refundAmountKobo: z.coerce.number().int().min(1).optional(), refundReference: z.string().trim().max(120).optional() });
 const supportTicketUpdateSchema = z.object({ status: z.enum(supportTicketStatuses), reply: z.string().trim().max(2000).optional(), internalNote: z.string().trim().max(1000).optional() });
 const newsletterStatusSchema = z.object({ status: z.enum(newsletterSubscriberStatuses) });
 const brandSchema = z.object({
@@ -439,7 +439,26 @@ function ordersToCsv(orders) {
   }
   return rows.map((row) => row.map(csvEscape).join(",")).join("\n");
 }
-function availabilityForStock(stockQuantity, reservedQuantity, lowStockThreshold) {
+
+function paymentsToCsv(payments) {
+  const rows = [["Reference", "Order Number", "Customer Email", "Status", "Amount", "Currency", "Channel", "Gateway Response", "Paid At", "Verified At", "Created At"]];
+  for (const payment of payments) {
+    rows.push([
+      payment.reference,
+      payment.orderNumber,
+      payment.customerEmail,
+      payment.status,
+      payment.amountKobo,
+      payment.currency,
+      payment.channel,
+      payment.gatewayResponse,
+      payment.paidAt?.toISOString?.() ?? payment.paidAt,
+      payment.verifiedAt?.toISOString?.() ?? payment.verifiedAt,
+      payment.createdAt?.toISOString?.() ?? payment.createdAt,
+    ]);
+  }
+  return rows.map((row) => row.map(csvEscape).join(",")).join("\n");
+}function availabilityForStock(stockQuantity, reservedQuantity, lowStockThreshold) {
   const available = Math.max(0, Number(stockQuantity) - Number(reservedQuantity ?? 0));
   if (available <= 0) return "out_of_stock";
   if (available <= Number(lowStockThreshold ?? 1)) return "low_stock";
@@ -839,10 +858,11 @@ adminRouter.get("/reports", requirePermissions("reports:view"), async (request, 
   try {
     const { orderFilter, paymentFilter, range } = await buildReportFilters(request.query);
     const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-    const [orders, payments, currentMonthPayments, productCounts, recentOrders, recentPayments, bestSellingProducts] = await Promise.all([
+    const [orders, payments, currentMonthPayments, refundedReturns, productCounts, recentOrders, recentPayments, bestSellingProducts] = await Promise.all([
       Order.find(orderFilter).sort({ createdAt: -1 }).lean(),
       Payment.find(paymentFilter).sort({ createdAt: -1 }).lean(),
       Payment.find({ status: "successful", createdAt: { $gte: currentMonthStart } }).select("amountKobo").lean(),
+      ReturnRequest.find({ status: "refunded", refundProcessedAt: { $gte: range.start, $lt: range.end } }).select("refundAmountKobo refundReference refundProcessedAt orderNumber customer").sort({ refundProcessedAt: -1 }).limit(25).lean(),
       Product.aggregate([
         { $match: { isArchived: false } },
         { $group: { _id: "$availability", count: { $sum: 1 } } },
@@ -858,6 +878,7 @@ adminRouter.get("/reports", requirePermissions("reports:view"), async (request, 
       ]),
     ]);
     const successfulPayments = payments.filter((payment) => payment.status === "successful");
+    const totalRefundedKobo = refundedReturns.reduce((total, item) => total + Number(item.refundAmountKobo ?? 0), 0);
     const ordersByStatus = Object.fromEntries(orderStatuses.map((status) => [status, orders.filter((order) => order.orderStatus === status).length]));
     const paymentsByStatus = Object.fromEntries(["pending", "successful", "failed", "abandoned", "refunded", "partially_refunded"].map((status) => [status, payments.filter((payment) => payment.status === status).length]));
     const revenueByDate = successfulPayments.reduce((accumulator, payment) => {
@@ -876,6 +897,7 @@ adminRouter.get("/reports", requirePermissions("reports:view"), async (request, 
           paidOrders: orders.filter((order) => order.paymentStatus === "successful").length,
           pendingOrders: orders.filter((order) => order.paymentStatus === "pending").length,
           cancelledOrders: orders.filter((order) => order.orderStatus === "cancelled").length,
+          totalRefundedKobo,
           productsInStock: inventory.in_stock ?? 0,
           lowStockProducts: inventory.low_stock ?? 0,
           outOfStockProducts: inventory.out_of_stock ?? 0,
@@ -885,6 +907,7 @@ adminRouter.get("/reports", requirePermissions("reports:view"), async (request, 
         revenueByDate: Object.entries(revenueByDate).map(([date, revenueKobo]) => ({ date, revenueKobo })),
         recentOrders: recentOrders.map(serializeOrder),
         recentPayments: recentPayments.map((payment) => ({ id: objectIdString(payment._id), orderNumber: payment.orderNumber, reference: payment.reference, amountKobo: payment.amountKobo, status: payment.status, customerEmail: payment.customerEmail, createdAt: payment.createdAt })),
+        recentRefunds: refundedReturns.map((refund) => ({ id: objectIdString(refund._id), orderNumber: refund.orderNumber, customerEmail: refund.customer?.email, refundAmountKobo: refund.refundAmountKobo, refundReference: refund.refundReference, refundProcessedAt: refund.refundProcessedAt })),
         bestSellingProducts: bestSellingProducts.map((item) => ({ sku: item._id, name: item.name, quantitySold: item.quantitySold, revenueKobo: item.revenueKobo })),
       },
     });
@@ -912,6 +935,29 @@ adminRouter.get("/reports/orders.csv", requirePermissions("reports:view"), async
     response.setHeader("Content-Type", "text/csv; charset=utf-8");
     response.setHeader("Content-Disposition", 'attachment; filename="just-adure-orders-report.csv"');
     response.send(ordersToCsv(orders));
+  } catch (error) {
+    next(error);
+  }
+});
+/**
+ * @openapi
+ * /api/v1/admin/reports/payments.csv:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Export filtered payments as CSV
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: CSV export returned
+ */
+adminRouter.get("/reports/payments.csv", requirePermissions("reports:view"), async (request, response, next) => {
+  try {
+    const { paymentFilter } = await buildReportFilters(request.query);
+    const payments = await Payment.find(paymentFilter).sort({ createdAt: -1 }).lean();
+    response.setHeader("Content-Type", "text/csv; charset=utf-8");
+    response.setHeader("Content-Disposition", 'attachment; filename="just-adure-payments-report.csv"');
+    response.send(paymentsToCsv(payments));
   } catch (error) {
     next(error);
   }
@@ -1404,29 +1450,57 @@ adminRouter.patch("/returns/:id", requirePermissions("returns:manage"), async (r
   try {
     const { id } = z.object({ id: objectIdSchema }).parse(request.params);
     const input = returnModerationSchema.parse(request.body);
-    const returnRequest = await ReturnRequest.findByIdAndUpdate(
-      id,
-      {
-        ...input,
-        resolvedAt: ["rejected", "refunded", "closed"].includes(input.status) ? new Date() : undefined,
-        resolvedBy: ["rejected", "refunded", "closed"].includes(input.status) ? request.user.id : undefined,
-      },
-      { returnDocument: "after", runValidators: true },
-    );
+    const returnRequest = await ReturnRequest.findById(id);
     if (!returnRequest) throw new AppError(404, "RETURN_REQUEST_NOT_FOUND", "Return request was not found.");
 
-    const nextOrderStatus = input.status === "refunded" ? "refunded" : input.status === "approved" ? "returned" : "return_requested";
     const order = await Order.findById(returnRequest.orderId);
+    if (input.status === "refunded") {
+      if (returnRequest.status === "refunded" || returnRequest.refundProcessedAt) {
+        throw new AppError(409, "RETURN_ALREADY_REFUNDED", "This return request has already been marked as refunded.");
+      }
+      if (!order || !["successful", "partially_refunded"].includes(order.paymentStatus)) {
+        throw new AppError(409, "ORDER_NOT_REFUNDABLE", "Only successful paid orders can be marked as refunded.");
+      }
+      if (!input.refundAmountKobo || input.refundAmountKobo > order.totalKobo) {
+        throw new AppError(400, "INVALID_REFUND_AMOUNT", "Enter a valid refund amount that does not exceed the order total.");
+      }
+      if (!input.refundReference && !input.adminNote) {
+        throw new AppError(400, "REFUND_REFERENCE_REQUIRED", "Enter a refund reference or admin note before marking this return as refunded.");
+      }
+    }
+
+    returnRequest.status = input.status;
+    if (input.adminNote !== undefined) returnRequest.adminNote = input.adminNote;
+    if (["rejected", "refunded", "closed"].includes(input.status)) {
+      returnRequest.resolvedAt = new Date();
+      returnRequest.resolvedBy = request.user.id;
+    }
+    if (input.status === "refunded") {
+      returnRequest.refundAmountKobo = input.refundAmountKobo;
+      returnRequest.refundReference = input.refundReference || input.adminNote;
+      returnRequest.refundProcessedAt = new Date();
+    }
+    await returnRequest.save();
+
+    const nextOrderStatus = input.status === "refunded" ? "refunded" : input.status === "approved" ? "returned" : input.status === "rejected" ? "delivered" : "return_requested";
     if (order) {
       order.orderStatus = nextOrderStatus;
-      if (input.status === "refunded") order.paymentStatus = "refunded";
+      if (input.status === "refunded") {
+        order.paymentStatus = input.refundAmountKobo >= order.totalKobo ? "refunded" : "partially_refunded";
+        const payment = await Payment.findOne({ orderId: order._id, status: { $in: ["successful", "partially_refunded"] } }).sort({ createdAt: -1 });
+        if (payment) {
+          payment.status = order.paymentStatus;
+          payment.gatewayResponse = `Refund recorded manually: ${returnRequest.refundReference}`;
+          await payment.save();
+        }
+      }
       order.statusHistory.push({ status: nextOrderStatus, note: input.adminNote ?? `Return request ${returnRequest.requestNumber} moved to ${input.status}.` });
       await order.save();
     }
 
     await notifyCustomer(order?.userId, { type: "return", title: "Return request updated", message: `Your return request ${returnRequest.requestNumber} is now ${input.status}.`, resourceType: "return", resourceId: String(returnRequest._id), actionUrl: `/order-tracking?orderNumber=${encodeURIComponent(returnRequest.orderNumber)}` });
 
-    await logAdminActivity(request, { action: "return.updated", resourceType: "return", resourceId: returnRequest._id, details: { requestNumber: returnRequest.requestNumber, status: input.status, orderNumber: returnRequest.orderNumber } });
+    await logAdminActivity(request, { action: input.status === "refunded" ? "refund.recorded" : "return.updated", resourceType: "return", resourceId: returnRequest._id, details: { requestNumber: returnRequest.requestNumber, status: input.status, orderNumber: returnRequest.orderNumber, refundAmountKobo: returnRequest.refundAmountKobo, refundReference: returnRequest.refundReference } });
     response.json({ data: { returnRequest: serializeReturnRequest(returnRequest) } });
   } catch (error) {
     next(error);
@@ -1616,6 +1690,12 @@ adminRouter.patch("/staff/:id", requireRoles("super_admin"), async (request, res
     next(error);
   }
 });
+
+
+
+
+
+
 
 
 

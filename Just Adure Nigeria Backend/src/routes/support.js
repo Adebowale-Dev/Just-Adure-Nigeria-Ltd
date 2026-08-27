@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+﻿import { randomUUID } from "node:crypto";
 import { Router } from "express";
 import { z } from "zod";
 import { SupportTicket, supportTicketTypes } from "../models/support-ticket.js";
@@ -20,6 +20,11 @@ const contactSchema = z.object({
 const lookupSchema = z.object({
   ticketNumber: z.string().trim().min(4).max(80),
   email: z.string().trim().email().toLowerCase(),
+});
+
+const customerReplySchema = lookupSchema.extend({
+  message: z.string().trim().min(2).max(2000),
+  name: z.string().trim().min(2).max(120).optional(),
 });
 
 function createTicketNumber() {
@@ -87,6 +92,38 @@ supportRouter.get("/support/tickets/lookup", async (request, response, next) => 
       response.status(404).json({ error: { code: "SUPPORT_TICKET_NOT_FOUND", message: "We could not find a ticket with those details." } });
       return;
     }
+    response.json({ data: { ticket: serializeSupportTicket(ticket) } });
+  } catch (error) {
+    next(error);
+  }
+});
+/**
+ * @openapi
+ * /api/v1/support/tickets/reply:
+ *   post:
+ *     tags: [Support]
+ *     summary: Add a customer reply to an existing support ticket
+ *     responses:
+ *       200:
+ *         description: Support ticket updated
+ */
+supportRouter.post("/support/tickets/reply", async (request, response, next) => {
+  try {
+    const input = customerReplySchema.parse(request.body);
+    const ticket = await SupportTicket.findOne({ ticketNumber: input.ticketNumber, email: input.email });
+    if (!ticket) {
+      response.status(404).json({ error: { code: "SUPPORT_TICKET_NOT_FOUND", message: "We could not find a ticket with those details." } });
+      return;
+    }
+    if (["resolved", "closed"].includes(ticket.status)) {
+      ticket.status = "open";
+      ticket.resolvedAt = undefined;
+    } else if (ticket.status === "waiting_for_customer") {
+      ticket.status = "in_progress";
+    }
+    ticket.replies.push({ authorType: "customer", authorName: input.name || ticket.name, message: input.message });
+    await ticket.save();
+    await notifyAdmins({ type: "support", title: "Customer replied to support ticket", message: `${ticket.email} replied to ${ticket.ticketNumber}.`, resourceType: "support_ticket", resourceId: String(ticket._id), actionUrl: "/admin" });
     response.json({ data: { ticket: serializeSupportTicket(ticket) } });
   } catch (error) {
     next(error);

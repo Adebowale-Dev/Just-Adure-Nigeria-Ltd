@@ -1,14 +1,19 @@
+﻿import { createHash } from "node:crypto";
 import mongoose from "mongoose";
 import request from "supertest";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { app } from "../src/app.js";
 import { connectMongo, disconnectMongo } from "../src/config/mongo.js";
 import { User } from "../src/models/user.js";
+import { hashPassword } from "../src/utils/password.js";
 function normalizeCookies(cookieHeader) {
     if (!cookieHeader) {
         return [];
     }
     return Array.isArray(cookieHeader) ? cookieHeader : [cookieHeader];
+}
+function hashToken(token) {
+    return createHash("sha256").update(token).digest("hex");
 }
 beforeAll(async () => {
     await connectMongo(true);
@@ -23,7 +28,7 @@ afterAll(async () => {
     await disconnectMongo();
 });
 describe("authentication", () => {
-    it("registers a customer and sets secure http-only auth cookies", async () => {
+    it("registers a customer, sets auth cookies and prepares email verification", async () => {
         const response = await request(app)
             .post("/api/v1/auth/register")
             .send({
@@ -39,8 +44,12 @@ describe("authentication", () => {
             roles: ["customer"],
             emailVerified: false,
         });
+        expect(response.body.data.verificationRequired).toBe(true);
         expect(response.body.data.user.passwordHash).toBeUndefined();
         expect(normalizeCookies(response.headers["set-cookie"]).join(";")).toContain("HttpOnly");
+        const user = await User.findOne({ email: "ada@example.com" }).select("+emailVerificationTokenHash +emailVerificationTokenExpiresAt");
+        expect(user?.emailVerificationTokenHash).toBeTruthy();
+        expect(user?.emailVerificationTokenExpiresAt).toBeInstanceOf(Date);
     });
     it("rejects duplicate registration emails", async () => {
         const payload = {
@@ -52,6 +61,58 @@ describe("authentication", () => {
         await request(app).post("/api/v1/auth/register").send(payload).expect(201);
         const response = await request(app).post("/api/v1/auth/register").send(payload).expect(409);
         expect(response.body.error.code).toBe("EMAIL_ALREADY_REGISTERED");
+    });
+    it("verifies a customer email with a valid token", async () => {
+        const token = "verification-token-for-test-1234567890";
+        const user = await User.create({
+            name: "Verified Buyer",
+            email: "verified@example.com",
+            phone: "08012345678",
+            passwordHash: await hashPassword("StrongPass123"),
+            roles: ["customer"],
+            emailVerificationTokenHash: hashToken(token),
+            emailVerificationTokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
+        });
+        const response = await request(app).post("/api/v1/auth/verify-email").send({ token }).expect(200);
+        expect(response.body.data.user.emailVerified).toBe(true);
+        const updated = await User.findById(user._id).select("+emailVerificationTokenHash +emailVerificationTokenExpiresAt");
+        expect(updated?.emailVerifiedAt).toBeInstanceOf(Date);
+        expect(updated?.emailVerificationTokenHash).toBeUndefined();
+    });
+    it("sends a safe response for forgotten password requests", async () => {
+        await User.create({
+            name: "Reset Buyer",
+            email: "reset@example.com",
+            phone: "08012345678",
+            passwordHash: await hashPassword("StrongPass123"),
+            roles: ["customer"],
+        });
+        const response = await request(app).post("/api/v1/auth/forgot-password").send({ email: "reset@example.com" }).expect(200);
+        expect(response.body.data.message).toContain("If the account exists");
+        const user = await User.findOne({ email: "reset@example.com" }).select("+passwordResetTokenHash +passwordResetTokenExpiresAt");
+        expect(user?.passwordResetTokenHash).toBeTruthy();
+        expect(user?.passwordResetTokenExpiresAt).toBeInstanceOf(Date);
+        await request(app).post("/api/v1/auth/forgot-password").send({ email: "missing@example.com" }).expect(200);
+    });
+    it("resets a customer password with a valid token", async () => {
+        const token = "password-reset-token-for-test-1234567890";
+        await User.create({
+            name: "Password Buyer",
+            email: "password@example.com",
+            phone: "08012345678",
+            passwordHash: await hashPassword("OldStrongPass123"),
+            roles: ["customer"],
+            passwordResetTokenHash: hashToken(token),
+            passwordResetTokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
+        });
+        await request(app).post("/api/v1/auth/reset-password").send({ token, password: "NewStrongPass123" }).expect(200);
+        const login = await request(app)
+            .post("/api/v1/auth/login")
+            .send({ email: "password@example.com", password: "NewStrongPass123" })
+            .expect(200);
+        expect(login.body.data.user.email).toBe("password@example.com");
+        const user = await User.findOne({ email: "password@example.com" }).select("+passwordResetTokenHash");
+        expect(user?.passwordResetTokenHash).toBeUndefined();
     });
     it("logs in and allows the current user to be fetched with the auth cookie", async () => {
         const payload = {

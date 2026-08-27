@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+﻿import mongoose from "mongoose";
 
 const { Schema } = mongoose;
 
@@ -27,6 +27,9 @@ const returnRequestSchema = new Schema(
     items: { type: [returnItemSchema], required: true, default: [] },
     status: { type: String, required: true, enum: returnRequestStatuses, default: "requested" },
     adminNote: { type: String, trim: true, maxlength: 1000 },
+    refundAmountKobo: { type: Number, min: 0 },
+    refundReference: { type: String, trim: true, maxlength: 120 },
+    refundProcessedAt: { type: Date },
     resolvedAt: { type: Date },
     resolvedBy: { type: Schema.Types.ObjectId, ref: "User" },
   },
@@ -35,5 +38,6 @@ const returnRequestSchema = new Schema(
 
 returnRequestSchema.index({ orderId: 1, status: 1 });
 returnRequestSchema.index({ customerEmail: 1, createdAt: -1 });
+returnRequestSchema.index({ refundReference: 1 }, { sparse: true });
 
 export const ReturnRequest = mongoose.models.ReturnRequest || mongoose.model("ReturnRequest", returnRequestSchema);

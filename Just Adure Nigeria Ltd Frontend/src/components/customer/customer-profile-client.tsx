@@ -16,7 +16,7 @@ const emptyAddress = {
   isDefault: false,
 };
 
-export function AccountClient() {
+export function CustomerProfileClient() {
   const [account, setAccount] = useState(null);
   const [profile, setProfile] = useState({ name: "", phone: "" });
   const [address, setAddress] = useState(emptyAddress);
@@ -34,7 +34,7 @@ export function AccountClient() {
       })
       .catch((loadError) => {
         setAccount(null);
-        setError(loadError instanceof Error ? loadError.message : "Please log in to view your account.");
+        setError(loadError instanceof Error ? loadError.message : "Please log in to view your profile.");
       });
   }
 
@@ -70,9 +70,7 @@ export function AccountClient() {
     event.preventDefault();
     startTransition(async () => {
       try {
-        const nextAccount = editingAddressId
-          ? await updateAccountAddress(editingAddressId, address)
-          : await addAccountAddress(address);
+        const nextAccount = editingAddressId ? await updateAccountAddress(editingAddressId, address) : await addAccountAddress(address);
         setAccount(nextAccount);
         setAddress(emptyAddress);
         setEditingAddressId("");
@@ -131,18 +129,18 @@ export function AccountClient() {
     <main className="min-h-screen">
       <section className="hero-grid border-b border-black/8">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <p className="section-kicker">Customer dashboard</p>
-          <h1 className="mt-5 font-serif text-5xl font-bold leading-none tracking-[-.06em] sm:text-7xl">Your account and delivery details.</h1>
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-[var(--muted)]">Manage your profile and saved Nigerian delivery addresses before checkout.</p>
+          <p className="section-kicker">Customer profile</p>
+          <h1 className="mt-5 font-serif text-5xl font-bold leading-none tracking-[-.06em] sm:text-7xl">Your profile and delivery details.</h1>
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-[var(--muted)]">Update your personal details and saved Nigerian delivery addresses before checkout.</p>
         </div>
       </section>
 
       <section className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 lg:grid-cols-[.9fr_1.1fr] lg:px-8">
         <form onSubmit={saveProfile} className="h-fit rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)] sm:p-8">
-          <div className="flex items-center gap-3"><UserRound className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Profile</h2></div>
+          <div className="flex items-center gap-3"><UserRound className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Profile information</h2></div>
           {message ? <p className="mt-5 rounded-2xl bg-emerald-50 p-4 text-sm font-bold text-emerald-900">{message}</p> : null}
           {error ? <p className="mt-5 rounded-2xl bg-[#fff8ed] p-4 text-sm font-bold text-[var(--accent-dark)]">{error}</p> : null}
-          {!account ? <p className="mt-6 font-bold">Loading account...</p> : null}
+          {!account ? <p className="mt-6 font-bold">Loading profile...</p> : null}
           {account ? <p className="mt-5 rounded-2xl bg-[#f6f3ec] p-4 text-sm font-bold">Signed in as {account.email}</p> : null}
           <div className="mt-6 grid gap-5">
             <label className="grid gap-2 text-sm font-bold">Full name<input name="name" value={profile.name} onChange={updateProfileField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label>

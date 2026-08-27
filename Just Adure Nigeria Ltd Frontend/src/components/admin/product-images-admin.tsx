@@ -1,4 +1,4 @@
-﻿import { useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { ImagePlus, Save, Star, Trash2 } from "lucide-react";
 import { attachAdminProductImage, removeAdminProductImage, setAdminProductPrimaryImage, uploadAdminProductImage } from "@/lib/api.js";
 
@@ -74,13 +74,13 @@ export function ProductImagesAdmin({ products = [], onProductsChanged }) {
   return (
     <section className="mt-8 rounded-[2rem] border border-black/8 bg-white/80 p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
       <div className="flex items-center gap-3"><ImagePlus className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Product images</h2></div>
-      <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Upload actual UK-used item photos, attach them to products, and choose the main storefront image.</p>
+      <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Upload actual UK-used item photos, attach them to products, and choose the main storefront image. If Cloudinary is not configured yet, uploads are saved locally for development.</p>
       {error ? <p className="mt-4 rounded-2xl border border-[var(--accent)]/30 bg-[#fff8ed] p-4 text-sm font-bold text-[var(--accent-dark)]">{error}</p> : null}
       {message ? <p className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-900">{message}</p> : null}
 
       {selectedProduct ? <form onSubmit={uploadAndAttach} className="mt-6 grid gap-4 md:grid-cols-[1fr_1fr_auto]">
         <label className="grid gap-2 text-sm font-bold">Product<select value={selectedProduct.id} onChange={(event) => setSelectedProductId(event.target.value)} className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none">{products.map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}</select></label>
-        <label className="grid gap-2 text-sm font-bold">Alt text<input value={altText} onChange={(event) => setAltText(event.target.value)} required placeholder="Actual photo of iPhone 13 Pro" className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
+        <label className="grid gap-2 text-sm font-bold">Alt text<input value={altText} onChange={(event) => setAltText(event.target.value)} required placeholder={selectedProduct ? `Actual photo of ${selectedProduct.name}` : "Actual product photo"} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
         <label className="grid gap-2 text-sm font-bold">Image file<input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => setFile(event.target.files?.[0] ?? null)} required className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none" /></label>
         <button type="submit" disabled={isPending} className="cta-primary md:col-span-3"><ImagePlus className="size-4" /> Upload and attach image</button>
       </form> : <p className="mt-5 rounded-2xl border border-dashed border-black/15 p-5 text-sm font-bold text-[var(--muted)]">Create a product before adding images.</p>}
@@ -92,3 +92,4 @@ export function ProductImagesAdmin({ products = [], onProductsChanged }) {
     </section>
   );
 }
+
