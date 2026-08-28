@@ -1,13 +1,13 @@
-﻿import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { Router } from "express";
 import { z } from "zod";
 import { env } from "../config/env.js";
 import { AppError } from "../errors/app-error.js";
-import { authCookieNames, requireAuth } from "../middleware/auth.js";
+import { authCookieNames } from "../middleware/auth.js";
 import { User } from "../models/user.js";
 import { notifyEmailVerification, notifyPasswordReset } from "../services/email.js";
 import { hashPassword, verifyPassword } from "../utils/password.js";
-import { signToken } from "../utils/token.js";
+import { signToken, verifyToken } from "../utils/token.js";
 export const authRouter = Router();
 const nigerianPhoneSchema = z
     .string()
@@ -81,9 +81,60 @@ async function issueEmailVerification(user) {
  *   post:
  *     tags: [Authentication]
  *     summary: Register a customer account
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, email, phone, password]
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Demo Customer
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: customer@gmail.com
+ *               phone:
+ *                 type: string
+ *                 example: "08000000002"
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: "123456789"
  *     responses:
  *       201:
  *         description: Customer account created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     verificationRequired:
+ *                       type: boolean
+ *                     user:
+ *                       $ref: '#/components/schemas/PublicUser'
+ *             example:
+ *               data:
+ *                 verificationRequired: true
+ *                 user:
+ *                   id: 66f20f55c7d7a984e8d50a11
+ *                   name: Demo Customer
+ *                   email: customer@gmail.com
+ *                   phone: "08000000002"
+ *                   roles: [customer]
+ *                   permissions: []
+ *                   emailVerifiedAt: null
+ *       409:
+ *         description: Email already registered
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
  */
 authRouter.post("/register", async (request, response, next) => {
     try {
@@ -113,9 +164,56 @@ authRouter.post("/register", async (request, response, next) => {
  *   post:
  *     tags: [Authentication]
  *     summary: Log in with email and password
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: admin@gmail.com
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: "123456789"
  *     responses:
  *       200:
  *         description: Login successful
+ *         headers:
+ *           Set-Cookie:
+ *             description: HTTP-only access and refresh token cookies.
+ *             schema:
+ *               type: string
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       $ref: '#/components/schemas/PublicUser'
+ *             example:
+ *               data:
+ *                 user:
+ *                   id: 66f20f55c7d7a984e8d50a10
+ *                   name: Just Adure Admin
+ *                   email: admin@gmail.com
+ *                   phone: "08000000001"
+ *                   roles: [admin]
+ *                   permissions: []
+ *                   emailVerifiedAt: "2026-08-28T10:00:00.000Z"
+ *       401:
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
  */
 authRouter.post("/login", async (request, response, next) => {
     try {
@@ -196,9 +294,21 @@ authRouter.post("/verify-email", async (request, response, next) => {
  *   post:
  *     tags: [Authentication]
  *     summary: Request a password reset email
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/EmailRequest'
+ *           example:
+ *             email: customer@gmail.com
  *     responses:
  *       200:
  *         description: Password reset email queued when account exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MessageResponse'
  */
 authRouter.post("/forgot-password", async (request, response, next) => {
     try {
@@ -223,9 +333,28 @@ authRouter.post("/forgot-password", async (request, response, next) => {
  *   post:
  *     tags: [Authentication]
  *     summary: Reset a customer password
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [token, password]
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 example: secure-reset-token-from-email
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: newSecurePassword123
  *     responses:
  *       200:
  *         description: Password reset successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MessageResponse'
  */
 authRouter.post("/reset-password", async (request, response, next) => {
     try {
@@ -253,17 +382,30 @@ authRouter.post("/reset-password", async (request, response, next) => {
  *   get:
  *     tags: [Authentication]
  *     summary: Get the current authenticated user
+ *     description: Returns the signed-in user when auth cookies are valid. Guests receive user as null instead of an error.
  *     responses:
  *       200:
- *         description: Current user returned
- *       401:
- *         description: Authentication required
+ *         description: Current auth state returned
  */
-authRouter.get("/me", requireAuth, async (request, response, next) => {
+authRouter.get("/me", async (request, response, next) => {
     try {
-        const user = await User.findById(request.user?.id).lean();
-        if (!user) {
-            throw new AppError(401, "AUTH_REQUIRED", "Please log in to continue.");
+        const token = request.cookies?.[authCookieNames.access];
+        if (!token) {
+            response.json({ data: { user: null } });
+            return;
+        }
+        let payload;
+        try {
+            payload = verifyToken(token, env.JWT_ACCESS_SECRET, "access");
+        }
+        catch {
+            response.json({ data: { user: null } });
+            return;
+        }
+        const user = await User.findById(payload.sub).lean();
+        if (!user || !user.isActive) {
+            response.json({ data: { user: null } });
+            return;
         }
         response.json({ data: { user: publicUser(user) } });
     }
@@ -286,3 +428,4 @@ authRouter.post("/logout", (_request, response) => {
     response.clearCookie(authCookieNames.refresh, { path: "/" });
     response.status(204).send();
 });
+

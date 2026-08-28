@@ -31,13 +31,14 @@ import { stockAlertsRouter } from "./routes/stock-alerts.js";
 import { newsletterRouter } from "./routes/newsletter.js";
 import { paystackWebhookRouter } from "./routes/paystack-webhook.js";
 import { systemRouter } from "./routes/system.js";
+import { developmentRequestLogger } from "./utils/terminal-banner.js";
 export const app = express();
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
 app.use(requestContext);
 app.use(pinoHttp({
     logger,
-    autoLogging: env.NODE_ENV !== "test",
+    autoLogging: env.NODE_ENV !== "test" && env.NODE_ENV !== "development",
     customProps: (_request, response) => ({
         requestId: response.locals.requestId,
     }),
@@ -55,6 +56,7 @@ app.use(compression());
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: false, limit: "64kb" }));
 app.use(cookieParser());
+app.use(developmentRequestLogger);
 app.use("/uploads", express.static(path.resolve(process.cwd(), "public", "uploads"), { maxAge: env.NODE_ENV === "production" ? "30d" : 0 }));
 app.use("/api/v1", rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -93,5 +95,6 @@ app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(openApiDocument, {
 }));
 app.use(notFoundHandler);
 app.use(errorHandler);
+
 
 

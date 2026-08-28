@@ -2,11 +2,22 @@ import { createServer } from "node:http";
 import { app } from "./app.js";
 import { env } from "./config/env.js";
 import { logger } from "./config/logger.js";
+import { printStartupBanner } from "./utils/terminal-banner.js";
 import { connectMongo, disconnectMongo } from "./config/mongo.js";
 async function start() {
     await connectMongo();
     const server = createServer(app);
+    server.on("error", (error) => {
+        if (error.code === "EADDRINUSE") {
+            console.error(`\nPort ${env.API_PORT} is already in use.`);
+            console.error("Close the other backend terminal or change API_PORT in .env.\n");
+            process.exit(1);
+        }
+        logger.fatal({ error }, "API server error");
+        process.exit(1);
+    });
     server.listen(env.API_PORT, () => {
+        printStartupBanner();
         logger.info({ port: env.API_PORT, environment: env.NODE_ENV }, "Just Adure Nigeria Ltd API is listening");
     });
     const shutdown = async (signal) => {
@@ -24,3 +35,5 @@ start().catch((error) => {
     logger.fatal({ error }, "API failed to start");
     process.exit(1);
 });
+
+

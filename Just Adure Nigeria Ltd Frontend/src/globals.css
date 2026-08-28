@@ -28,10 +28,30 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .hero-grid {
   background-color: var(--paper);
   background-image:
-    linear-gradient(rgba(22, 29, 27, .045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(22, 29, 27, .045) 1px, transparent 1px),
-    radial-gradient(circle at 78% 22%, rgba(244, 133, 61, .18), transparent 30%);
-  background-size: 42px 42px, 42px 42px, auto;
+    radial-gradient(circle at 80% 18%, rgba(244, 133, 61, .22), transparent 28rem),
+    radial-gradient(circle at 12% 78%, rgba(185, 80, 25, .12), transparent 24rem),
+    linear-gradient(135deg, #fbf7ee 0%, #f4eadb 44%, #f7f1e7 100%);
+  position: relative;
+}
+.hero-grid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(120deg, rgba(255, 255, 255, .72), transparent 34%),
+    radial-gradient(circle at 55% 45%, rgba(255, 255, 255, .45), transparent 18rem);
+}
+.hero-grid::after {
+  content: "";
+  position: absolute;
+  inset: auto 4% -11rem auto;
+  width: min(38rem, 70vw);
+  height: 18rem;
+  border-radius: 999px 999px 0 0;
+  background: rgba(22, 29, 27, .045);
+  filter: blur(.5px);
+  pointer-events: none;
 }
 .eyebrow, .section-kicker { display: inline-flex; align-items: center; gap: .5rem; font-size: .75rem; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; }
 .eyebrow { border: 1px solid rgba(22, 29, 27, .12); border-radius: 999px; background: rgba(255, 255, 255, .55); padding: .65rem .9rem; }
@@ -53,3 +73,4 @@ button, a { -webkit-tap-highlight-color: transparent; }
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
