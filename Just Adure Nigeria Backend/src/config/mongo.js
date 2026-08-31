@@ -9,7 +9,7 @@ export async function connectMongo(required = env.NODE_ENV === "production") {
     try {
         printMongoAttempt();
         await mongoose.connect(env.MONGODB_URL, {
-            serverSelectionTimeoutMS: env.NODE_ENV === "production" ? 30_000 : 2_000,
+            serverSelectionTimeoutMS: env.NODE_ENV === "production" ? 30_000 : 15_000,
         });
         printMongoConnected();
         return true;

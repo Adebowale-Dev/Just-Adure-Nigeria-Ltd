@@ -1,5 +1,5 @@
-import { useEffect, useState, useTransition } from "react";
-import { Activity, AlertTriangle, BarChart3, Boxes, ClipboardList, Image, Mail, MessageSquareText, PackageCheck, RotateCcw, Save, Settings, ShieldCheck, Star, Tags } from "lucide-react";
+﻿import { useEffect, useState, useTransition } from "react";
+import { Activity, AlertTriangle, BarChart3, Boxes, ClipboardList, Image, Mail, MessageSquareText, PackageCheck, RotateCcw, Save, Settings, ShieldCheck, Star, Tags, TrendingUp } from "lucide-react";
 import {
   createAdminCoupon,
   getAdminCoupons,
@@ -33,6 +33,8 @@ import { DeliveryZonesAdmin } from "@/components/admin/delivery-zones-admin";
 import { ProductImagesAdmin } from "@/components/admin/product-images-admin";
 import { ProductManagementAdmin } from "@/components/admin/product-management-admin";
 import { CatalogueLookupsAdmin } from "@/components/admin/catalogue-lookups-admin";
+import { AdminRevenueChart, AdminStatusBarChart } from "@/components/admin/admin-charts";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { formatNaira } from "@/lib/utils.js";
 
 const orderStatuses = ["paid", "processing", "ready_for_pickup", "ready_for_delivery", "shipped", "out_for_delivery", "delivered", "cancelled"];
@@ -195,7 +197,52 @@ const initialCouponForm = {
 };
 
 function StatCard({ label, value }) {
-  return <div className="rounded-2xl border border-black/8 bg-white p-5 shadow-[0_18px_50px_rgba(28,34,31,.05)]"><p className="text-xs font-black uppercase tracking-[.12em] text-[var(--muted)]">{label}</p><p className="mt-2 text-2xl font-black tracking-[-.04em]">{value}</p></div>;
+  return <div className="group overflow-hidden rounded-[1.65rem] border border-black/8 bg-white p-5 shadow-[0_18px_50px_rgba(28,34,31,.06)] transition hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(28,34,31,.1)]"><div className="flex items-center justify-between gap-4"><p className="text-xs font-black uppercase tracking-[.14em] text-[var(--muted)]">{label}</p><TrendingUp className="size-4 text-[var(--accent-dark)] opacity-70" /></div><p className="mt-4 text-3xl font-black tracking-[-.05em] text-[var(--ink)]">{value}</p><div className="mt-5 h-1.5 overflow-hidden rounded-full bg-[#f1eadf]"><span className="block h-full w-2/3 rounded-full bg-[var(--accent)] transition group-hover:w-full" /></div></div>;
+}
+
+const adminSections = [
+  { href: "/admin", key: "overview", label: "Overview" },
+  { href: "/admin/reports", key: "reports", label: "Reports" },
+  { href: "/admin/products", key: "products", label: "Products" },
+  { href: "/admin/inventory", key: "inventory", label: "Inventory" },
+  { href: "/admin/orders", key: "orders", label: "Orders" },
+  { href: "/admin/delivery", key: "delivery", label: "Delivery" },
+  { href: "/admin/support", key: "support", label: "Support" },
+  { href: "/admin/returns", key: "returns", label: "Returns" },
+  { href: "/admin/reviews", key: "reviews", label: "Reviews" },
+  { href: "/admin/coupons", key: "coupons", label: "Coupons" },
+  { href: "/admin/content", key: "content", label: "Content" },
+  { href: "/admin/settings", key: "settings", label: "Settings" },
+  { href: "/admin/staff", key: "staff", label: "Staff" },
+];
+
+function AdminSectionNav({ activeSection }) {
+  return (
+    <nav className="mb-6 rounded-[1.6rem] border border-black/8 bg-white p-3 shadow-[0_14px_45px_rgba(28,34,31,.05)]" aria-label="Admin sections">
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {adminSections.map((item) => (
+          <a key={item.key} href={item.href} className={`shrink-0 rounded-full px-4 py-2.5 text-sm font-black transition ${activeSection === item.key ? "bg-[var(--accent)] text-[var(--ink)] shadow-[0_10px_24px_rgba(244,133,61,.22)]" : "text-[var(--muted)] hover:bg-[#fff3e8] hover:text-[var(--ink)]"}`}>{item.label}</a>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
+function AdminDropdown({ value, options, placeholder = "Select", onValueChange, dark = false }) {
+  const active = options.find((option) => option.value === value);
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className={`flex min-h-12 w-full items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm font-black outline-none transition ${dark ? "border-black/10 bg-[#fff3e8] text-[var(--ink)]" : "border-black/10 bg-[#fff3e8] text-[var(--ink)] hover:border-[var(--accent)]/40"}`}>
+        <span className="truncate">{active?.label ?? placeholder}</span>
+        <span className="ml-3 text-[var(--accent-dark)]">â–¾</span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="max-h-72 w-full min-w-[14rem] overflow-y-auto">
+        {options.map((option) => (
+          <DropdownMenuItem key={option.value || "all"} onClick={() => onValueChange(option.value)} className={option.value === value ? "bg-[#fff3e8] text-[var(--accent-dark)]" : ""}>{option.label}</DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
 
 function nairaToKobo(value) {
@@ -227,7 +274,7 @@ function buildReportParams(filters) {
   return params;
 }
 
-export function AdminDashboardClient() {
+export function AdminDashboardClient({ section = "overview" }: { section?: string } = {}) {
   const [stats, setStats] = useState(null);
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -256,20 +303,47 @@ export function AdminDashboardClient() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
+  const requestedSection = section || "overview";
+  const activeSection = adminSections.some((item) => item.key === requestedSection) ? requestedSection : "overview";
+  const showSection = (name) => activeSection === name;
+  const returnSummary = {
+    total: returns.length,
+    pending: returns.filter((item) => ["requested", "under_review"].includes(item.status)).length,
+    approved: returns.filter((item) => item.status === "approved").length,
+    refunded: returns.filter((item) => item.status === "refunded").length,
+  };
 
   function loadAdminData() {
     const reportParams = buildReportParams(reportFilters);
+    const loadOverview = activeSection === "overview";
+    const loadProducts = loadOverview || ["products", "inventory"].includes(activeSection);
+    const loadOrders = loadOverview || ["orders", "reports"].includes(activeSection);
+    const loadReports = loadOverview || activeSection === "reports";
+    const loadCoupons = loadOverview || activeSection === "coupons";
+    const loadReviews = loadOverview || activeSection === "reviews";
+    const loadReturns = loadOverview || activeSection === "returns";
+    const loadSupport = loadOverview || activeSection === "support";
+    const loadDelivery = loadOverview || activeSection === "delivery";
+    const loadContent = loadOverview || activeSection === "content";
+    const loadSettings = loadOverview || activeSection === "settings";
+    const loadStaff = loadOverview || activeSection === "staff";
+
     Promise.all([
-      safeAdminLoad(getAdminDashboard(), null),
-      safeAdminLoad(getAdminProducts(), []),
-      safeAdminLoad(getAdminOrders(), []),
-      safeAdminLoad(getAdminCoupons(), []),
-      safeAdminLoad(getAdminReviews(), []),
-      safeAdminLoad(getAdminReturns(), []),
-      safeAdminLoad(getAdminSupportTickets(), []),
-      safeAdminLoad(getAdminReports(reportParams), emptyReport),
+      loadOverview ? safeAdminLoad(getAdminDashboard(), null) : Promise.resolve(stats),
+      loadProducts ? safeAdminLoad(getAdminProducts(), []) : Promise.resolve(products),
+      loadOrders ? safeAdminLoad(getAdminOrders(), []) : Promise.resolve(orders),
+      loadCoupons ? safeAdminLoad(getAdminCoupons(), []) : Promise.resolve(coupons),
+      loadReviews ? safeAdminLoad(getAdminReviews(), []) : Promise.resolve(reviews),
+      loadReturns ? safeAdminLoad(getAdminReturns(), []) : Promise.resolve(returns),
+      loadSupport ? safeAdminLoad(getAdminSupportTickets(), []) : Promise.resolve(supportTickets),
+      loadReports ? safeAdminLoad(getAdminReports(reportParams), emptyReport) : Promise.resolve(reports),
+      loadStaff ? safeAdminLoad(getAdminStaff(), []) : Promise.resolve(staff),
+      loadSettings ? safeAdminLoad(getAdminStoreSettings(), null) : Promise.resolve(storeSettings),
+      loadOverview ? safeAdminLoad(getAdminActivityLogs(), []) : Promise.resolve(activityLogs),
+      loadContent ? safeAdminLoad(getAdminHomepageContent(), null) : Promise.resolve(homepageContent),
+      loadContent ? safeAdminLoad(getAdminNewsletterSubscribers(), { items: [], summary: { total: 0, subscribed: 0, unsubscribed: 0 } }) : Promise.resolve({ items: newsletterSubscribers, summary: newsletterSummary }),
     ])
-      .then(([nextStats, nextProducts, nextOrders, nextCoupons, nextReviews, nextReturns, nextSupportTickets, nextReports]) => {
+      .then(([nextStats, nextProducts, nextOrders, nextCoupons, nextReviews, nextReturns, nextSupportTickets, nextReports, nextStaff, nextStoreSettings, nextActivityLogs, nextHomepageContent, nextNewsletter]) => {
         setStats(nextStats);
         setProducts(nextProducts);
         setOrders(nextOrders);
@@ -278,16 +352,18 @@ export function AdminDashboardClient() {
         setReturns(nextReturns);
         setSupportTickets(nextSupportTickets);
         setReports(nextReports);
-        safeAdminLoad(getAdminStaff(), []).then(setStaff);
-        safeAdminLoad(getAdminStoreSettings(), null).then((settings) => { setStoreSettings(settings); setStoreSettingsForm(settingsToForm(settings)); });
-        safeAdminLoad(getAdminActivityLogs(), []).then(setActivityLogs);
-        safeAdminLoad(getAdminHomepageContent(), null).then((content) => { setHomepageContent(content); setHomepageContentForm(homepageContentToForm(content)); });
-        safeAdminLoad(getAdminNewsletterSubscribers(), { items: [], summary: { total: 0, subscribed: 0, unsubscribed: 0 } }).then((data) => { setNewsletterSubscribers(data.items ?? []); setNewsletterSummary(data.summary ?? { total: 0, subscribed: 0, unsubscribed: 0 }); });
+        setStaff(nextStaff);
+        setStoreSettings(nextStoreSettings);
+        setStoreSettingsForm(settingsToForm(nextStoreSettings));
+        setActivityLogs(nextActivityLogs);
+        setHomepageContent(nextHomepageContent);
+        setHomepageContentForm(homepageContentToForm(nextHomepageContent));
+        setNewsletterSubscribers(nextNewsletter.items ?? []);
+        setNewsletterSummary(nextNewsletter.summary ?? { total: 0, subscribed: 0, unsubscribed: 0 });
         setError("");
       })
       .catch((loadError) => setError(loadError instanceof Error ? loadError.message : "Admin dashboard could not load."));
   }
-
   useEffect(() => {
     loadAdminData();
   }, []);
@@ -579,110 +655,203 @@ export function AdminDashboardClient() {
     });
   }
   return (
-    <main className="min-h-screen">
-      <section className="hero-grid border-b border-black/8">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <p className="section-kicker">Admin dashboard</p>
-          <h1 className="mt-4 font-serif text-5xl font-bold leading-none tracking-[-.06em] sm:text-7xl">Control the store.</h1>
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-[var(--muted)]">Manage stock, coupons, reviews, orders and UK-used product availability from one protected place.</p>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#f6f3ec] px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+      <section className="mx-auto max-w-7xl">
         {error ? <div className="mb-6 rounded-2xl border border-[var(--accent)]/30 bg-[#fff8ed] p-4 text-sm font-bold"><AlertTriangle className="mb-2 size-5 text-[var(--accent-dark)]" />{error}</div> : null}
         {message ? <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-900">{message}</div> : null}
+        <AdminSectionNav activeSection={activeSection} />
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Revenue" value={formatNaira(stats?.totalRevenueKobo ?? 0)} />
-          <StatCard label="Orders" value={stats?.totalOrders ?? "..."} />
-          <StatCard label="Products" value={stats?.totalProducts ?? "..."} />
-          <StatCard label="Low stock" value={stats?.lowStockProducts ?? "..."} />
-        </div>
+        {showSection("overview") ? <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard label="Total revenue" value={formatNaira(stats?.totalRevenueKobo ?? 0)} />
+          <StatCard label="Total orders" value={stats?.totalOrders ?? "..."} />
+          <StatCard label="Catalogue items" value={stats?.totalProducts ?? "..."} />
+          <StatCard label="Low stock alerts" value={stats?.lowStockProducts ?? "..."} />
+        </div> : null}
+
+        {showSection("overview") ? <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {adminSections.filter((item) => item.key !== "overview").map((item) => <a key={item.key} href={item.href} className="group rounded-[1.5rem] border border-black/8 bg-white p-5 shadow-[0_14px_40px_rgba(28,34,31,.04)] transition hover:-translate-y-1 hover:border-[var(--accent)]/40 hover:shadow-[0_18px_55px_rgba(28,34,31,.08)]"><p className="text-xs font-black uppercase tracking-[.14em] text-[var(--accent-dark)]">Admin page</p><h2 className="mt-2 text-xl font-black text-[var(--ink)]">{item.label}</h2><p className="mt-3 text-sm font-bold leading-6 text-[var(--muted)]">Open the dedicated {item.label.toLowerCase()} workspace.</p><span className="mt-5 inline-flex text-sm font-black text-[var(--accent-dark)] group-hover:underline">Open page</span></a>)}
+        </div> : null}
 
 
-        <section className="mt-8 rounded-[2rem] border border-black/8 bg-[#fbfaf6] p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div><div className="flex items-center gap-3"><BarChart3 className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Reports and statistics</h2></div><p className="mt-2 text-sm leading-6 text-[var(--muted)]">Filter sales, orders and payment activity without loading the full database.</p></div>
-            <div className="flex flex-wrap gap-3"><a href={getAdminOrdersReportCsvUrl(buildReportParams(reportFilters))} className="cta-outline" target="_blank" rel="noreferrer">Export orders CSV</a><a href={getAdminPaymentsReportCsvUrl(buildReportParams(reportFilters))} className="cta-outline" target="_blank" rel="noreferrer">Export payments CSV</a></div>
+        {showSection("reports") ? <section className="mt-8 overflow-hidden rounded-[2.2rem] border border-black/8 bg-[#f7f2e9] shadow-[0_24px_80px_rgba(28,34,31,.08)]">
+          <div className="border-b border-black/8 bg-white px-6 py-7 text-[var(--ink)] sm:px-8">
+            <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+              <div className="max-w-2xl">
+                <div className="flex items-center gap-3">
+                  <span className="grid size-11 place-items-center rounded-2xl bg-[#fff3e8]"><BarChart3 className="size-5 text-[var(--accent)]" /></span>
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[.16em] text-[var(--accent)]">Admin analytics</p>
+                    <h2 className="mt-1 text-3xl font-black tracking-[-.05em]">Reports and statistics</h2>
+                  </div>
+                </div>
+                <p className="mt-4 text-sm leading-6 text-[var(--muted)]">Monitor revenue, order movement, payment health and store performance from one clean reporting workspace.</p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <a href={getAdminOrdersReportCsvUrl(buildReportParams(reportFilters))} className="rounded-2xl border border-black/10 bg-white px-5 py-3 text-sm font-black text-[var(--ink)] transition hover:bg-[var(--accent)]" target="_blank" rel="noreferrer">Export orders CSV</a>
+                <a href={getAdminPaymentsReportCsvUrl(buildReportParams(reportFilters))} className="rounded-2xl border border-black/10 bg-[#fff3e8] px-5 py-3 text-sm font-black text-[var(--ink)] transition hover:bg-[#fff3e8]" target="_blank" rel="noreferrer">Export payments CSV</a>
+              </div>
+            </div>
           </div>
-          <form onSubmit={refreshReports} className="mt-6 grid gap-4 md:grid-cols-5">
-            <label className="grid gap-2 text-sm font-bold">Range<select name="range" value={reportFilters.range} onChange={updateReportFilter} className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none"><option value="today">Today</option><option value="week">This week</option><option value="month">This month</option><option value="custom">Custom</option></select></label>
-            <label className="grid gap-2 text-sm font-bold">From<input name="dateFrom" type="date" value={reportFilters.dateFrom} onChange={updateReportFilter} className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none" /></label>
-            <label className="grid gap-2 text-sm font-bold">To<input name="dateTo" type="date" value={reportFilters.dateTo} onChange={updateReportFilter} className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none" /></label>
-            <label className="grid gap-2 text-sm font-bold">Order status<select name="orderStatus" value={reportFilters.orderStatus} onChange={updateReportFilter} className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none"><option value="">All</option>{orderStatuses.map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}</select></label>
-            <label className="grid gap-2 text-sm font-bold">Payment<select name="paymentStatus" value={reportFilters.paymentStatus} onChange={updateReportFilter} className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none"><option value="">All</option><option value="pending">Pending</option><option value="successful">Successful</option><option value="failed">Failed</option><option value="abandoned">Abandoned</option><option value="refunded">Refunded</option><option value="partially_refunded">Partially refunded</option></select></label>
-            <button type="submit" disabled={isPending} className="cta-primary md:col-span-5">Refresh report</button>
-          </form>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Filtered revenue" value={formatNaira(reports?.summary?.totalRevenueKobo ?? 0)} />
-            <StatCard label="Month revenue" value={formatNaira(reports?.summary?.currentMonthRevenueKobo ?? 0)} />
-            <StatCard label="Filtered orders" value={reports?.summary?.totalOrders ?? "..."} />
-            <StatCard label="Cancelled" value={reports?.summary?.cancelledOrders ?? "..."} />
-          </div>
-          <div className="mt-6 grid gap-6 lg:grid-cols-3">
-            <div className="rounded-2xl border border-black/8 bg-white p-5"><p className="font-black">Orders by status</p><div className="mt-4 grid gap-2 text-sm text-[var(--muted)]">{Object.entries(reports?.ordersByStatus ?? {}).filter(([, count]) => Number(count) > 0).map(([status, count]) => <p key={status} className="flex justify-between gap-4"><span>{statusLabel(status)}</span><strong>{Number(count)}</strong></p>)}</div></div>
-            <div className="rounded-2xl border border-black/8 bg-white p-5"><p className="font-black">Daily revenue</p><div className="mt-4 grid gap-2 text-sm text-[var(--muted)]">{(reports?.revenueByDate ?? []).slice(0, 7).map((item) => <p key={item.date} className="flex justify-between gap-4"><span>{item.date}</span><strong>{formatNaira(item.revenueKobo)}</strong></p>)}</div></div>
-            <div className="rounded-2xl border border-black/8 bg-white p-5"><p className="font-black">Best sellers</p><div className="mt-4 grid gap-2 text-sm text-[var(--muted)]">{(reports?.bestSellingProducts ?? []).map((item) => <p key={item.sku} className="flex justify-between gap-4"><span>{item.name}</span><strong>{item.quantitySold}</strong></p>)}</div></div>
-            <div className="rounded-2xl border border-black/8 bg-white p-5"><p className="font-black">Payments by status</p><div className="mt-4 grid gap-2 text-sm text-[var(--muted)]">{Object.entries(reports?.paymentsByStatus ?? {}).filter(([, count]) => Number(count) > 0).map(([status, count]) => <p key={status} className="flex justify-between gap-4"><span>{statusLabel(status)}</span><strong>{Number(count)}</strong></p>)}</div></div>
-            <div className="rounded-2xl border border-black/8 bg-white p-5"><p className="font-black">Recent refunds</p><div className="mt-4 grid gap-2 text-sm text-[var(--muted)]">{(reports?.recentRefunds ?? []).slice(0, 5).map((refund) => <p key={refund.id} className="flex justify-between gap-4"><span>{refund.orderNumber}</span><strong>{formatNaira(refund.refundAmountKobo)}</strong></p>)}</div></div>
-          </div>
-        </section>
-        <CatalogueLookupsAdmin onLookupsChanged={loadAdminData} />
 
-        <ProductManagementAdmin products={products} onProductsChanged={loadAdminData} />
+          <div className="p-5 sm:p-8">
+            <form onSubmit={refreshReports} className="rounded-[1.8rem] border border-black/8 bg-white p-4 shadow-[0_18px_50px_rgba(28,34,31,.05)] sm:p-5">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                <label className="grid gap-2 text-sm font-bold">Range<AdminDropdown value={reportFilters.range} options={[{ value: "today", label: "Today" }, { value: "week", label: "This week" }, { value: "month", label: "This month" }, { value: "custom", label: "Custom" }]} onValueChange={(value) => setReportFilters((current) => ({ ...current, range: value }))} /></label>
+                <label className="grid gap-2 text-sm font-bold">From<input name="dateFrom" type="date" value={reportFilters.dateFrom} onChange={updateReportFilter} className="min-h-12 rounded-2xl border border-black/10 bg-white px-4 py-3 font-bold outline-none" /></label>
+                <label className="grid gap-2 text-sm font-bold">To<input name="dateTo" type="date" value={reportFilters.dateTo} onChange={updateReportFilter} className="min-h-12 rounded-2xl border border-black/10 bg-white px-4 py-3 font-bold outline-none" /></label>
+                <label className="grid gap-2 text-sm font-bold">Order status<AdminDropdown value={reportFilters.orderStatus} options={[{ value: "", label: "All orders" }, ...orderStatuses.map((status) => ({ value: status, label: statusLabel(status) }))]} onValueChange={(value) => setReportFilters((current) => ({ ...current, orderStatus: value }))} /></label>
+                <label className="grid gap-2 text-sm font-bold">Payment<AdminDropdown value={reportFilters.paymentStatus} options={[{ value: "", label: "All payments" }, { value: "pending", label: "Pending" }, { value: "successful", label: "Successful" }, { value: "failed", label: "Failed" }, { value: "abandoned", label: "Abandoned" }, { value: "refunded", label: "Refunded" }, { value: "partially_refunded", label: "Partially refunded" }]} onValueChange={(value) => setReportFilters((current) => ({ ...current, paymentStatus: value }))} /></label>
+              </div>
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs font-bold uppercase tracking-[.12em] text-[var(--muted)]">Use filters, then refresh to update charts and CSV exports.</p>
+                <button type="submit" disabled={isPending} className="cta-primary justify-center">Refresh report</button>
+              </div>
+            </form>
 
-        <div className="mt-10 grid gap-8 xl:grid-cols-[1fr_1fr]">
-          <section className="rounded-[2rem] border border-black/8 bg-white/80 p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <StatCard label="Filtered revenue" value={formatNaira(reports?.summary?.totalRevenueKobo ?? 0)} />
+              <StatCard label="Month revenue" value={formatNaira(reports?.summary?.currentMonthRevenueKobo ?? 0)} />
+              <StatCard label="Filtered orders" value={reports?.summary?.totalOrders ?? "..."} />
+              <StatCard label="Cancelled orders" value={reports?.summary?.cancelledOrders ?? "..."} />
+            </div>
+
+            <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(22rem,.7fr)]">
+              <AdminRevenueChart data={reports?.revenueByDate ?? []} />
+              <div className="grid gap-6 content-start">
+                <AdminStatusBarChart eyebrow="Order pipeline" title="Orders by status" data={Object.entries(reports?.ordersByStatus ?? {}).map(([status, count]) => ({ label: statusLabel(status), value: Number(count) }))} />
+                <AdminStatusBarChart eyebrow="Payment health" title="Payments by status" data={Object.entries(reports?.paymentsByStatus ?? {}).map(([status, count]) => ({ label: statusLabel(status), value: Number(count) }))} />
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-6 lg:grid-cols-2">
+              <div className="rounded-[1.8rem] border border-black/8 bg-white p-5 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
+                <div className="flex items-center justify-between gap-4"><p className="font-black">Best sellers</p><span className="rounded-full bg-[#fff3e8] px-3 py-1 text-xs font-black uppercase tracking-[.1em] text-[var(--accent-dark)]">Top products</span></div>
+                <div className="mt-4 grid gap-3 text-sm text-[var(--muted)]">{(reports?.bestSellingProducts ?? []).map((item) => <p key={item.sku} className="flex items-center justify-between gap-4 rounded-2xl bg-[#fbfaf6] px-4 py-3"><span className="font-bold text-[var(--ink)]">{item.name}</span><strong>{item.quantitySold}</strong></p>)}</div>
+                {(reports?.bestSellingProducts ?? []).length === 0 ? <p className="mt-4 text-sm font-bold text-[var(--muted)]">Best-selling products will appear after completed orders.</p> : null}
+              </div>
+              <div className="rounded-[1.8rem] border border-black/8 bg-white p-5 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
+                <div className="flex items-center justify-between gap-4"><p className="font-black">Recent refunds</p><span className="rounded-full bg-[#f1eadf] px-3 py-1 text-xs font-black uppercase tracking-[.1em] text-[var(--muted)]">Finance</span></div>
+                <div className="mt-4 grid gap-3 text-sm text-[var(--muted)]">{(reports?.recentRefunds ?? []).slice(0, 5).map((refund) => <p key={refund.id} className="flex items-center justify-between gap-4 rounded-2xl bg-[#fbfaf6] px-4 py-3"><span className="font-bold text-[var(--ink)]">{refund.orderNumber}</span><strong>{formatNaira(refund.refundAmountKobo)}</strong></p>)}</div>
+                {(reports?.recentRefunds ?? []).length === 0 ? <p className="mt-4 text-sm font-bold text-[var(--muted)]">Refund records will show here when available.</p> : null}
+              </div>
+            </div>
+          </div>
+        </section> : null}
+        {showSection("products") ? <CatalogueLookupsAdmin onLookupsChanged={loadAdminData} /> : null}
+
+        {showSection("products") ? <div id="admin-products" className="scroll-mt-32"><ProductManagementAdmin products={products} onProductsChanged={loadAdminData} /></div> : null}
+
+        {showSection("inventory") || showSection("orders") ? <div className="mt-10 grid gap-8 xl:grid-cols-[1fr_1fr]">
+          {showSection("inventory") ? <section className="rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
             <div className="flex items-center gap-3"><Boxes className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Inventory</h2></div>
             <div className="mt-6 grid gap-4">
               {products.slice(0, 8).map((product) => <article key={product.id} className="rounded-2xl border border-black/8 p-4"><p className="font-black">{product.name}</p><p className="mt-1 text-sm text-[var(--muted)]">{product.sku} | {statusLabel(product.availability)} | {product.availableQuantity} available</p><div className="mt-4 flex gap-3"><input type="number" min={0} value={stockDrafts[product.id] ?? product.stockQuantity} onChange={(event) => setStockDrafts((current) => ({ ...current, [product.id]: event.target.value }))} className="w-28 rounded-xl border border-black/10 px-3 py-2 font-black outline-none" /><button type="button" disabled={isPending} onClick={() => saveStock(product)} className="cta-outline py-2"><Save className="size-4" /> Save</button></div></article>)}
               {products.length === 0 ? <p className="text-sm font-bold text-[var(--muted)]">No products yet.</p> : null}
             </div>
-          </section>
+          </section> : null}
 
-          <section className="rounded-[2rem] border border-black/8 bg-[var(--ink)] p-6 text-white shadow-[0_24px_70px_rgba(28,34,31,.18)]">
+          {showSection("orders") ? <section id="admin-orders" className="scroll-mt-32 rounded-[2rem] border border-black/8 bg-white p-6 text-[var(--ink)] shadow-[0_18px_50px_rgba(28,34,31,.06)]">
             <div className="flex items-center gap-3"><ClipboardList className="size-5 text-[var(--accent)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Orders</h2></div>
             <div className="mt-6 grid gap-4">
-              {orders.slice(0, 8).map((order) => <article key={order.id} className="rounded-2xl bg-white/8 p-4"><p className="font-black">{order.orderNumber}</p><p className="mt-1 text-sm text-white/60">{order.customer.email} | {formatNaira(order.totalKobo)} | {order.paymentStatus}</p><div className="mt-4 flex flex-col gap-3 sm:flex-row"><select value={orderDrafts[order.id] ?? order.orderStatus} onChange={(event) => setOrderDrafts((current) => ({ ...current, [order.id]: event.target.value }))} className="rounded-xl border border-white/10 bg-white px-3 py-2 font-black text-[var(--ink)] outline-none">{orderStatuses.map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}</select><button type="button" disabled={isPending} onClick={() => saveOrderStatus(order)} className="cta-primary bg-[var(--accent)] py-2 text-[var(--ink)]"><PackageCheck className="size-4" /> Update</button></div></article>)}
-              {orders.length === 0 ? <p className="text-sm font-bold text-white/60">No orders yet.</p> : null}
+              {orders.slice(0, 8).map((order) => <article key={order.id} className="rounded-2xl bg-[#fbfaf6] p-4"><p className="font-black">{order.orderNumber}</p><p className="mt-1 text-sm text-[var(--muted)]">{order.customer.email} | {formatNaira(order.totalKobo)} | {order.paymentStatus}</p><div className="mt-4 flex flex-col gap-3 sm:flex-row"><AdminDropdown dark value={orderDrafts[order.id] ?? order.orderStatus} options={orderStatuses.map((status) => ({ value: status, label: statusLabel(status) }))} onValueChange={(value) => setOrderDrafts((current) => ({ ...current, [order.id]: value }))} /><button type="button" disabled={isPending} onClick={() => saveOrderStatus(order)} className="cta-primary bg-[var(--accent)] py-2 text-[var(--ink)]"><PackageCheck className="size-4" /> Update</button></div></article>)}
+              {orders.length === 0 ? <p className="text-sm font-bold text-[var(--muted)]">No orders yet.</p> : null}
             </div>
-          </section>
-        </div>
+          </section> : null}
+        </div> : null}
 
 
 
-        <ProductImagesAdmin products={products} onProductsChanged={loadAdminData} />
+        {showSection("products") ? <ProductImagesAdmin products={products} onProductsChanged={loadAdminData} /> : null}
 
-        <DeliveryZonesAdmin />
+        {showSection("delivery") ? <DeliveryZonesAdmin /> : null}
 
-        <section className="mt-8 rounded-[2rem] border border-black/8 bg-white/80 p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
+        {showSection("support") ? <section className="mt-8 rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
           <div className="flex items-center gap-3"><MessageSquareText className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Support tickets</h2></div>
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
-            {supportTickets.slice(0, 8).map((ticket) => <article key={ticket.id} className="rounded-2xl border border-black/8 bg-[#fbfaf6] p-5"><p className="font-black">{ticket.ticketNumber}</p><p className="mt-1 text-sm text-[var(--muted)]">{ticket.email} | {statusLabel(ticket.type)} | {statusLabel(ticket.status)}</p><p className="mt-3 font-bold">{ticket.subject}</p><p className="mt-2 text-sm leading-6 text-[var(--muted)]">{ticket.message}</p><div className="mt-4 grid gap-3"><select value={supportDrafts[ticket.id]?.status ?? ticket.status} onChange={(event) => updateSupportDraft(ticket.id, "status", event.target.value)} className="rounded-xl border border-black/10 bg-white px-3 py-2 font-black outline-none">{supportStatuses.map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}</select><textarea value={supportDrafts[ticket.id]?.reply ?? ""} onChange={(event) => updateSupportDraft(ticket.id, "reply", event.target.value)} rows={3} placeholder="Reply to customer" className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm outline-none" /><textarea value={supportDrafts[ticket.id]?.internalNote ?? ticket.internalNote ?? ""} onChange={(event) => updateSupportDraft(ticket.id, "internalNote", event.target.value)} rows={2} placeholder="Internal note" className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm outline-none" /><button type="button" disabled={isPending} onClick={() => saveSupportTicket(ticket)} className="cta-primary"><MessageSquareText className="size-4" /> Update ticket</button></div></article>)}
+            {supportTickets.slice(0, 8).map((ticket) => <article key={ticket.id} className="rounded-2xl border border-black/8 bg-[#fbfaf6] p-5"><p className="font-black">{ticket.ticketNumber}</p><p className="mt-1 text-sm text-[var(--muted)]">{ticket.email} | {statusLabel(ticket.type)} | {statusLabel(ticket.status)}</p><p className="mt-3 font-bold">{ticket.subject}</p><p className="mt-2 text-sm leading-6 text-[var(--muted)]">{ticket.message}</p><div className="mt-4 grid gap-3"><AdminDropdown value={supportDrafts[ticket.id]?.status ?? ticket.status} options={supportStatuses.map((status) => ({ value: status, label: statusLabel(status) }))} onValueChange={(value) => updateSupportDraft(ticket.id, "status", value)} /><textarea value={supportDrafts[ticket.id]?.reply ?? ""} onChange={(event) => updateSupportDraft(ticket.id, "reply", event.target.value)} rows={3} placeholder="Reply to customer" className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm outline-none" /><textarea value={supportDrafts[ticket.id]?.internalNote ?? ticket.internalNote ?? ""} onChange={(event) => updateSupportDraft(ticket.id, "internalNote", event.target.value)} rows={2} placeholder="Internal note" className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm outline-none" /><button type="button" disabled={isPending} onClick={() => saveSupportTicket(ticket)} className="cta-primary"><MessageSquareText className="size-4" /> Update ticket</button></div></article>)}
             {supportTickets.length === 0 ? <p className="text-sm font-bold text-[var(--muted)]">No support tickets yet.</p> : null}
           </div>
-        </section>
-        <section className="mt-8 rounded-[2rem] border border-black/8 bg-[var(--ink)] p-6 text-white shadow-[0_24px_70px_rgba(28,34,31,.18)]">
-          <div className="flex items-center gap-3"><RotateCcw className="size-5 text-[var(--accent)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Returns and refunds</h2></div>
-          <div className="mt-6 grid gap-4 lg:grid-cols-2">
-            {returns.slice(0, 8).map((returnRequest) => <article key={returnRequest.id} className="rounded-2xl bg-white/8 p-5"><p className="font-black">{returnRequest.requestNumber}</p><p className="mt-1 text-sm text-white/60">{returnRequest.orderNumber} | {returnRequest.customerEmail} | {statusLabel(returnRequest.reason)}</p><div className="mt-3 grid gap-2 text-sm text-white/70">{returnRequest.items.map((item) => <p key={`${returnRequest.id}-${item.sku}`}>{item.name} | Qty {item.quantity}</p>)}</div><p className="mt-4 text-sm leading-6 text-white/75">{returnRequest.details}</p><div className="mt-4 grid gap-3"><select value={returnDrafts[returnRequest.id]?.status ?? returnRequest.status} onChange={(event) => updateReturnDraft(returnRequest.id, "status", event.target.value)} className="rounded-xl border border-white/10 bg-white px-3 py-2 font-black text-[var(--ink)] outline-none">{returnStatuses.map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}</select><textarea value={returnDrafts[returnRequest.id]?.adminNote ?? returnRequest.adminNote ?? ""} onChange={(event) => updateReturnDraft(returnRequest.id, "adminNote", event.target.value)} rows={3} placeholder="Admin note for this return" className="rounded-xl border border-white/10 bg-white px-3 py-2 text-sm text-[var(--ink)] outline-none" />{returnRequest.refundAmountKobo ? <p className="text-xs font-black text-[var(--accent)]">Refund recorded: {formatNaira(returnRequest.refundAmountKobo)} | {returnRequest.refundReference ?? "No reference"}</p> : null}<input value={returnDrafts[returnRequest.id]?.refundAmountNaira ?? (returnRequest.refundAmountKobo ? String(returnRequest.refundAmountKobo / 100) : "")} onChange={(event) => updateReturnDraft(returnRequest.id, "refundAmountNaira", event.target.value)} type="number" min="1" step="1" placeholder="Refund amount in naira" className="rounded-xl border border-white/10 bg-white px-3 py-2 text-sm text-[var(--ink)] outline-none" /><input value={returnDrafts[returnRequest.id]?.refundReference ?? returnRequest.refundReference ?? ""} onChange={(event) => updateReturnDraft(returnRequest.id, "refundReference", event.target.value)} placeholder="Refund reference or Paystack note" className="rounded-xl border border-white/10 bg-white px-3 py-2 text-sm text-[var(--ink)] outline-none" /><button type="button" disabled={isPending} onClick={() => saveReturn(returnRequest)} className="cta-primary bg-[var(--accent)] text-[var(--ink)]"><RotateCcw className="size-4" /> Update return</button></div></article>)}
-            {returns.length === 0 ? <p className="text-sm font-bold text-white/60">No return requests yet.</p> : null}
+        </section> : null}
+        {showSection("returns") ? <section className="mt-8 space-y-6">
+          <div className="overflow-hidden rounded-[2.2rem] border border-black/8 bg-white shadow-[0_20px_70px_rgba(28,34,31,.07)]">
+            <div className="grid gap-6 bg-[linear-gradient(135deg,#fff,#fff7ef)] p-6 sm:p-8 lg:grid-cols-[1fr_auto] lg:items-end">
+              <div>
+                <div className="flex items-center gap-3">
+                  <span className="grid size-12 place-items-center rounded-2xl bg-[#fff3e8] text-[var(--accent-dark)]"><RotateCcw className="size-5" /></span>
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[.16em] text-[var(--accent-dark)]">After-sales desk</p>
+                    <h2 className="mt-1 text-3xl font-black tracking-[-.05em] text-[var(--ink)]">Returns and refunds</h2>
+                  </div>
+                </div>
+                <p className="mt-4 max-w-2xl text-sm font-bold leading-6 text-[var(--muted)]">Review customer return requests, record internal notes, and safely track refund references without mixing them into the main orders page.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:min-w-[30rem]">
+                <div className="rounded-2xl border border-black/8 bg-white p-4"><p className="text-xs font-black uppercase tracking-[.12em] text-[var(--muted)]">Total</p><p className="mt-2 text-2xl font-black text-[var(--ink)]">{returnSummary.total}</p></div>
+                <div className="rounded-2xl border border-black/8 bg-white p-4"><p className="text-xs font-black uppercase tracking-[.12em] text-[var(--muted)]">Pending</p><p className="mt-2 text-2xl font-black text-[var(--accent-dark)]">{returnSummary.pending}</p></div>
+                <div className="rounded-2xl border border-black/8 bg-white p-4"><p className="text-xs font-black uppercase tracking-[.12em] text-[var(--muted)]">Approved</p><p className="mt-2 text-2xl font-black text-[var(--ink)]">{returnSummary.approved}</p></div>
+                <div className="rounded-2xl border border-black/8 bg-white p-4"><p className="text-xs font-black uppercase tracking-[.12em] text-[var(--muted)]">Refunded</p><p className="mt-2 text-2xl font-black text-emerald-700">{returnSummary.refunded}</p></div>
+              </div>
+            </div>
           </div>
-        </section>
-        <section className="mt-8 rounded-[2rem] border border-black/8 bg-white/80 p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
+
+          {returns.length === 0 ? <div className="rounded-[2rem] border border-dashed border-black/15 bg-white p-10 text-center shadow-[0_18px_50px_rgba(28,34,31,.04)]"><RotateCcw className="mx-auto size-10 text-[var(--accent-dark)]" /><h3 className="mt-4 text-2xl font-black tracking-[-.03em] text-[var(--ink)]">No return requests yet.</h3><p className="mx-auto mt-2 max-w-md text-sm font-bold leading-6 text-[var(--muted)]">When customers request a return or refund, each case will appear here for review and follow-up.</p></div> : null}
+
+          <div className="grid gap-5">
+            {returns.slice(0, 12).map((returnRequest) => (
+              <article key={returnRequest.id} className="overflow-hidden rounded-[2rem] border border-black/8 bg-white shadow-[0_18px_55px_rgba(28,34,31,.06)]">
+                <div className="grid gap-5 border-b border-black/8 bg-[#fbfaf6] p-5 lg:grid-cols-[1fr_auto] lg:items-start">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-[#fff3e8] px-3 py-1 text-xs font-black uppercase tracking-[.1em] text-[var(--accent-dark)]">{statusLabel(returnRequest.status)}</span>
+                      <span className="rounded-full border border-black/10 bg-white px-3 py-1 text-xs font-black uppercase tracking-[.1em] text-[var(--muted)]">{statusLabel(returnRequest.reason)}</span>
+                    </div>
+                    <h3 className="mt-3 text-xl font-black tracking-[-.03em] text-[var(--ink)]">{returnRequest.requestNumber}</h3>
+                    <p className="mt-1 text-sm font-bold text-[var(--muted)]">Order {returnRequest.orderNumber} | {returnRequest.customerEmail}</p>
+                  </div>
+                  <div className="rounded-2xl border border-black/8 bg-white px-4 py-3 text-sm font-black text-[var(--ink)]">
+                    Requested items: {returnRequest.items.length}
+                  </div>
+                </div>
+
+                <div className="grid gap-6 p-5 lg:grid-cols-[1fr_.75fr]">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[.14em] text-[var(--muted)]">Customer explanation</p>
+                    <p className="mt-3 rounded-2xl bg-[#fbfaf6] p-4 text-sm font-bold leading-6 text-[var(--muted)]">{returnRequest.details}</p>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      {returnRequest.items.map((item) => <div key={String(returnRequest.id) + "-" + item.sku} className="rounded-2xl border border-black/8 bg-white p-4"><p className="font-black text-[var(--ink)]">{item.name}</p><p className="mt-1 text-sm font-bold text-[var(--muted)]">SKU {item.sku} | Qty {item.quantity}</p></div>)}
+                    </div>
+                  </div>
+
+                  <div className="rounded-[1.4rem] border border-black/8 bg-[#fbfaf6] p-4">
+                    <p className="text-xs font-black uppercase tracking-[.14em] text-[var(--muted)]">Admin action</p>
+                    <div className="mt-4 grid gap-3">
+                      <AdminDropdown value={returnDrafts[returnRequest.id]?.status ?? returnRequest.status} options={returnStatuses.map((status) => ({ value: status, label: statusLabel(status) }))} onValueChange={(value) => updateReturnDraft(returnRequest.id, "status", value)} />
+                      <textarea value={returnDrafts[returnRequest.id]?.adminNote ?? returnRequest.adminNote ?? ""} onChange={(event) => updateReturnDraft(returnRequest.id, "adminNote", event.target.value)} rows={4} placeholder="Admin note for this return" className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm text-[var(--ink)] outline-none focus:border-[var(--accent-dark)]" />
+                      {returnRequest.refundAmountKobo ? <p className="rounded-2xl bg-white px-4 py-3 text-xs font-black text-emerald-700">Refund recorded: {formatNaira(returnRequest.refundAmountKobo)} | {returnRequest.refundReference ?? "No reference"}</p> : null}
+                      <input value={returnDrafts[returnRequest.id]?.refundAmountNaira ?? (returnRequest.refundAmountKobo ? String(returnRequest.refundAmountKobo / 100) : "")} onChange={(event) => updateReturnDraft(returnRequest.id, "refundAmountNaira", event.target.value)} type="number" min="1" step="1" placeholder="Refund amount in naira" className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm text-[var(--ink)] outline-none focus:border-[var(--accent-dark)]" />
+                      <input value={returnDrafts[returnRequest.id]?.refundReference ?? returnRequest.refundReference ?? ""} onChange={(event) => updateReturnDraft(returnRequest.id, "refundReference", event.target.value)} placeholder="Refund reference or Paystack note" className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm text-[var(--ink)] outline-none focus:border-[var(--accent-dark)]" />
+                      <button type="button" disabled={isPending} onClick={() => saveReturn(returnRequest)} className="cta-primary justify-center"><RotateCcw className="size-4" /> Update return</button>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section> : null}
+        {showSection("reviews") ? <section className="mt-8 rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
           <div className="flex items-center gap-3"><MessageSquareText className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Review moderation</h2></div>
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
-            {reviews.slice(0, 8).map((review) => <article key={review.id} className="rounded-2xl border border-black/8 bg-[#fbfaf6] p-5"><div className="flex items-start justify-between gap-4"><div><p className="font-black">{review.title}</p><p className="mt-1 text-sm text-[var(--muted)]">{review.productName ?? "Product"} | {review.customerName}</p>{review.isVerifiedPurchase ? <p className="mt-2 text-xs font-black uppercase tracking-[.12em] text-emerald-700">Verified purchase</p> : null}</div><div className="flex gap-1 text-[var(--accent-dark)]">{Array.from({ length: review.rating }).map((_, index) => <Star key={index} className="size-4 fill-[var(--accent)] text-[var(--accent)]" />)}</div></div><p className="mt-4 text-sm leading-6 text-[var(--muted)]">{review.comment}</p><div className="mt-4 grid gap-3"><select value={reviewDrafts[review.id]?.status ?? review.status} onChange={(event) => updateReviewDraft(review.id, "status", event.target.value)} className="rounded-xl border border-black/10 bg-white px-3 py-2 font-black outline-none">{reviewStatuses.map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}</select><textarea value={reviewDrafts[review.id]?.adminReply ?? review.adminReply ?? ""} onChange={(event) => updateReviewDraft(review.id, "adminReply", event.target.value)} rows={3} placeholder="Optional store reply" className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm outline-none" /><button type="button" disabled={isPending} onClick={() => saveReview(review)} className="cta-primary"><MessageSquareText className="size-4" /> Save moderation</button></div></article>)}
+            {reviews.slice(0, 8).map((review) => <article key={review.id} className="rounded-2xl border border-black/8 bg-[#fbfaf6] p-5"><div className="flex items-start justify-between gap-4"><div><p className="font-black">{review.title}</p><p className="mt-1 text-sm text-[var(--muted)]">{review.productName ?? "Product"} | {review.customerName}</p>{review.isVerifiedPurchase ? <p className="mt-2 text-xs font-black uppercase tracking-[.12em] text-emerald-700">Verified purchase</p> : null}</div><div className="flex gap-1 text-[var(--accent-dark)]">{Array.from({ length: review.rating }).map((_, index) => <Star key={index} className="size-4 fill-[var(--accent)] text-[var(--accent)]" />)}</div></div><p className="mt-4 text-sm leading-6 text-[var(--muted)]">{review.comment}</p><div className="mt-4 grid gap-3"><AdminDropdown value={reviewDrafts[review.id]?.status ?? review.status} options={reviewStatuses.map((status) => ({ value: status, label: statusLabel(status) }))} onValueChange={(value) => updateReviewDraft(review.id, "status", value)} /><textarea value={reviewDrafts[review.id]?.adminReply ?? review.adminReply ?? ""} onChange={(event) => updateReviewDraft(review.id, "adminReply", event.target.value)} rows={3} placeholder="Optional store reply" className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm outline-none" /><button type="button" disabled={isPending} onClick={() => saveReview(review)} className="cta-primary"><MessageSquareText className="size-4" /> Save moderation</button></div></article>)}
             {reviews.length === 0 ? <p className="text-sm font-bold text-[var(--muted)]">No reviews submitted yet.</p> : null}
           </div>
-        </section>
+        </section> : null}
 
-        <section className="mt-8 rounded-[2rem] border border-black/8 bg-white/80 p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
+        {showSection("coupons") ? <section className="mt-8 rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
           <div className="flex items-center gap-3"><Tags className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Coupon management</h2></div>
           <form onSubmit={createCoupon} className="mt-6 grid gap-4 md:grid-cols-4">
             <label className="grid gap-2 text-sm font-bold">Code<input name="code" value={couponForm.code} onChange={updateCouponField} required placeholder="LAUNCH10" className="rounded-2xl border border-black/10 px-4 py-3 uppercase outline-none focus:border-[var(--accent-dark)]" /></label>
             <label className="grid gap-2 text-sm font-bold">Name<input name="name" value={couponForm.name} onChange={updateCouponField} required placeholder="Launch discount" className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label>
-            <label className="grid gap-2 text-sm font-bold">Type<select name="type" value={couponForm.type} onChange={updateCouponField} className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]"><option value="percentage">Percentage</option><option value="fixed">Fixed amount</option></select></label>
+            <label className="grid gap-2 text-sm font-bold">Type<AdminDropdown value={couponForm.type} options={[{ value: "percentage", label: "Percentage" }, { value: "fixed", label: "Fixed amount" }]} onValueChange={(value) => setCouponForm((current) => ({ ...current, type: value }))} /></label>
             {couponForm.type === "percentage" ? <label className="grid gap-2 text-sm font-bold">Percentage<input name="percentage" type="number" min={1} max={100} value={couponForm.percentage} onChange={updateCouponField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label> : <label className="grid gap-2 text-sm font-bold">Fixed discount (NGN)<input name="valueNaira" type="number" min={1} value={couponForm.valueNaira} onChange={updateCouponField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label>}
             <label className="grid gap-2 text-sm font-bold">Minimum order (NGN)<input name="minOrderNaira" type="number" min={0} value={couponForm.minOrderNaira} onChange={updateCouponField} className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label>
             <label className="grid gap-2 text-sm font-bold">Max discount (NGN)<input name="maxDiscountNaira" type="number" min={0} value={couponForm.maxDiscountNaira} onChange={updateCouponField} placeholder="Optional" className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label>
@@ -695,14 +864,14 @@ export function AdminDashboardClient() {
             {coupons.map((coupon) => <article key={coupon.id} className="rounded-2xl border border-black/8 p-4"><div className="flex items-start justify-between gap-4"><div><p className="font-black">{coupon.code}</p><p className="mt-1 text-sm text-[var(--muted)]">{coupon.name} | {coupon.type === "percentage" ? `${coupon.percentage}% off` : `${formatNaira(coupon.valueKobo)} off`}</p><p className="mt-1 text-xs font-bold uppercase tracking-[.12em] text-[var(--muted)]">Used {coupon.usedCount}{coupon.usageLimit ? ` of ${coupon.usageLimit}` : ""}</p></div><button type="button" disabled={isPending} onClick={() => toggleCoupon(coupon)} className="cta-outline py-2">{coupon.isActive ? "Disable" : "Enable"}</button></div></article>)}
             {coupons.length === 0 ? <p className="text-sm font-bold text-[var(--muted)]">No coupons created yet.</p> : null}
           </div>
-        </section>
+        </section> : null}
 
 
 
 
 
 
-        <section className="mt-8 rounded-[2rem] border border-black/8 bg-white/80 p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
+        {showSection("content") ? <section className="mt-8 rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <div className="flex items-center gap-3"><Mail className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Newsletter subscribers</h2></div>
@@ -718,7 +887,7 @@ export function AdminDashboardClient() {
             {newsletterSubscribers.map((subscriber) => <article key={subscriber.id} className="rounded-2xl border border-black/8 bg-[#fbfaf6] p-4"><div className="flex items-start justify-between gap-4"><div><p className="font-black">{subscriber.email}</p><p className="mt-1 text-sm text-[var(--muted)]">{subscriber.name || "Guest subscriber"} | {subscriber.source}</p><p className="mt-1 text-xs font-black uppercase tracking-[.12em] text-[var(--muted)]">{subscriber.status} | {subscriber.subscribedAt ? new Date(subscriber.subscribedAt).toLocaleDateString() : "No date"}</p></div><button type="button" disabled={isPending} onClick={() => toggleNewsletterSubscriber(subscriber)} className="cta-outline py-2">{subscriber.status === "subscribed" ? "Unsubscribe" : "Resubscribe"}</button></div></article>)}
             {newsletterSubscribers.length === 0 ? <p className="text-sm font-bold text-[var(--muted)]">No newsletter subscribers yet.</p> : null}
           </div>
-        </section>        <section className="mt-8 rounded-[2rem] border border-black/8 bg-white/80 p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
+        </section> : null}        {showSection("content") ? <section className="mt-8 rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
           <div className="flex items-center gap-3"><Image className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Homepage content</h2></div>
           <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Manage hero copy and the first promotional banner on the storefront.</p>
           {homepageContent ? <form onSubmit={saveHomepageContent} className="mt-6 grid gap-4 md:grid-cols-2">
@@ -732,14 +901,14 @@ export function AdminDashboardClient() {
             <div className="md:col-span-2 rounded-2xl border border-black/8 bg-[#fbfaf6] p-4"><p className="text-sm font-black uppercase tracking-[.12em] text-[var(--muted)]">Promotional banner</p><div className="mt-4 grid gap-4 md:grid-cols-2"><label className="grid gap-2 text-sm font-bold">Banner title<input name="bannerTitle" value={homepageContentForm.bannerTitle} onChange={updateHomepageContentField} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label><label className="grid gap-2 text-sm font-bold">Banner link<input name="bannerCtaHref" value={homepageContentForm.bannerCtaHref} onChange={updateHomepageContentField} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label><label className="grid gap-2 text-sm font-bold md:col-span-2">Banner subtitle<textarea name="bannerSubtitle" value={homepageContentForm.bannerSubtitle} onChange={updateHomepageContentField} rows={2} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label><label className="flex items-center gap-3 text-sm font-bold"><input name="bannerIsActive" type="checkbox" checked={homepageContentForm.bannerIsActive} onChange={updateHomepageContentField} /> Active banner</label></div></div>
             <button type="submit" disabled={isPending} className="cta-primary md:col-span-2"><Image className="size-4" /> Save homepage content</button>
           </form> : <p className="mt-6 text-sm font-bold text-[var(--muted)]">Homepage content is visible to content managers and super administrators.</p>}
-        </section>        <section className="mt-8 rounded-[2rem] border border-black/8 bg-[#fbfaf6] p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
+        </section> : null}        {showSection("settings") ? <section className="mt-8 rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)] sm:p-8">
           <div className="flex items-center gap-3"><Activity className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Admin activity logs</h2></div>
           <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Recent protected administrator actions, visible to super administrators.</p>
           <div className="mt-6 grid gap-3">
             {activityLogs.slice(0, 10).map((log) => <article key={log.id} className="rounded-2xl border border-black/8 bg-white p-4"><div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"><div><p className="font-black">{statusLabel(log.action)} <span className="text-[var(--muted)]">on</span> {statusLabel(log.resourceType)}</p><p className="mt-1 text-sm text-[var(--muted)]">{log.administratorName} | {log.administratorEmail}</p></div><p className="text-xs font-black uppercase tracking-[.12em] text-[var(--muted)]">{log.createdAt ? new Date(log.createdAt).toLocaleString() : ""}</p></div><p className="mt-3 text-xs font-bold text-[var(--muted)]">Resource: {log.resourceId || "n/a"} | Request: {log.requestId || "n/a"}</p></article>)}
             {activityLogs.length === 0 ? <p className="text-sm font-bold text-[var(--muted)]">Activity logs are visible after logging in as a super administrator.</p> : null}
           </div>
-        </section>        <section className="mt-8 rounded-[2rem] border border-black/8 bg-white/80 p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
+        </section> : null}        {showSection("settings") ? <section className="mt-8 rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
           <div className="flex items-center gap-3"><Settings className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Store settings</h2></div>
           <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Super administrators can update public store details and maintenance settings here.</p>
           {storeSettings ? <form onSubmit={saveStoreSettings} className="mt-6 grid gap-4 md:grid-cols-2">
@@ -762,28 +931,29 @@ export function AdminDashboardClient() {
             <label className="grid gap-2 text-sm font-bold">Maintenance message<input name="maintenanceMessage" value={storeSettingsForm.maintenanceMessage} onChange={updateStoreSettingsField} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
             <button type="submit" disabled={isPending} className="cta-primary md:col-span-2"><Settings className="size-4" /> Save store settings</button>
           </form> : <p className="mt-6 text-sm font-bold text-[var(--muted)]">Store settings are visible after logging in as a super administrator.</p>}
-        </section>        <section className="mt-8 rounded-[2rem] border border-black/8 bg-[var(--ink)] p-6 text-white shadow-[0_24px_70px_rgba(28,34,31,.18)]">
+        </section> : null}        {showSection("staff") ? <section className="mt-8 rounded-[2rem] border border-black/8 bg-white p-6 text-[var(--ink)] shadow-[0_18px_50px_rgba(28,34,31,.06)]">
           <div className="flex items-center gap-3"><ShieldCheck className="size-5 text-[var(--accent)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Staff roles and permissions</h2></div>
-          <p className="mt-2 text-sm leading-6 text-white/65">Super administrators can create staff accounts and assign only the permissions each role needs.</p>
+          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Super administrators can create staff accounts and assign only the permissions each role needs.</p>
           <form onSubmit={createStaff} className="mt-6 grid gap-4 md:grid-cols-2">
-            <label className="grid gap-2 text-sm font-bold">Name<input name="name" value={staffForm.name} onChange={updateStaffFormField} required className="rounded-2xl border border-white/10 bg-white px-4 py-3 text-[var(--ink)] outline-none" /></label>
-            <label className="grid gap-2 text-sm font-bold">Email<input name="email" type="email" value={staffForm.email} onChange={updateStaffFormField} required className="rounded-2xl border border-white/10 bg-white px-4 py-3 text-[var(--ink)] outline-none" /></label>
-            <label className="grid gap-2 text-sm font-bold">Phone<input name="phone" value={staffForm.phone} onChange={updateStaffFormField} required className="rounded-2xl border border-white/10 bg-white px-4 py-3 text-[var(--ink)] outline-none" /></label>
-            <label className="grid gap-2 text-sm font-bold">Temporary password<input name="password" type="password" value={staffForm.password} onChange={updateStaffFormField} required minLength={8} className="rounded-2xl border border-white/10 bg-white px-4 py-3 text-[var(--ink)] outline-none" /></label>
-            <div className="md:col-span-2"><p className="text-sm font-black uppercase tracking-[.12em] text-white/60">Roles</p><div className="mt-3 flex flex-wrap gap-2">{staffRoles.map((role) => <button key={role} type="button" onClick={() => toggleStaffFormRole(role)} className={`rounded-full px-4 py-2 text-sm font-black ${staffForm.roles.includes(role) ? "bg-[var(--accent)] text-[var(--ink)]" : "bg-white/10 text-white"}`}>{statusLabel(role)}</button>)}</div></div>
-            <div className="md:col-span-2"><p className="text-sm font-black uppercase tracking-[.12em] text-white/60">Permissions</p><div className="mt-3 flex flex-wrap gap-2">{staffPermissions.map((permission) => <button key={permission} type="button" onClick={() => toggleStaffFormPermission(permission)} className={`rounded-full px-4 py-2 text-xs font-black ${staffForm.permissions.includes(permission) ? "bg-white text-[var(--ink)]" : "bg-white/10 text-white"}`}>{permission}</button>)}</div></div>
+            <label className="grid gap-2 text-sm font-bold">Name<input name="name" value={staffForm.name} onChange={updateStaffFormField} required className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-[var(--ink)] outline-none" /></label>
+            <label className="grid gap-2 text-sm font-bold">Email<input name="email" type="email" value={staffForm.email} onChange={updateStaffFormField} required className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-[var(--ink)] outline-none" /></label>
+            <label className="grid gap-2 text-sm font-bold">Phone<input name="phone" value={staffForm.phone} onChange={updateStaffFormField} required className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-[var(--ink)] outline-none" /></label>
+            <label className="grid gap-2 text-sm font-bold">Temporary password<input name="password" type="password" value={staffForm.password} onChange={updateStaffFormField} required minLength={8} className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-[var(--ink)] outline-none" /></label>
+            <div className="md:col-span-2"><p className="text-sm font-black uppercase tracking-[.12em] text-[var(--muted)]">Roles</p><div className="mt-3 flex flex-wrap gap-2">{staffRoles.map((role) => <button key={role} type="button" onClick={() => toggleStaffFormRole(role)} className={`rounded-full px-4 py-2 text-sm font-black ${staffForm.roles.includes(role) ? "bg-[var(--accent)] text-[var(--ink)]" : "bg-[#fff3e8] text-white"}`}>{statusLabel(role)}</button>)}</div></div>
+            <div className="md:col-span-2"><p className="text-sm font-black uppercase tracking-[.12em] text-[var(--muted)]">Permissions</p><div className="mt-3 flex flex-wrap gap-2">{staffPermissions.map((permission) => <button key={permission} type="button" onClick={() => toggleStaffFormPermission(permission)} className={`rounded-full px-4 py-2 text-xs font-black ${staffForm.permissions.includes(permission) ? "bg-[#fff3e8] text-[var(--ink)]" : "bg-[#fff3e8] text-white"}`}>{permission}</button>)}</div></div>
             <button type="submit" disabled={isPending} className="cta-primary bg-[var(--accent)] text-[var(--ink)] md:col-span-2"><ShieldCheck className="size-4" /> Create staff account</button>
           </form>
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
-            {staff.map((staffMember) => <article key={staffMember.id} className="rounded-2xl bg-white/8 p-5"><div className="flex items-start justify-between gap-4"><div><p className="font-black">{staffMember.name}</p><p className="mt-1 text-sm text-white/60">{staffMember.email} | {staffMember.isActive ? "Active" : "Suspended"}</p></div><button type="button" disabled={isPending} onClick={() => updateStaffDraft(staffMember.id, "isActive", !(staffDrafts[staffMember.id]?.isActive ?? staffMember.isActive))} className="cta-outline border-white/20 py-2 text-white">{(staffDrafts[staffMember.id]?.isActive ?? staffMember.isActive) ? "Suspend" : "Reactivate"}</button></div><div className="mt-4"><p className="text-xs font-black uppercase tracking-[.12em] text-white/50">Roles</p><div className="mt-2 flex flex-wrap gap-2">{staffRoles.map((role) => <button key={role} type="button" onClick={() => toggleStaffDraftArray(staffMember, "roles", role)} className={`rounded-full px-3 py-2 text-xs font-black ${(staffDrafts[staffMember.id]?.roles ?? staffMember.roles).includes(role) ? "bg-[var(--accent)] text-[var(--ink)]" : "bg-white/10 text-white"}`}>{statusLabel(role)}</button>)}</div></div><div className="mt-4"><p className="text-xs font-black uppercase tracking-[.12em] text-white/50">Permissions</p><div className="mt-2 flex flex-wrap gap-2">{staffPermissions.map((permission) => <button key={permission} type="button" onClick={() => toggleStaffDraftArray(staffMember, "permissions", permission)} className={`rounded-full px-3 py-2 text-[11px] font-black ${(staffDrafts[staffMember.id]?.permissions ?? staffMember.permissions).includes(permission) ? "bg-white text-[var(--ink)]" : "bg-white/10 text-white"}`}>{permission}</button>)}</div></div><button type="button" disabled={isPending} onClick={() => saveStaff(staffMember)} className="cta-primary mt-4 bg-[var(--accent)] text-[var(--ink)]"><Save className="size-4" /> Save staff permissions</button></article>)}
-            {staff.length === 0 ? <p className="text-sm font-bold text-white/60">Staff management is visible after logging in as a super administrator.</p> : null}
+            {staff.map((staffMember) => <article key={staffMember.id} className="rounded-2xl bg-[#fbfaf6] p-5"><div className="flex items-start justify-between gap-4"><div><p className="font-black">{staffMember.name}</p><p className="mt-1 text-sm text-[var(--muted)]">{staffMember.email} | {staffMember.isActive ? "Active" : "Suspended"}</p></div><button type="button" disabled={isPending} onClick={() => updateStaffDraft(staffMember.id, "isActive", !(staffDrafts[staffMember.id]?.isActive ?? staffMember.isActive))} className="cta-outline border-black/10 py-2 text-[var(--ink)]">{(staffDrafts[staffMember.id]?.isActive ?? staffMember.isActive) ? "Suspend" : "Reactivate"}</button></div><div className="mt-4"><p className="text-xs font-black uppercase tracking-[.12em] text-[var(--muted)]">Roles</p><div className="mt-2 flex flex-wrap gap-2">{staffRoles.map((role) => <button key={role} type="button" onClick={() => toggleStaffDraftArray(staffMember, "roles", role)} className={`rounded-full px-3 py-2 text-xs font-black ${(staffDrafts[staffMember.id]?.roles ?? staffMember.roles).includes(role) ? "bg-[var(--accent)] text-[var(--ink)]" : "bg-[#fff3e8] text-white"}`}>{statusLabel(role)}</button>)}</div></div><div className="mt-4"><p className="text-xs font-black uppercase tracking-[.12em] text-[var(--muted)]">Permissions</p><div className="mt-2 flex flex-wrap gap-2">{staffPermissions.map((permission) => <button key={permission} type="button" onClick={() => toggleStaffDraftArray(staffMember, "permissions", permission)} className={`rounded-full px-3 py-2 text-[11px] font-black ${(staffDrafts[staffMember.id]?.permissions ?? staffMember.permissions).includes(permission) ? "bg-[#fff3e8] text-[var(--ink)]" : "bg-[#fff3e8] text-white"}`}>{permission}</button>)}</div></div><button type="button" disabled={isPending} onClick={() => saveStaff(staffMember)} className="cta-primary mt-4 bg-[var(--accent)] text-[var(--ink)]"><Save className="size-4" /> Save staff permissions</button></article>)}
+            {staff.length === 0 ? <p className="text-sm font-bold text-[var(--muted)]">Staff management is visible after logging in as a super administrator.</p> : null}
           </div>
-        </section>
-        <div className="mt-8 rounded-2xl bg-white/70 p-5 text-sm text-[var(--muted)]"><BarChart3 className="mb-2 size-5 text-[var(--accent-dark)]" />Reports are now connected. Product image uploads and deeper staff permission screens can build on this protected admin foundation.</div>
+        </section> : null}
+        {showSection("overview") ? <div className="mt-8 rounded-2xl bg-white/70 p-5 text-sm text-[var(--muted)]"><BarChart3 className="mb-2 size-5 text-[var(--accent-dark)]" />Reports are now connected. Product image uploads and deeper staff permission screens can build on this protected admin foundation.</div> : null}
       </section>
     </main>
   );
 }
+
 
 
 

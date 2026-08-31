@@ -100,7 +100,7 @@ export function DeliveryZonesAdmin() {
   }
 
   return (
-    <section className="mt-8 rounded-[2rem] border border-black/8 bg-white/80 p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
+    <section className="mt-8 rounded-[2rem] border border-black/8 bg-[#fbfaf6]0 p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
       <div className="flex items-center gap-3"><Truck className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Delivery zones</h2></div>
       <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Manage Nigerian delivery coverage, fees and estimated delivery timelines used by checkout.</p>
       {error ? <p className="mt-4 rounded-2xl border border-[var(--accent)]/30 bg-[#fff8ed] p-4 text-sm font-bold text-[var(--accent-dark)]">{error}</p> : null}

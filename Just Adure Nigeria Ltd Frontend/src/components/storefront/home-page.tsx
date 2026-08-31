@@ -73,6 +73,48 @@ const quickDepartments = [
   { name: "Bicycles", href: "/shop?q=bicycle", icon: Bike },
   { name: "Monitors", href: "/shop?q=monitor", icon: Monitor },
 ];
+const heroSlides = [
+  {
+    eyebrow: "Just Adure stock festival",
+    title: "UK-used deals for homes, offices and shops.",
+    subtitle: "Computers, appliances, TVs, furniture and bicycles with honest condition notes and secure naira checkout.",
+    cta: "Discover deals",
+    href: "/shop",
+    badgeOne: "Quality checked",
+    badgeTwo: "Paystack ready",
+    gradient: "bg-[linear-gradient(135deg,#ff8b2d_0%,#f46d1f_42%,#1d241f_100%)]",
+  },
+  {
+    eyebrow: "Appliance clearance",
+    title: "Fridges, washers and dryers ready for Nigerian homes.",
+    subtitle: "Shop tested UK-used appliances with cooling, spinning, heating and power notes clearly shown.",
+    cta: "Shop appliances",
+    href: "/category/home-appliances",
+    badgeOne: "Tested stock",
+    badgeTwo: "Delivery fees ready",
+    gradient: "bg-[linear-gradient(135deg,#0f3d35_0%,#1f6b55_45%,#f4853d_100%)]",
+  },
+  {
+    eyebrow: "Office and study setup",
+    title: "Desktop computers and monitors for serious work.",
+    subtitle: "Find Apple desktops, Dell monitors and everyday office equipment inspected before listing.",
+    cta: "Shop computers",
+    href: "/category/computers",
+    badgeOne: "Ports checked",
+    badgeTwo: "Stock verified",
+    gradient: "bg-[linear-gradient(135deg,#1b263b_0%,#30476d_48%,#f4853d_100%)]",
+  },
+  {
+    eyebrow: "Living room finds",
+    title: "Furniture, TVs and DVD units with clear condition notes.",
+    subtitle: "Actual product condition, accessories, visible defects and warranty details stay clear before checkout.",
+    cta: "Shop home finds",
+    href: "/shop?q=furniture",
+    badgeOne: "Condition shown",
+    badgeTwo: "One-off items",
+    gradient: "bg-[linear-gradient(135deg,#50311f_0%,#a45b2c_45%,#111816_100%)]",
+  },
+];
 
 const conditionNotes = ["Like New", "Excellent", "Very Good", "Good", "Fair"];
 
@@ -80,6 +122,7 @@ export function HomePage() {
   const [homepage, setHomepage] = useState(null);
   const [products, setProducts] = useState(fallbackProducts);
   const [categories, setCategories] = useState(fallbackCategories);
+  const [activeSlide, setActiveSlide] = useState(0);
 
   useEffect(() => {
     getHomepage()
@@ -92,41 +135,48 @@ export function HomePage() {
         setHomepage(null);
       });
   }, []);
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setActiveSlide((current) => (current + 1) % heroSlides.length);
+    }, 5500);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const primaryBanner = homepage?.content?.banners?.find((banner) => banner.isActive) ?? null;
-  const heroImage = primaryBanner?.imageUrl || products[0]?.imageUrl || fallbackImage;
+  const currentSlide = heroSlides[activeSlide];
+  const heroImage = primaryBanner?.imageUrl || products[activeSlide % products.length]?.imageUrl || fallbackImage;
 
   return (
     <main className="overflow-hidden bg-[#ededed]">
       <section className="py-5">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-[1.35rem] bg-[linear-gradient(135deg,#ff8b2d_0%,#f46d1f_42%,#1d241f_100%)] shadow-[0_22px_70px_rgba(28,34,31,.18)]">
-            <div className="absolute right-[4%] top-[-8rem] h-[32rem] w-[32rem] rounded-full bg-white/18" aria-hidden="true" />
+          <div className={`relative overflow-hidden rounded-[1.35rem] ${currentSlide.gradient} shadow-[0_22px_70px_rgba(28,34,31,.18)]`}>
+            <div className="absolute right-[4%] top-[-8rem] h-[32rem] w-[32rem] rounded-full bg-[#fff3e8]" aria-hidden="true" />
             <div className="absolute bottom-[-9rem] right-[18%] h-[24rem] w-[24rem] rounded-full bg-black/18" aria-hidden="true" />
-            <div className="relative grid min-h-[25rem] items-center gap-8 p-7 text-white sm:p-10 lg:grid-cols-[.9fr_1.1fr] lg:p-12">
+            <div className="relative grid min-h-[25rem] items-center gap-8 p-7 text-[var(--ink)] sm:p-10 lg:grid-cols-[.9fr_1.1fr] lg:p-12">
               <div className="relative z-10 animate-rise">
-                <p className="text-sm font-black uppercase tracking-[.16em] text-white/85"><Sparkles className="mr-2 inline size-4" /> Just Adure stock festival</p>
+                <p className="text-sm font-black uppercase tracking-[.16em] text-[var(--muted)]"><Sparkles className="mr-2 inline size-4" /> {currentSlide.eyebrow}</p>
                 <h1 className="mt-4 max-w-xl font-serif text-5xl font-bold leading-[.92] tracking-[-.06em] sm:text-7xl">
-                  {primaryBanner?.title ?? "UK-used deals for homes, offices and shops."}
+                  {primaryBanner?.title ?? currentSlide.title}
                 </h1>
-                <p className="mt-5 max-w-lg text-lg leading-8 text-white/82">
-                  {primaryBanner?.subtitle ?? "Computers, appliances, TVs, furniture and bicycles with honest condition notes and secure naira checkout."}
+                <p className="mt-5 max-w-lg text-lg leading-8 text-[var(--muted)]">
+                  {primaryBanner?.subtitle ?? currentSlide.subtitle}
                 </p>
                 <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                  <a href={primaryBanner?.href || "/shop"} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-6 font-black text-[var(--ink)] hover:bg-[#fff3e7]">Discover deals <ArrowRight className="size-4" /></a>
-                  <a href="/order-tracking" className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/35 px-6 font-black text-white hover:bg-white hover:text-[var(--ink)]">Track order</a>
+                  <a href={primaryBanner?.href || currentSlide.href} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-6 font-black text-[var(--ink)] hover:bg-[#fff3e7]">{currentSlide.cta} <ArrowRight className="size-4" /></a>
+                  <a href="/order-tracking" className="inline-flex min-h-12 items-center justify-center rounded-full border border-black/10 px-6 font-black text-[var(--ink)] hover:bg-[#fff3e8]">Track order</a>
                 </div>
               </div>
 
               <div className="relative z-10 hidden min-h-[22rem] items-end justify-end lg:flex">
-                <div className="absolute right-0 top-1/2 h-56 w-[34rem] -translate-y-1/2 rotate-[-8deg] rounded-[3rem] bg-white/18" aria-hidden="true" />
+                <div className="absolute right-0 top-1/2 h-56 w-[34rem] -translate-y-1/2 rotate-[-8deg] rounded-[3rem] bg-[#fff3e8]" aria-hidden="true" />
                 <img src={heroImage} alt="Featured UK-used product" className="relative h-[21rem] w-[34rem] rounded-[1.15rem] object-cover shadow-[0_30px_80px_rgba(0,0,0,.22)]" />
-                <div className="absolute bottom-8 left-8 rounded-full bg-white px-5 py-3 text-sm font-black text-[var(--ink)] shadow-xl">Quality checked</div>
-                <div className="absolute right-8 top-7 rounded-full bg-[var(--ink)] px-5 py-3 text-sm font-black text-white shadow-xl">Paystack ready</div>
+                <div className="absolute bottom-8 left-8 rounded-full bg-white px-5 py-3 text-sm font-black text-[var(--ink)] shadow-xl">{currentSlide.badgeOne}</div>
+                <div className="absolute right-8 top-7 rounded-full bg-white px-5 py-3 text-sm font-black text-[var(--ink)] shadow-xl">{currentSlide.badgeTwo}</div>
               </div>
             </div>
             <div className="relative flex justify-center gap-2 pb-4">
-              {[0, 1, 2, 3, 4, 5].map((item) => <span key={item} className={`size-2 rounded-full ${item === 0 ? "w-8 bg-white" : "bg-white/55"}`} />)}
+              {heroSlides.map((slide, index) => <button key={slide.title} type="button" aria-label={`Show ${slide.eyebrow} slide`} onClick={() => setActiveSlide(index)} className={`h-2 rounded-full transition ${index === activeSlide ? "w-8 bg-white" : "w-2 bg-white/55 hover:bg-white/80"}`} />)}
             </div>
           </div>
         </div>
@@ -182,16 +232,16 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="bg-[var(--ink)] py-16 text-white">
+      <section className="bg-[#fbfaf6] py-16 text-[var(--ink)]">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[.9fr_1.1fr] lg:px-8">
           <div>
             <p className="section-kicker text-[var(--accent)]">Condition-first shopping</p>
             <h2 className="mt-3 font-serif text-5xl font-bold leading-[.95] tracking-[-.055em]">No hidden story after delivery.</h2>
-            <p className="mt-5 max-w-xl leading-8 text-white/68">UK-used products need honesty. The store is structured to show the exact grade, visible faults, included accessories, testing status and warranty before the customer pays.</p>
+            <p className="mt-5 max-w-xl leading-8 text-[var(--muted)]">UK-used products need honesty. The store is structured to show the exact grade, visible faults, included accessories, testing status and warranty before the customer pays.</p>
           </div>
           <div className="grid gap-3 sm:grid-cols-5 lg:items-end">
             {conditionNotes.map((condition, index) => (
-              <div key={condition} className="rounded-[1.25rem] border border-white/10 bg-white/8 p-4" style={{ minHeight: `${8 + index * 1.2}rem` }}>
+              <div key={condition} className="rounded-[1.25rem] border border-black/10 bg-[#fbfaf6] p-4" style={{ minHeight: `${8 + index * 1.2}rem` }}>
                 <p className="text-xs font-black uppercase tracking-[.14em] text-[var(--accent)]">Grade {index + 1}</p>
                 <p className="mt-3 text-xl font-black tracking-[-.04em]">{condition}</p>
               </div>

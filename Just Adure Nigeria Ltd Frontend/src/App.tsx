@@ -1,7 +1,9 @@
-"use client";
+  "use client";
 
 import { useMemo } from "react";
 import { AccountClient } from "@/components/customer/account-client";
+import { CustomerAddressesPage } from "@/components/customer/customer-addresses-page";
+import { CustomerOrdersPage } from "@/components/customer/customer-order-history";
 import { AdminDashboardClient } from "@/components/admin/admin-dashboard-client";
 import { BasicPage } from "@/components/storefront/basic-page";
 import { CartClient } from "@/components/commerce/cart-client";
@@ -22,13 +24,11 @@ import { ResetPasswordClient } from "@/components/login/reset-password-client";
 import { ShopPage } from "@/components/storefront/shop-page";
 import { SiteHeader } from "@/components/layout/site-header";
 import { WishlistClient } from "@/components/customer/wishlist-client";
-import { usePath } from "@/lib/navigation";
 
 export default function App({ initialPath = "/" }) {
-  const path = usePath(initialPath);
   const url = useMemo(
-    () => new URL(path, typeof window === "undefined" ? "http://localhost:3000" : window.location.origin),
-    [path],
+    () => new URL(initialPath, typeof window === "undefined" ? "http://localhost:3000" : window.location.origin),
+    [initialPath],
   );
   const pathname = url.pathname;
 
@@ -38,10 +38,18 @@ export default function App({ initialPath = "/" }) {
     page = <HomePage />;
   } else if (pathname === "/account") {
     page = <AccountClient />;
+  } else if (pathname === "/account/orders") {
+    page = <CustomerOrdersPage />;
+  } else if (pathname === "/account/addresses") {
+    page = <CustomerAddressesPage />;
   } else if (pathname === "/profile") {
     page = <CustomerProfileClient />;
   } else if (pathname === "/admin") {
-    page = <AdminDashboardClient />;
+    page = <AdminDashboardClient section="overview" />;
+  } else if (["/returns", "/refunds", "/return-refund", "/returns-refunds", "/admin/return", "/admin/refund", "/admin/return-refund", "/admin/returns-refunds"].includes(pathname)) {
+    page = <AdminDashboardClient section="returns" />;
+  } else if (pathname.startsWith("/admin/")) {
+    page = <AdminDashboardClient section={pathname.replace("/admin/", "")} />;
   } else if (pathname === "/shop") {
     page = <ShopPage defaultQuery={url.searchParams.get("q") ?? ""} defaultCategory={url.searchParams.get("category") ?? ""} />;
   } else if (pathname === "/wishlist") {
@@ -72,8 +80,9 @@ export default function App({ initialPath = "/" }) {
     page = <ShopPage defaultCategory={decodeURIComponent(pathname.replace("/category/", ""))} />;
   } else if (pathname.startsWith("/product/")) {
     page = <ProductDetailsPage slug={decodeURIComponent(pathname.replace("/product/", ""))} />;
-  } else if (["/about", "/faq", "/delivery-returns", "/privacy", "/terms"].includes(pathname)) {
-    page = <BasicPage title={pathname.replace("/", "").replaceAll("-", " ")} />;
+  } else if (["/about", "/faq", "/frequently-asked-questions", "/delivery-information", "/delivery-returns", "/return-and-refund-policy", "/privacy", "/privacy-policy", "/terms", "/terms-and-conditions", "/warranty-information"].includes(pathname)) {
+    const pageTitle = pathname.replace("/", "").replaceAll("-", " ");
+    page = <BasicPage title={pageTitle === "faq" ? "frequently asked questions" : pageTitle} />;
   } else {
     page = <NotFoundPage />;
   }

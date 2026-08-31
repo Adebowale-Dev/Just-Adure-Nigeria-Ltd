@@ -36,7 +36,7 @@ export function ProductEnquiryForm({ product }) {
   }
 
   return (
-    <form onSubmit={submitEnquiry} className="rounded-[2rem] border border-black/8 bg-white/80 p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)] sm:p-8">
+    <form onSubmit={submitEnquiry} className="rounded-[2rem] border border-black/8 bg-[#fbfaf6]0 p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)] sm:p-8">
       <div className="flex items-center gap-3"><MessageSquareText className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Ask about this item</h2></div>
       <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Use this for condition, accessories, warranty, delivery or availability questions. We attach the product slug automatically.</p>
       {ticket ? <p className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-900">Enquiry sent. Ticket number: {ticket.ticketNumber}</p> : null}

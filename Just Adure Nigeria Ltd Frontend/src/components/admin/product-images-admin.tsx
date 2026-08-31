@@ -1,7 +1,22 @@
 import { useState, useTransition } from "react";
 import { ImagePlus, Save, Star, Trash2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { attachAdminProductImage, removeAdminProductImage, setAdminProductPrimaryImage, uploadAdminProductImage } from "@/lib/api.js";
 
+function AdminDropdown({ value, options, placeholder = "Select", onValueChange }) {
+  const active = options.find((option) => option.value === value);
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className="flex min-h-12 w-full items-center justify-between rounded-2xl border border-black/10 bg-white px-4 py-3 text-left text-sm font-black text-[var(--ink)] outline-none transition hover:border-[var(--accent)]/40">
+        <span className="truncate">{active?.label ?? placeholder}</span>
+        <span className="ml-3 text-[var(--accent-dark)]">▾</span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="max-h-72 w-full min-w-[16rem] overflow-y-auto">
+        {options.map((option) => <DropdownMenuItem key={option.value || "empty"} onClick={() => onValueChange(option.value)} className={option.value === value ? "bg-[#fff3e8] text-[var(--accent-dark)]" : ""}>{option.label}</DropdownMenuItem>)}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 function readFileAsDataUri(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -72,14 +87,14 @@ export function ProductImagesAdmin({ products = [], onProductsChanged }) {
   }
 
   return (
-    <section className="mt-8 rounded-[2rem] border border-black/8 bg-white/80 p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
+    <section className="mt-8 rounded-[2rem] border border-black/8 bg-[#fbfaf6]0 p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
       <div className="flex items-center gap-3"><ImagePlus className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Product images</h2></div>
       <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Upload actual UK-used item photos, attach them to products, and choose the main storefront image. If Cloudinary is not configured yet, uploads are saved locally for development.</p>
       {error ? <p className="mt-4 rounded-2xl border border-[var(--accent)]/30 bg-[#fff8ed] p-4 text-sm font-bold text-[var(--accent-dark)]">{error}</p> : null}
       {message ? <p className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-900">{message}</p> : null}
 
       {selectedProduct ? <form onSubmit={uploadAndAttach} className="mt-6 grid gap-4 md:grid-cols-[1fr_1fr_auto]">
-        <label className="grid gap-2 text-sm font-bold">Product<select value={selectedProduct.id} onChange={(event) => setSelectedProductId(event.target.value)} className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none">{products.map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}</select></label>
+        <label className="grid gap-2 text-sm font-bold">Product<AdminDropdown value={selectedProduct.id} placeholder="Select product" options={products.map((product) => ({ value: product.id, label: product.name }))} onValueChange={setSelectedProductId} /></label>
         <label className="grid gap-2 text-sm font-bold">Alt text<input value={altText} onChange={(event) => setAltText(event.target.value)} required placeholder={selectedProduct ? `Actual photo of ${selectedProduct.name}` : "Actual product photo"} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
         <label className="grid gap-2 text-sm font-bold">Image file<input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => setFile(event.target.files?.[0] ?? null)} required className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none" /></label>
         <button type="submit" disabled={isPending} className="cta-primary md:col-span-3"><ImagePlus className="size-4" /> Upload and attach image</button>

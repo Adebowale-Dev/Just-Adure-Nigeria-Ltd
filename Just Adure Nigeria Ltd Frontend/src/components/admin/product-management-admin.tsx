@@ -1,5 +1,6 @@
-﻿import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Archive, PackagePlus, Save } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { archiveAdminProduct, createAdminProduct, getBrands, getCategories, getConditionGrades, updateAdminProduct } from "@/lib/api.js";
 import { formatNaira } from "@/lib/utils.js";
 
@@ -24,6 +25,20 @@ const initialForm = {
   isFeatured: false,
 };
 
+function AdminDropdown({ value, options, placeholder = "Select", onValueChange }) {
+  const active = options.find((option) => option.value === value);
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className="flex min-h-12 w-full items-center justify-between rounded-2xl border border-black/10 bg-white px-4 py-3 text-left text-sm font-black text-[var(--ink)] outline-none transition hover:border-[var(--accent)]/40">
+        <span className="truncate">{active?.label ?? placeholder}</span>
+        <span className="ml-3 text-[var(--accent-dark)]">▾</span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="max-h-72 w-full min-w-[16rem] overflow-y-auto">
+        {options.map((option) => <DropdownMenuItem key={option.value || "empty"} onClick={() => onValueChange(option.value)} className={option.value === value ? "bg-[#fff3e8] text-[var(--accent-dark)]" : ""}>{option.label}</DropdownMenuItem>)}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 function slugify(value) {
   return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
@@ -110,8 +125,7 @@ export function ProductManagementAdmin({ products = [], onProductsChanged }) {
     });
   }
 
-  function selectProduct(event) {
-    const productId = event.target.value;
+  function selectProductId(productId) {
     setSelectedProductId(productId);
     const product = products.find((item) => item.id === productId);
     setForm(product ? productToForm(product) : initialForm);
@@ -165,7 +179,7 @@ export function ProductManagementAdmin({ products = [], onProductsChanged }) {
   }
 
   return (
-    <section className="mt-8 rounded-[2rem] border border-black/8 bg-white/80 p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
+    <section className="mt-8 rounded-[2rem] border border-black/8 bg-[#fbfaf6]0 p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div><div className="flex items-center gap-3"><PackagePlus className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Product management</h2></div><p className="mt-2 text-sm leading-6 text-[var(--muted)]">Create and edit UK-used products with honest condition, pricing, stock and warranty details.</p></div>
         <button type="button" onClick={resetForm} className="cta-outline">New product</button>
@@ -173,15 +187,15 @@ export function ProductManagementAdmin({ products = [], onProductsChanged }) {
       {error ? <p className="mt-4 rounded-2xl border border-[var(--accent)]/30 bg-[#fff8ed] p-4 text-sm font-bold text-[var(--accent-dark)]">{error}</p> : null}
       {message ? <p className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-900">{message}</p> : null}
 
-      <label className="mt-6 grid gap-2 text-sm font-bold">Edit existing product<select value={selectedProductId} onChange={selectProduct} className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none"><option value="">Create a new product</option>{products.map((product) => <option key={product.id} value={product.id}>{product.name} | {product.sku}</option>)}</select></label>
+      <label className="mt-6 grid gap-2 text-sm font-bold">Edit existing product<AdminDropdown value={selectedProductId} placeholder="Create a new product" options={[{ value: "", label: "Create a new product" }, ...products.map((product) => ({ value: product.id, label: `${product.name} | ${product.sku}` }))]} onValueChange={selectProductId} /></label>
 
       <form onSubmit={saveProduct} className="mt-6 grid gap-4 md:grid-cols-3">
         <label className="grid gap-2 text-sm font-bold">Name<input name="name" value={form.name} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
         <label className="grid gap-2 text-sm font-bold">Slug<input name="slug" value={form.slug} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
         <label className="grid gap-2 text-sm font-bold">SKU<input name="sku" value={form.sku} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 uppercase outline-none" /></label>
-        <label className="grid gap-2 text-sm font-bold">Brand<select name="brandId" value={form.brandId} onChange={updateField} required className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none">{lookups.brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}</select></label>
-        <label className="grid gap-2 text-sm font-bold">Category<select name="categoryId" value={form.categoryId} onChange={updateField} required className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none">{lookups.categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
-        <label className="grid gap-2 text-sm font-bold">Condition<select name="conditionGradeId" value={form.conditionGradeId} onChange={updateField} required className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none">{lookups.grades.map((grade) => <option key={grade.id} value={grade.id}>{grade.name}</option>)}</select></label>
+        <label className="grid gap-2 text-sm font-bold">Brand<AdminDropdown value={form.brandId} placeholder="Select brand" options={lookups.brands.map((brand) => ({ value: brand.id, label: brand.name }))} onValueChange={(value) => setForm((current) => ({ ...current, brandId: value }))} /></label>
+        <label className="grid gap-2 text-sm font-bold">Category<AdminDropdown value={form.categoryId} placeholder="Select category" options={lookups.categories.map((category) => ({ value: category.id, label: category.name }))} onValueChange={(value) => setForm((current) => ({ ...current, categoryId: value }))} /></label>
+        <label className="grid gap-2 text-sm font-bold">Condition<AdminDropdown value={form.conditionGradeId} placeholder="Select condition" options={lookups.grades.map((grade) => ({ value: grade.id, label: grade.name }))} onValueChange={(value) => setForm((current) => ({ ...current, conditionGradeId: value }))} /></label>
         <label className="grid gap-2 text-sm font-bold">Price (NGN)<input name="priceNaira" type="number" min={0} value={form.priceNaira} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
         <label className="grid gap-2 text-sm font-bold">Previous price<input name="previousPriceNaira" type="number" min={0} value={form.previousPriceNaira} onChange={updateField} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
         <label className="grid gap-2 text-sm font-bold">Stock<input name="stockQuantity" type="number" min={0} value={form.stockQuantity} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>

@@ -1,19 +1,28 @@
-﻿import { useState, useTransition } from "react";
-import { AlertTriangle, UserPlus } from "lucide-react";
+import { useState, useTransition } from "react";
+import { AlertTriangle, ArrowRight, Eye, EyeOff, UserPlus } from "lucide-react";
 import { registerUser } from "@/lib/api.js";
 
+type RegistrationForm = {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+};
+
+
 export function RegisterClient() {
-  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
+  const [form, setForm] = useState<RegistrationForm>({ name: "", email: "", phone: "", password: "" });
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  function updateField(event) {
+  function updateField(event: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
   }
 
-  function submitRegistration(event) {
+  function submitRegistration(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     startTransition(async () => {
       try {
@@ -28,31 +37,30 @@ export function RegisterClient() {
   }
 
   return (
-    <main className="min-h-screen">
-      <section className="hero-grid border-b border-black/8">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <p className="section-kicker">Customer account</p>
-          <h1 className="mt-4 font-serif text-5xl font-bold leading-none tracking-[-.06em] sm:text-7xl">Create your account.</h1>
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-[var(--muted)]">Save delivery addresses, track orders, keep a wishlist and receive secure order updates.</p>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
-        <form onSubmit={submitRegistration} className="rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)] sm:p-8">
-          <div className="flex items-center gap-3"><UserPlus className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Registration details</h2></div>
-          {error ? <div className="mt-6 rounded-2xl border border-[var(--accent)]/30 bg-[#fff8ed] p-4 text-sm font-bold"><AlertTriangle className="mb-2 size-5 text-[var(--accent-dark)]" />{error}</div> : null}
-          {message ? <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-900">{message}</div> : null}
-          <div className="mt-8 grid gap-5 sm:grid-cols-2">
-            <label className="grid gap-2 text-sm font-bold">Full name<input name="name" value={form.name} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label>
-            <label className="grid gap-2 text-sm font-bold">Phone number<input name="phone" value={form.phone} onChange={updateField} required placeholder="08012345678" className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label>
-            <label className="grid gap-2 text-sm font-bold sm:col-span-2">Email address<input name="email" type="email" value={form.email} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label>
-            <label className="grid gap-2 text-sm font-bold sm:col-span-2">Password<input name="password" type="password" value={form.password} onChange={updateField} required minLength={8} className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label>
+    <main className="auth-shell min-h-screen px-4 py-12 sm:px-6 lg:px-8">
+      <section className="mx-auto flex min-h-[calc(100vh-9rem)] w-full max-w-2xl items-center justify-center">
+        <form onSubmit={submitRegistration} className="mx-auto w-full max-w-2xl rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_24px_70px_rgba(18,27,23,.1)] sm:p-8 lg:p-10">
+          <div className="flex size-14 items-center justify-center rounded-2xl bg-[#fff3e8] text-[var(--accent-dark)]">
+            <UserPlus className="size-6" />
           </div>
-          <button disabled={isPending} className="cta-primary mt-8 w-full disabled:opacity-50" type="submit">{isPending ? "Creating account..." : "Create account"}</button>
-          <p className="mt-5 text-center text-sm font-bold text-[var(--muted)]">Already have an account? <a className="text-[var(--accent-dark)]" href="/login">Sign in</a></p>
+          <h1 className="mt-6 font-serif text-5xl font-bold leading-none tracking-[-.06em] text-[var(--ink)] sm:text-6xl">Create account.</h1>
+          <p className="mt-3 max-w-xl text-base leading-7 text-[var(--muted)]">Join Just Adure Nigeria Ltd to checkout faster, save your address and receive order updates.</p>
+
+          {error ? <div className="mt-6 rounded-2xl border border-[var(--accent)]/30 bg-[#fff8ed] p-4 text-sm font-bold text-[var(--ink)]"><AlertTriangle className="mb-2 size-5 text-[var(--accent-dark)]" />{error}</div> : null}
+          {message ? <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-900">{message}</div> : null}
+
+          <div className="mt-8 grid gap-5 sm:grid-cols-2">
+            <label className="grid gap-2 text-sm font-black text-[var(--ink)]">Full name<input name="name" value={form.name} onChange={updateField} required autoComplete="name" placeholder="Your full name" className="rounded-2xl border border-black/10 bg-[#fbfaf6] px-4 py-3.5 outline-none transition focus:border-[var(--accent-dark)] focus:bg-white" /></label>
+            <label className="grid gap-2 text-sm font-black text-[var(--ink)]">Phone number<input name="phone" value={form.phone} onChange={updateField} required autoComplete="tel" inputMode="tel" placeholder="08012345678" className="rounded-2xl border border-black/10 bg-[#fbfaf6] px-4 py-3.5 outline-none transition focus:border-[var(--accent-dark)] focus:bg-white" /></label>
+            <label className="grid gap-2 text-sm font-black text-[var(--ink)] sm:col-span-2">Email address<input name="email" type="email" value={form.email} onChange={updateField} required autoComplete="email" placeholder="you@example.com" className="rounded-2xl border border-black/10 bg-[#fbfaf6] px-4 py-3.5 outline-none transition focus:border-[var(--accent-dark)] focus:bg-white" /></label>
+            <label className="grid gap-2 text-sm font-black text-[var(--ink)] sm:col-span-2">Password<div className="flex items-center rounded-2xl border border-black/10 bg-[#fbfaf6] px-4 transition focus-within:border-[var(--accent-dark)] focus-within:bg-white"><input name="password" type={showPassword ? "text" : "password"} value={form.password} onChange={updateField} required minLength={8} autoComplete="new-password" placeholder="Minimum 8 characters" className="min-w-0 flex-1 bg-transparent py-3.5 outline-none" /><button type="button" onClick={() => setShowPassword((current) => !current)} className="text-[var(--muted)] hover:text-[var(--ink)]" aria-label={showPassword ? "Hide password" : "Show password"}>{showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}</button></div></label>
+          </div>
+
+          <p className="mt-5 rounded-2xl bg-[#fbfaf6] px-4 py-3 text-sm leading-6 text-[var(--muted)]">By creating an account, you can manage orders, delivery addresses, wishlist items and support requests from one dashboard.</p>
+          <button disabled={isPending} className="cta-primary mt-6 w-full disabled:opacity-50" type="submit">{isPending ? "Creating account..." : "Create account"} <ArrowRight className="size-5" /></button>
+          <p className="mt-5 text-center text-sm font-bold text-[var(--muted)]">Already have an account? <a className="text-[var(--accent-dark)] hover:underline" href="/login">Sign in</a></p>
         </form>
       </section>
     </main>
   );
 }
-

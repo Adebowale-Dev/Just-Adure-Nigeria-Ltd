@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 export function getCurrentPath() {
-  return typeof window === "undefined" ? "/" : `${window.location.pathname}${window.location.search}`;
+  return typeof window === "undefined" ? "/" : window.location.pathname + window.location.search;
 }
 
 export function usePath(initialPath = "/") {
@@ -11,8 +11,15 @@ export function usePath(initialPath = "/") {
 
   useEffect(() => {
     const updatePath = () => setPath(getCurrentPath());
+    updatePath();
     window.addEventListener("popstate", updatePath);
-    return () => window.removeEventListener("popstate", updatePath);
+    window.addEventListener("pushstate", updatePath);
+    window.addEventListener("replacestate", updatePath);
+    return () => {
+      window.removeEventListener("popstate", updatePath);
+      window.removeEventListener("pushstate", updatePath);
+      window.removeEventListener("replacestate", updatePath);
+    };
   }, []);
 
   return path;

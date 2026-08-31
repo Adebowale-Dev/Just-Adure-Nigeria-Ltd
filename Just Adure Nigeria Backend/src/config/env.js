@@ -5,7 +5,7 @@ const environmentSchema = z.object({
     API_PORT: z.coerce.number().int().min(1).max(65_535).default(4000),
     API_URL: z.string().url().default("http://localhost:4000"),
     WEB_URL: z.string().url().default("http://localhost:3000"),
-    MONGODB_URL: z.string().url().default("mongodb://localhost:27017/just_adure"),
+    MONGODB_URL: z.string().trim().refine((value) => value.startsWith("mongodb://") || value.startsWith("mongodb+srv://"), "Enter a valid MongoDB connection string.").default("mongodb://localhost:27017/just_adure"),
     LOG_LEVEL: z
         .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
         .default("info"),

@@ -1,6 +1,9 @@
 import { connectMongo, disconnectMongo } from "../config/mongo.js";
 import { Brand, Category, ConditionGrade, DeliveryZone, Product, } from "../models/catalogue.js";
 import { User } from "../models/user.js";
+import { Order } from "../models/order.js";
+import { Payment } from "../models/payment.js";
+import { ReturnRequest } from "../models/return-request.js";
 import { hashPassword } from "../utils/password.js";
 const conditionGrades = [
     {
@@ -641,13 +644,102 @@ async function upsertCatalogue(gradeByCode) {
         }, { returnDocument: "after", upsert: true, runValidators: true });
     }
 }
+
+async function upsertDemoReturnRequest() {
+    const customer = await User.findOne({ email: "customer@gmail.com" }).lean();
+    const product = await Product.findOne({ sku: "JAD-FUR-SOFA-23-001" }).populate("conditionGradeId").lean();
+    const zone = await DeliveryZone.findOne({ code: "lagos-mainland" }).lean();
+    if (!customer || !product) return;
+
+    const item = {
+        productId: product._id,
+        name: product.name,
+        slug: product.slug,
+        sku: product.sku,
+        condition: product.conditionGradeId?.name ?? "Excellent",
+        imageUrl: product.images?.[0]?.secureUrl,
+        unitPriceKobo: product.priceKobo,
+        quantity: 1,
+        lineSubtotalKobo: product.priceKobo,
+    };
+
+    const order = await Order.findOneAndUpdate({ orderNumber: "JAN-DEMO-RETURN-001" }, {
+        $set: {
+            orderNumber: "JAN-DEMO-RETURN-001",
+            userId: customer._id,
+            customer: {
+                name: customer.name,
+                email: customer.email,
+                phone: customer.phone,
+                addressLine1: "12 Demo Street",
+                addressLine2: "",
+                state: "Lagos",
+                city: "Ikeja",
+                deliveryInstructions: "Call before delivery.",
+            },
+            items: [item],
+            subtotalKobo: product.priceKobo,
+            discountKobo: 0,
+            deliveryFeeKobo: 750000,
+            totalKobo: product.priceKobo + 750000,
+            currency: "NGN",
+            deliveryZoneId: zone?._id,
+            deliveryMethod: "delivery",
+            paymentStatus: "successful",
+            orderStatus: "return_requested",
+            statusHistory: [
+                { status: "paid", note: "Demo order paid successfully." },
+                { status: "delivered", note: "Demo order delivered to customer." },
+                { status: "return_requested", note: "Customer submitted a demo return request." },
+            ],
+            reservations: [],
+            customerNotes: "Demo order created for testing return and refund workflow.",
+            adminNotes: "Use this record to test the admin returns page.",
+        },
+    }, { returnDocument: "after", upsert: true, runValidators: true });
+
+    await Payment.findOneAndUpdate({ reference: "JAD-DEMO-RETURN-PAYMENT" }, {
+        $set: {
+            orderId: order._id,
+            orderNumber: order.orderNumber,
+            reference: "JAD-DEMO-RETURN-PAYMENT",
+            paystackTransactionId: "demo-transaction-001",
+            amountKobo: order.totalKobo,
+            currency: "NGN",
+            status: "successful",
+            channel: "card",
+            gatewayResponse: "Demo successful payment",
+            customerEmail: customer.email,
+            paidAt: new Date(),
+            verifiedAt: new Date(),
+        },
+    }, { returnDocument: "after", upsert: true, runValidators: true });
+
+    await ReturnRequest.findOneAndUpdate({ requestNumber: "RET-DEMO-001" }, {
+        $set: {
+            requestNumber: "RET-DEMO-001",
+            orderId: order._id,
+            orderNumber: order.orderNumber,
+            customerName: customer.name,
+            customerEmail: customer.email,
+            reason: "not_as_described",
+            details: "Demo customer says the sofa has more visible marks than expected and wants admin review before refund decision.",
+            items: [{ productId: product._id, sku: product.sku, name: product.name, quantity: 1 }],
+            status: "requested",
+            adminNote: "Inspect uploaded condition photos and confirm whether refund is approved.",
+        },
+        $unset: { refundAmountKobo: "", refundReference: "", refundProcessedAt: "", resolvedAt: "", resolvedBy: "" },
+    }, { returnDocument: "after", upsert: true, runValidators: true });
+}
+
 async function main() {
     await connectMongo(true);
     const gradeByCode = await upsertConditionGrades();
     await upsertDeliveryZones();
     await upsertCatalogue(gradeByCode);
     await upsertDemoUsers();
-    console.info(`Seeded ${catalogue.length} UK-used product listings and ${demoUsers.length} demo users.`);
+    await upsertDemoReturnRequest();
+    console.info(`Seeded ${catalogue.length} UK-used product listings, ${demoUsers.length} demo users and 1 demo return request.`);
 }
 main()
     .catch((error) => {

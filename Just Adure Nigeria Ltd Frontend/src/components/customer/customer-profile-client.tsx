@@ -1,10 +1,30 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { AlertTriangle, Home, MapPin, Pencil, Plus, Trash2, UserRound } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, Home, MapPin, Pencil, Plus, Trash2, UserRound } from "lucide-react";
 import { addAccountAddress, deleteAccountAddress, getAccount, updateAccountAddress, updateAccountProfile } from "@/lib/api.js";
 
-const emptyAddress = {
+type Address = {
+  id?: string;
+  label: string;
+  recipientName: string;
+  phone: string;
+  addressLine1: string;
+  addressLine2: string;
+  state: string;
+  city: string;
+  deliveryInstructions: string;
+  isDefault: boolean;
+};
+
+type Account = {
+  name?: string;
+  email?: string;
+  phone?: string;
+  addresses?: Address[];
+};
+
+const emptyAddress: Address = {
   label: "Home",
   recipientName: "",
   phone: "",
@@ -16,10 +36,26 @@ const emptyAddress = {
   isDefault: false,
 };
 
+function TextInput({ label, name, value, onChange, placeholder, required = false }: {
+  label: string;
+  name: string;
+  value: string;
+  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder?: string;
+  required?: boolean;
+}) {
+  return (
+    <label className="grid gap-2 text-sm font-black text-[var(--ink)]">
+      {label}
+      <input name={name} value={value} onChange={onChange} required={required} placeholder={placeholder} className="rounded-2xl border border-black/10 bg-[#fbfaf6] px-4 py-3.5 text-[var(--ink)] outline-none transition placeholder:text-black/35 focus:border-[var(--accent-dark)] focus:bg-white focus:shadow-[0_0_0_4px_rgba(255,123,37,.12)]" />
+    </label>
+  );
+}
+
 export function CustomerProfileClient() {
-  const [account, setAccount] = useState(null);
+  const [account, setAccount] = useState<Account | null>(null);
   const [profile, setProfile] = useState({ name: "", phone: "" });
-  const [address, setAddress] = useState(emptyAddress);
+  const [address, setAddress] = useState<Address>(emptyAddress);
   const [editingAddressId, setEditingAddressId] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -42,17 +78,19 @@ export function CustomerProfileClient() {
     loadAccount();
   }, []);
 
-  function updateProfileField(event) {
+  function updateProfileField(event: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target;
     setProfile((current) => ({ ...current, [name]: value }));
   }
 
-  function updateAddressField(event) {
-    const { name, value, type, checked } = event.target;
+  function updateAddressField(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    const { name, value } = event.target;
+    const checked = event.target instanceof HTMLInputElement ? event.target.checked : false;
+    const type = event.target instanceof HTMLInputElement ? event.target.type : "text";
     setAddress((current) => ({ ...current, [name]: type === "checkbox" ? checked : value }));
   }
 
-  function saveProfile(event) {
+  function saveProfile(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     startTransition(async () => {
       try {
@@ -66,7 +104,7 @@ export function CustomerProfileClient() {
     });
   }
 
-  function saveAddress(event) {
+  function saveAddress(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     startTransition(async () => {
       try {
@@ -82,7 +120,8 @@ export function CustomerProfileClient() {
     });
   }
 
-  function editAddress(nextAddress) {
+  function editAddress(nextAddress: Address) {
+    if (!nextAddress.id) return;
     setEditingAddressId(nextAddress.id);
     setAddress({
       label: nextAddress.label ?? "Home",
@@ -97,7 +136,8 @@ export function CustomerProfileClient() {
     });
   }
 
-  function removeAddress(addressId) {
+  function removeAddress(addressId?: string) {
+    if (!addressId) return;
     startTransition(async () => {
       try {
         const nextAccount = await deleteAccountAddress(addressId);
@@ -112,13 +152,13 @@ export function CustomerProfileClient() {
 
   if (error && !account) {
     return (
-      <main className="min-h-screen">
-        <section className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
-          <div className="rounded-[2rem] border border-[var(--accent)]/30 bg-white p-8 text-center shadow-[0_18px_50px_rgba(28,34,31,.06)]">
-            <AlertTriangle className="mx-auto size-9 text-[var(--accent-dark)]" />
-            <h1 className="mt-5 font-serif text-5xl font-bold tracking-[-.05em]">Login required.</h1>
+      <main className="auth-shell min-h-screen px-4 py-16 sm:px-6 lg:px-8">
+        <section className="mx-auto flex min-h-[calc(100vh-10rem)] max-w-3xl items-center justify-center">
+          <div className="w-full rounded-[2rem] border border-[var(--accent)]/30 bg-white p-8 text-center shadow-[0_24px_70px_rgba(18,27,23,.1)] sm:p-10">
+            <AlertTriangle className="mx-auto size-10 text-[var(--accent-dark)]" />
+            <h1 className="mt-5 font-serif text-5xl font-bold tracking-[-.05em] text-[var(--ink)]">Login required.</h1>
             <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[var(--muted)]">{error}</p>
-            <a href="/login" className="cta-primary mx-auto mt-6 w-fit">Go to login</a>
+            <a href="/login" className="cta-primary mx-auto mt-7 w-fit">Go to login <ArrowRight className="size-4" /></a>
           </div>
         </section>
       </main>
@@ -126,53 +166,116 @@ export function CustomerProfileClient() {
   }
 
   return (
-    <main className="min-h-screen">
-      <section className="hero-grid border-b border-black/8">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <p className="section-kicker">Customer profile</p>
-          <h1 className="mt-5 font-serif text-5xl font-bold leading-none tracking-[-.06em] sm:text-7xl">Your profile and delivery details.</h1>
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-[var(--muted)]">Update your personal details and saved Nigerian delivery addresses before checkout.</p>
-        </div>
-      </section>
-
-      <section className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 lg:grid-cols-[.9fr_1.1fr] lg:px-8">
-        <form onSubmit={saveProfile} className="h-fit rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)] sm:p-8">
-          <div className="flex items-center gap-3"><UserRound className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Profile information</h2></div>
-          {message ? <p className="mt-5 rounded-2xl bg-emerald-50 p-4 text-sm font-bold text-emerald-900">{message}</p> : null}
-          {error ? <p className="mt-5 rounded-2xl bg-[#fff8ed] p-4 text-sm font-bold text-[var(--accent-dark)]">{error}</p> : null}
-          {!account ? <p className="mt-6 font-bold">Loading profile...</p> : null}
-          {account ? <p className="mt-5 rounded-2xl bg-[#f6f3ec] p-4 text-sm font-bold">Signed in as {account.email}</p> : null}
-          <div className="mt-6 grid gap-5">
-            <label className="grid gap-2 text-sm font-bold">Full name<input name="name" value={profile.name} onChange={updateProfileField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label>
-            <label className="grid gap-2 text-sm font-bold">Phone number<input name="phone" value={profile.phone} onChange={updateProfileField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label>
+    <main className="min-h-screen bg-[#f6f3ec] px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+      <section className="mx-auto max-w-7xl">
+        <div className="mb-8 grid gap-5 rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)] lg:grid-cols-[1fr_auto] lg:items-center lg:p-8">
+          <div>
+            <p className="section-kicker">Account settings</p>
+            <h1 className="mt-3 font-serif text-4xl font-bold leading-none tracking-[-.05em] text-[var(--ink)] sm:text-6xl">Profile and delivery</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--muted)]">Update the details used for checkout, support and delivery notifications.</p>
           </div>
-          <button disabled={isPending || !account} className="cta-primary mt-8 w-full disabled:opacity-50" type="submit"><Pencil className="size-4" /> Save profile</button>
-        </form>
+          <div className="flex flex-wrap gap-3">
+            <a href="/account" className="cta-outline">Dashboard</a>
+            <a href="/shop" className="cta-primary">Continue shopping <ArrowRight className="size-4" /></a>
+          </div>
+        </div>
 
-        <div className="grid gap-8">
-          <form onSubmit={saveAddress} className="rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)] sm:p-8">
-            <div className="flex items-center gap-3"><MapPin className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">{editingAddressId ? "Edit address" : "Add delivery address"}</h2></div>
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <label className="grid gap-2 text-sm font-bold">Label<input name="label" value={address.label} onChange={updateAddressField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
-              <label className="grid gap-2 text-sm font-bold">Recipient name<input name="recipientName" value={address.recipientName} onChange={updateAddressField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
-              <label className="grid gap-2 text-sm font-bold">Phone<input name="phone" value={address.phone} onChange={updateAddressField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
-              <label className="grid gap-2 text-sm font-bold">State<input name="state" value={address.state} onChange={updateAddressField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
-              <label className="grid gap-2 text-sm font-bold">City / LGA<input name="city" value={address.city} onChange={updateAddressField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
-              <label className="grid gap-2 text-sm font-bold md:col-span-2">Address line 1<input name="addressLine1" value={address.addressLine1} onChange={updateAddressField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
-              <label className="grid gap-2 text-sm font-bold md:col-span-2">Address line 2<input name="addressLine2" value={address.addressLine2} onChange={updateAddressField} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
-              <label className="grid gap-2 text-sm font-bold md:col-span-2">Delivery instructions<textarea name="deliveryInstructions" value={address.deliveryInstructions} onChange={updateAddressField} rows={3} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
+        {(message || error) ? (
+          <div className={`mb-6 rounded-2xl border p-4 text-sm font-bold ${error ? "border-[var(--accent)]/30 bg-[#fff8ed] text-[var(--accent-dark)]" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`}>
+            <div className="flex items-start gap-3">
+              {error ? <AlertTriangle className="mt-.5 size-5 shrink-0" /> : <CheckCircle2 className="mt-.5 size-5 shrink-0" />}
+              <span>{error || message}</span>
             </div>
-            <label className="mt-5 flex items-center gap-3 text-sm font-bold"><input type="checkbox" name="isDefault" checked={address.isDefault} onChange={updateAddressField} /> Use as default delivery address</label>
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <button disabled={isPending || !account} className="cta-primary disabled:opacity-50" type="submit"><Plus className="size-4" /> {editingAddressId ? "Update address" : "Add address"}</button>
-              {editingAddressId ? <button type="button" className="cta-outline" onClick={() => { setEditingAddressId(""); setAddress(emptyAddress); }}>Cancel edit</button> : null}
+          </div>
+        ) : null}
+
+        <div className="grid gap-8 xl:grid-cols-[.78fr_1.22fr]">
+          <form onSubmit={saveProfile} className="h-fit rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)] sm:p-8">
+            <div className="flex items-start justify-between gap-5">
+              <div>
+                <p className="section-kicker">Personal details</p>
+                <h2 className="mt-2 text-2xl font-black tracking-[-.03em] text-[var(--ink)]">Customer information</h2>
+                <p className="mt-2 text-sm leading-6 text-[var(--muted)]">This information appears on your customer profile and order records.</p>
+              </div>
+              <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#fff3e8] text-[var(--accent-dark)]">
+                <UserRound className="size-5" />
+              </div>
             </div>
+            {!account ? <p className="mt-6 rounded-2xl bg-[#fbfaf6] p-4 text-sm font-bold text-[var(--muted)]">Loading profile...</p> : null}
+            {account?.email ? <p className="mt-6 rounded-2xl bg-[#fbfaf6] p-4 text-sm font-bold text-[var(--muted)]">Email address: <span className="text-[var(--ink)]">{account.email}</span></p> : null}
+            <div className="mt-6 grid gap-5">
+              <TextInput label="Full name" name="name" value={profile.name} onChange={updateProfileField} required placeholder="Your full name" />
+              <TextInput label="Phone number" name="phone" value={profile.phone} onChange={updateProfileField} required placeholder="08012345678" />
+            </div>
+            <button disabled={isPending || !account} className="cta-primary mt-7 w-full disabled:opacity-50" type="submit"><Pencil className="size-4" /> Save profile</button>
           </form>
 
-          <section className="rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)] sm:p-8">
-            <div className="flex items-center gap-3"><Home className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Saved addresses</h2></div>
-            {account?.addresses?.length ? <div className="mt-6 grid gap-4">{account.addresses.map((savedAddress) => <article key={savedAddress.id} className="rounded-2xl border border-black/8 bg-[#fbfaf6] p-5"><div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><p className="font-black">{savedAddress.label}{savedAddress.isDefault ? " | Default" : ""}</p><p className="mt-2 text-sm leading-6 text-[var(--muted)]">{savedAddress.recipientName}, {savedAddress.phone}<br />{savedAddress.addressLine1}{savedAddress.addressLine2 ? `, ${savedAddress.addressLine2}` : ""}<br />{savedAddress.city}, {savedAddress.state}</p>{savedAddress.deliveryInstructions ? <p className="mt-2 text-xs font-bold text-[var(--accent-dark)]">Note: {savedAddress.deliveryInstructions}</p> : null}</div><div className="flex gap-2"><button type="button" className="cta-outline px-4 py-2" onClick={() => editAddress(savedAddress)}>Edit</button><button type="button" disabled={isPending} className="rounded-full border border-black/10 p-3 text-[var(--accent-dark)] disabled:opacity-50" onClick={() => removeAddress(savedAddress.id)} aria-label="Delete address"><Trash2 className="size-4" /></button></div></div></article>)}</div> : <p className="mt-5 rounded-2xl border border-dashed border-black/15 p-5 text-sm font-bold text-[var(--muted)]">No saved delivery addresses yet.</p>}
-          </section>
+          <div className="grid gap-8">
+            <form onSubmit={saveAddress} className="rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)] sm:p-8">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="section-kicker">Delivery address</p>
+                  <h2 className="mt-2 text-2xl font-black tracking-[-.03em] text-[var(--ink)]">{editingAddressId ? "Edit saved address" : "Add a new address"}</h2>
+                  <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Use accurate state, city and phone details so delivery fees and tracking stay correct.</p>
+                </div>
+                {editingAddressId ? <button type="button" className="cta-outline px-5 py-2.5" onClick={() => { setEditingAddressId(""); setAddress(emptyAddress); }}>Cancel edit</button> : null}
+              </div>
+
+              <div className="mt-7 grid gap-4 md:grid-cols-2">
+                <TextInput label="Address label" name="label" value={address.label} onChange={updateAddressField} required placeholder="Home, Office, Shop" />
+                <TextInput label="Recipient name" name="recipientName" value={address.recipientName} onChange={updateAddressField} required placeholder="Receiver name" />
+                <TextInput label="Phone" name="phone" value={address.phone} onChange={updateAddressField} required placeholder="08012345678" />
+                <TextInput label="State" name="state" value={address.state} onChange={updateAddressField} required placeholder="Lagos" />
+                <TextInput label="City / LGA" name="city" value={address.city} onChange={updateAddressField} required placeholder="Ikeja" />
+                <div className="md:col-span-2"><TextInput label="Address line 1" name="addressLine1" value={address.addressLine1} onChange={updateAddressField} required placeholder="Street address" /></div>
+                <div className="md:col-span-2"><TextInput label="Address line 2" name="addressLine2" value={address.addressLine2} onChange={updateAddressField} placeholder="Apartment, landmark or extra detail" /></div>
+                <label className="grid gap-2 text-sm font-black text-[var(--ink)] md:col-span-2">
+                  Delivery instructions
+                  <textarea name="deliveryInstructions" value={address.deliveryInstructions} onChange={updateAddressField} rows={3} placeholder="Optional delivery note" className="resize-none rounded-2xl border border-black/10 bg-[#fbfaf6] px-4 py-3.5 text-[var(--ink)] outline-none transition placeholder:text-black/35 focus:border-[var(--accent-dark)] focus:bg-white focus:shadow-[0_0_0_4px_rgba(255,123,37,.12)]" />
+                </label>
+              </div>
+
+              <div className="mt-6 flex flex-col gap-4 rounded-3xl bg-[#fbfaf6] p-4 sm:flex-row sm:items-center sm:justify-between">
+                <label className="flex items-center gap-3 text-sm font-bold text-[var(--ink)]"><input type="checkbox" name="isDefault" checked={address.isDefault} onChange={updateAddressField} /> Use as default delivery address</label>
+                <button disabled={isPending || !account} className="cta-primary disabled:opacity-50" type="submit"><Plus className="size-4" /> {editingAddressId ? "Update address" : "Add address"}</button>
+              </div>
+            </form>
+
+            <section className="rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)] sm:p-8">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="section-kicker">Address book</p>
+                  <h2 className="mt-2 text-2xl font-black tracking-[-.03em] text-[var(--ink)]">Saved addresses</h2>
+                </div>
+                <p className="text-sm font-bold text-[var(--muted)]">{account?.addresses?.length ?? 0} saved</p>
+              </div>
+
+              {account?.addresses?.length ? (
+                <div className="mt-6 grid gap-4 md:grid-cols-2">
+                  {account.addresses.map((savedAddress) => (
+                    <article key={savedAddress.id} className="rounded-3xl border border-black/8 bg-[#fbfaf6] p-5 transition hover:border-[var(--accent)]/40 hover:bg-white">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="grid size-11 place-items-center rounded-2xl bg-white text-[var(--accent-dark)] shadow-sm"><Home className="size-5" /></div>
+                        {savedAddress.isDefault ? <span className="rounded-full bg-[#fff3e8] px-3 py-1 text-xs font-black text-[var(--accent-dark)]">Default</span> : null}
+                      </div>
+                      <h3 className="mt-5 text-lg font-black text-[var(--ink)]">{savedAddress.label}</h3>
+                      <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{savedAddress.recipientName}, {savedAddress.phone}<br />{savedAddress.addressLine1}{savedAddress.addressLine2 ? `, ${savedAddress.addressLine2}` : ""}<br />{savedAddress.city}, {savedAddress.state}</p>
+                      {savedAddress.deliveryInstructions ? <p className="mt-3 rounded-2xl bg-white px-4 py-3 text-xs font-bold leading-5 text-[var(--accent-dark)]">Note: {savedAddress.deliveryInstructions}</p> : null}
+                      <div className="mt-5 flex gap-2">
+                        <button type="button" className="cta-outline flex-1 px-4 py-2" onClick={() => editAddress(savedAddress)}>Edit</button>
+                        <button type="button" disabled={isPending} className="rounded-full border border-black/10 bg-white p-3 text-[var(--accent-dark)] disabled:opacity-50" onClick={() => removeAddress(savedAddress.id)} aria-label="Delete address"><Trash2 className="size-4" /></button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-6 rounded-3xl border border-dashed border-black/15 bg-[#fbfaf6] p-6 text-center">
+                  <MapPin className="mx-auto size-7 text-[var(--accent-dark)]" />
+                  <p className="mt-3 text-sm font-bold text-[var(--muted)]">No saved delivery addresses yet. Add one above to make checkout faster.</p>
+                </div>
+              )}
+            </section>
+          </div>
         </div>
       </section>
     </main>

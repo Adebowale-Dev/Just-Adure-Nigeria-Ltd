@@ -20,7 +20,15 @@ import {
   UserRound,
   WashingMachine,
 } from "lucide-react";
-import { getCurrentUser, getNotifications, markNotificationRead } from "@/lib/api.js";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { getCurrentUser, getNotifications, logoutUser, markNotificationRead } from "@/lib/api.js";
 
 const storeName = process.env.NEXT_PUBLIC_STORE_NAME || "Just Adure Nigeria Ltd";
 
@@ -44,11 +52,14 @@ function timeAgo(value) {
   return `${Math.round(hours / 24)}d ago`;
 }
 
+function MenuLink({ href, children }) {
+  return <a href={href} role="menuitem" className="block rounded-xl px-3 py-2 text-sm font-bold hover:bg-[#fbfaf6]">{children}</a>;
+}
+
 export function SiteHeader() {
   const [user, setUser] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   function loadNotifications(nextUser = user) {
@@ -89,19 +100,18 @@ export function SiteHeader() {
     });
   }
 
+  function handleLogout() {
+    startTransition(async () => {
+      await logoutUser().catch(() => null);
+      setUser(null);
+      setNotifications([]);
+      setUnreadCount(0);
+      window.location.href = "/login";
+    });
+  }
+
   return (
     <header className="sticky top-0 z-50 bg-white shadow-[0_2px_16px_rgba(28,34,31,.08)]">
-      <div className="border-b border-black/5 bg-[#f2f2f2]">
-        <div className="mx-auto flex h-9 max-w-7xl items-center justify-between px-4 text-xs font-black sm:px-6 lg:px-8">
-          <a href="/contact" className="flex items-center gap-1.5 text-[var(--accent-dark)]"><Star className="size-4 fill-[var(--accent)] text-[var(--accent)]" /> Sell to Just Adure</a>
-          <div className="hidden items-center gap-5 text-[var(--muted)] sm:flex">
-            <span>JUST ADURE</span>
-            <span>PAYSTACK PAY</span>
-            <span>NIGERIA DELIVERY</span>
-          </div>
-        </div>
-      </div>
-
       <div className="mx-auto flex min-h-20 max-w-7xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
         <button className="grid size-11 place-items-center rounded-md border border-black/10 lg:hidden" aria-label="Open navigation"><Menu className="size-5" /></button>
         <a href="/" className="flex shrink-0 items-center gap-2" aria-label={`${storeName} home`}>
@@ -116,10 +126,41 @@ export function SiteHeader() {
         </form>
 
         <div className="ml-auto flex items-center gap-1 sm:gap-2">
-          <a href="/account" className="hidden items-center gap-2 rounded-md px-3 py-2 text-sm font-black hover:bg-[#f6f3ec] sm:flex"><UserRound className="size-6" /> Account <ChevronDown className="size-4" /></a>
-          <a href="/contact" className="hidden items-center gap-2 rounded-md px-3 py-2 text-sm font-black hover:bg-[#f6f3ec] md:flex"><CircleHelp className="size-6" /> Help <ChevronDown className="size-4" /></a>
+          <div className="hidden sm:block">
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-black hover:bg-[#f6f3ec] data-[state=open]:bg-[#f6f3ec]">
+                <UserRound className="size-6" /> Account <ChevronDown className="size-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-72">
+                {user ? <div className="rounded-xl bg-[#fbfaf6] p-4"><p className="text-xs font-black uppercase tracking-[.14em] text-[var(--muted)]">Signed in as</p><p className="mt-1 font-black text-[var(--ink)]">{user.name}</p><p className="text-sm text-[var(--muted)]">{user.email}</p></div> : <a href="/login" className="flex min-h-11 items-center justify-center rounded-xl bg-[var(--accent)] px-4 text-sm font-black text-white hover:bg-[var(--accent-dark)]">Login or create account</a>}
+                <DropdownMenuSeparator />
+                <MenuLink href="/account">My profile</MenuLink>
+                <MenuLink href="/account/orders">Orders</MenuLink>
+                <MenuLink href="/wishlist">Wishlist</MenuLink>
+                <MenuLink href="/account/addresses">Saved addresses</MenuLink>
+                {user ? <DropdownMenuItem disabled={isPending} onClick={handleLogout} className="mt-2 border border-red-100 bg-red-50 font-black text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60">Logout</DropdownMenuItem> : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          <div className="hidden md:block">
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-black hover:bg-[#f6f3ec] data-[state=open]:bg-[#f6f3ec]">
+                <CircleHelp className="size-6" /> Help <ChevronDown className="size-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-72">
+                <DropdownMenuLabel>Customer help</DropdownMenuLabel>
+                <MenuLink href="/contact">Contact support</MenuLink>
+                <MenuLink href="/order-tracking">Track an order</MenuLink>
+                <MenuLink href="/delivery-information">Delivery information</MenuLink>
+                <MenuLink href="/frequently-asked-questions">FAQs</MenuLink>
+                <MenuLink href="/return-and-refund-policy">Returns and refunds</MenuLink>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
           <a href="/wishlist" className="header-action hidden sm:grid" aria-label="Wishlist"><Heart className="size-5" /></a>
-          {user ? <div className="relative"><button type="button" className="header-action relative" aria-label="Notifications" onClick={() => setOpen((current) => !current)}><Bell className="size-5" />{unreadCount > 0 ? <span className="absolute -right-0.5 -top-0.5 grid size-4 place-items-center rounded-full bg-[var(--accent)] text-[10px] font-black text-white">{Math.min(unreadCount, 9)}</span> : null}</button>{open ? <div className="absolute right-0 mt-3 w-80 rounded-2xl border border-black/8 bg-white p-3 shadow-[0_24px_70px_rgba(28,34,31,.18)]"><p className="px-2 pb-2 text-xs font-black uppercase tracking-[.14em] text-[var(--muted)]">Notifications</p>{notifications.length === 0 ? <p className="rounded-xl bg-[#fbfaf6] p-3 text-sm font-bold text-[var(--muted)]">No notifications yet.</p> : null}{notifications.slice(0, 5).map((notification) => <button key={notification.id} type="button" disabled={isPending} onClick={() => markRead(notification)} className="block w-full rounded-xl p-3 text-left hover:bg-[#fbfaf6]"><span className="flex items-center justify-between gap-3"><strong className="text-sm">{notification.title}</strong>{notification.readAt ? null : <span className="size-2 rounded-full bg-[var(--accent-dark)]" />}</span><span className="mt-1 block text-xs leading-5 text-[var(--muted)]">{notification.message}</span><span className="mt-1 block text-[11px] font-black uppercase tracking-[.1em] text-[var(--accent-dark)]">{timeAgo(notification.createdAt)}</span></button>)}</div> : null}</div> : null}
+          {user ? <DropdownMenu><DropdownMenuTrigger className="header-action relative" aria-label="Notifications"><Bell className="size-5" />{unreadCount > 0 ? <span className="absolute -right-0.5 -top-0.5 grid size-4 place-items-center rounded-full bg-[var(--accent)] text-[10px] font-black text-white">{Math.min(unreadCount, 9)}</span> : null}</DropdownMenuTrigger><DropdownMenuContent className="w-80"><DropdownMenuLabel>Notifications</DropdownMenuLabel>{notifications.length === 0 ? <p className="rounded-xl bg-[#fbfaf6] p-3 text-sm font-bold text-[var(--muted)]">No notifications yet.</p> : null}{notifications.slice(0, 5).map((notification) => <DropdownMenuItem key={notification.id} disabled={isPending} onClick={() => markRead(notification)} className="p-3"><span className="flex items-center justify-between gap-3"><strong className="text-sm">{notification.title}</strong>{notification.readAt ? null : <span className="size-2 rounded-full bg-[var(--accent-dark)]" />}</span><span className="mt-1 block text-xs leading-5 text-[var(--muted)]">{notification.message}</span><span className="mt-1 block text-[11px] font-black uppercase tracking-[.1em] text-[var(--accent-dark)]">{timeAgo(notification.createdAt)}</span></DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu> : null}
           <a href="/cart" className="flex items-center gap-2 rounded-md px-2 py-2 text-sm font-black hover:bg-[#f6f3ec] sm:px-3"><span className="relative"><ShoppingCart className="size-7" /><span className="absolute -right-2 -top-2 grid size-5 place-items-center rounded-full bg-[var(--accent)] text-[10px] font-black text-white">0</span></span><span className="hidden sm:inline">Cart</span></a>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import compression from "compression";
+﻿import compression from "compression";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
@@ -11,6 +11,7 @@ import { env } from "./config/env.js";
 import { logger } from "./config/logger.js";
 import { openApiDocument } from "./config/swagger.js";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler.js";
+import { requireDatabaseReady } from "./middleware/database-ready.js";
 import { requestContext } from "./middleware/request-context.js";
 import { adminRouter } from "./routes/admin.js";
 import { authRouter } from "./routes/auth.js";
@@ -60,7 +61,7 @@ app.use(developmentRequestLogger);
 app.use("/uploads", express.static(path.resolve(process.cwd(), "public", "uploads"), { maxAge: env.NODE_ENV === "production" ? "30d" : 0 }));
 app.use("/api/v1", rateLimit({
     windowMs: 15 * 60 * 1000,
-    limit: env.NODE_ENV === "test" ? 10_000 : 300,
+    limit: env.NODE_ENV === "production" ? 300 : 10_000,
     standardHeaders: "draft-8",
     legacyHeaders: false,
     message: {
@@ -71,6 +72,7 @@ app.use("/api/v1", rateLimit({
     },
 }));
 app.use(systemRouter);
+app.use("/api/v1", requireDatabaseReady);
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1", accountRouter);
 app.use("/api/v1/admin", adminRouter);
@@ -95,6 +97,7 @@ app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(openApiDocument, {
 }));
 app.use(notFoundHandler);
 app.use(errorHandler);
+
 
 
 

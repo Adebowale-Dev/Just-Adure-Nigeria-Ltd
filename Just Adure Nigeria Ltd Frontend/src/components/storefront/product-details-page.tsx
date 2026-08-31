@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { ArrowLeft, BadgeCheck, Boxes, Heart, PackageCheck, ShieldCheck, Star, Truck } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Boxes, Heart, PackageCheck, ShieldCheck, Star } from "lucide-react";
 import { AddToCartButton } from "@/components/commerce/add-to-cart-button";
 import { NotFoundPage } from "@/components/storefront/not-found-page";
 import { ProductEnquiryForm } from "@/components/storefront/product-enquiry-form";
@@ -67,7 +67,7 @@ export function ProductDetailsPage({ slug }) {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="rounded-[2rem] border border-black/8 bg-white/80 p-8 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
+        <div className="rounded-[2rem] border border-black/8 bg-[#fbfaf6]0 p-8 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div><p className="section-kicker">Customer reviews</p><h2 className="mt-2 font-serif text-4xl font-bold tracking-[-.04em]">What buyers are saying.</h2></div>
             <div className="inline-flex w-fit items-center gap-2 rounded-full bg-[#fff8ed] px-4 py-2 text-sm font-black text-[var(--ink)]"><Star className="size-4 fill-[var(--accent)] text-[var(--accent)]" />{product.reviewSummary?.reviewCount ? `${product.reviewSummary.averageRating.toFixed(1)} from ${product.reviewSummary.reviewCount} review${product.reviewSummary.reviewCount === 1 ? "" : "s"}` : "No reviews yet"}</div>
@@ -83,9 +83,6 @@ export function ProductDetailsPage({ slug }) {
         <ProductEnquiryForm product={product} />
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="rounded-[2rem] bg-[var(--ink)] p-8 text-white"><Truck className="size-7 text-[var(--accent)]" /><h2 className="mt-4 font-serif text-4xl font-bold tracking-[-.04em]">Delivery and payment stay protected.</h2><p className="mt-3 max-w-2xl leading-7 text-white/70">Before checkout, the backend will recalculate price, stock, coupon, delivery fee and final Paystack amount.</p></div>
-      </section>
     </main>
   );
 }

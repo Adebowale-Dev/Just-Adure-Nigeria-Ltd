@@ -8,7 +8,7 @@ export function ProductCard({ product }) {
         <div className="relative aspect-[4/3]">
           <img src={product.imageUrl} alt={`${product.name} actual product view`} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.035]" />
           <span className="absolute left-4 top-4 rounded-full bg-white/92 px-3 py-1 text-xs font-black uppercase tracking-[0.08em] text-[var(--ink)] backdrop-blur">{product.condition}</span>
-          {product.isSoldOut ? <span className="absolute bottom-4 left-4 rounded-full bg-[var(--ink)] px-3 py-1 text-xs font-black uppercase tracking-[0.08em] text-white">Sold out</span> : null}
+          {product.isSoldOut ? <span className="absolute bottom-4 left-4 rounded-full bg-[#fff3e8] px-3 py-1 text-xs font-black uppercase tracking-[0.08em] text-[var(--accent-dark)]">Sold out</span> : null}
         </div>
       </a>
       <div className="p-5">

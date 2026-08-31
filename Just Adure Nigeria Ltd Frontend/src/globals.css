@@ -58,7 +58,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .section-kicker { color: var(--accent-dark); }
 .section-title { margin-top: .8rem; font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif; font-size: clamp(2.5rem, 5vw, 4.5rem); font-weight: 700; letter-spacing: -.05em; line-height: .95; }
 .cta-primary, .cta-outline { display: inline-flex; min-height: 3rem; align-items: center; justify-content: center; gap: .6rem; border-radius: 999px; padding: .75rem 1.25rem; font-size: .875rem; font-weight: 900; }
-.cta-primary { background: var(--ink); color: white; box-shadow: 0 12px 30px rgba(22, 29, 27, .18); }
+.cta-primary { background: var(--accent); color: var(--ink); box-shadow: 0 12px 30px rgba(244, 133, 61, .24); }
 .cta-primary:hover { transform: translateY(-2px); background: #000; }
 .cta-outline { border: 1px solid rgba(22, 29, 27, .16); background: rgba(255, 255, 255, .55); }
 .cta-outline:hover { border-color: rgba(22, 29, 27, .35); background: white; }
