@@ -27,6 +27,7 @@ button, input, textarea, select { font: inherit; }
   outline: 3px solid rgba(185, 80, 25, .42);
   outline-offset: 3px;
 }
+.header-search-input:focus-visible { outline: none; }
 button:disabled { cursor: not-allowed; }
 img { max-width: 100%; }
 

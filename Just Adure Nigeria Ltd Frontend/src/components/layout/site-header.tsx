@@ -6,6 +6,7 @@ import {
   Bike,
   ChevronDown,
   CircleHelp,
+  Globe2,
   Heart,
   Home,
   Laptop,
@@ -17,7 +18,6 @@ import {
   Star,
   Store,
   Tv,
-  UserRound,
   WashingMachine,
 } from "lucide-react";
 import {
@@ -137,27 +137,36 @@ export function SiteHeader() {
 
         <form action="/shop" className="mx-auto hidden h-12 max-w-2xl flex-1 items-center overflow-hidden rounded-full bg-[#f1f1f3] pl-5 lg:flex">
           <Search className="size-6 text-[#34373c]" />
-          <input name="q" placeholder="Search products, brands and categories" className="h-full flex-1 bg-transparent px-3 text-sm font-semibold text-[var(--ink)] outline-none placeholder:text-[#69707c]" />
+          <input name="q" placeholder="Search products, brands and categories" className="header-search-input h-full flex-1 bg-transparent px-3 text-sm font-semibold text-[var(--ink)] outline-none placeholder:text-[#69707c]" />
           <button className="mr-1 rounded-full bg-[var(--accent)] px-7 py-3 text-sm font-black text-white hover:bg-[var(--accent-dark)]" type="submit">Search</button>
         </form>
 
         <div className="ml-auto flex items-center gap-1 sm:gap-2">
-          <div className="hidden sm:block">
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-black hover:bg-[#f6f3ec] data-[state=open]:bg-[#f6f3ec]">
-                <UserRound className="size-6" /> Account <ChevronDown className="size-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-72">
-                {user ? <div className="rounded-xl bg-[#fbfaf6] p-4"><p className="text-xs font-black uppercase tracking-[.14em] text-[var(--muted)]">Signed in as</p><p className="mt-1 font-black text-[var(--ink)]">{user.name}</p><p className="text-sm text-[var(--muted)]">{user.email}</p></div> : <a href="/login" className="flex min-h-11 items-center justify-center rounded-xl bg-[var(--accent)] px-4 text-sm font-black text-white hover:bg-[var(--accent-dark)]">Login or create account</a>}
-                <DropdownMenuSeparator />
-                <MenuLink href="/account">My profile</MenuLink>
-                <MenuLink href="/account/orders">Orders</MenuLink>
-                <MenuLink href="/wishlist">Wishlist</MenuLink>
-                <MenuLink href="/account/addresses">Saved addresses</MenuLink>
-                {user ? <DropdownMenuItem disabled={isPending} onClick={handleLogout} className="mt-2 border border-red-100 bg-red-50 font-black text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60">Logout</DropdownMenuItem> : null}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          {user ? (
+            <div className="hidden sm:block">
+              <DropdownMenu>
+                <DropdownMenuTrigger className="grid size-11 place-items-center rounded-full bg-[#fff3e8] text-sm font-black uppercase text-[var(--accent-dark)] hover:bg-[var(--accent)] hover:text-[var(--ink)]" aria-label="Open profile menu">
+                  {(user.name || user.email || "U").trim().charAt(0)}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-72">
+                  <div className="rounded-xl bg-[#fbfaf6] p-4"><p className="text-xs font-black uppercase tracking-[.14em] text-[var(--muted)]">Signed in as</p><p className="mt-1 font-black text-[var(--ink)]">{user.name}</p><p className="text-sm text-[var(--muted)]">{user.email}</p></div>
+                  <DropdownMenuSeparator />
+                  <MenuLink href="/account">My profile</MenuLink>
+                  <MenuLink href="/account/orders">Orders</MenuLink>
+                  <MenuLink href="/wishlist">Wishlist</MenuLink>
+                  <MenuLink href="/account/addresses">Saved addresses</MenuLink>
+                  <DropdownMenuItem disabled={isPending} onClick={handleLogout} className="mt-2 border border-red-100 bg-red-50 font-black text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60">Logout</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ) : (
+            <div className="hidden items-center gap-2 text-sm font-bold sm:flex">
+              <span className="inline-flex items-center gap-1 text-[var(--muted)]"><Globe2 className="size-4" /> EN</span>
+              <a href="/login" className="px-1 py-2 hover:text-[var(--accent-dark)]">Sign in</a>
+              <span className="text-black/25" aria-hidden="true">|</span>
+              <a href="/register" className="px-1 py-2 hover:text-[var(--accent-dark)]">Registration</a>
+            </div>
+          )}
 
           <div className="hidden md:block">
             <DropdownMenu>
