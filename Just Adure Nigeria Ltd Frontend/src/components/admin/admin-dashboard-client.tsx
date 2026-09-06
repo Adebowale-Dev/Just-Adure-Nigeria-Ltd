@@ -1,5 +1,5 @@
-﻿import { useEffect, useState, useTransition } from "react";
-import { Activity, AlertTriangle, BarChart3, Boxes, ClipboardList, Image, Mail, MessageSquareText, PackageCheck, RotateCcw, Save, Settings, ShieldCheck, Star, Tags, TrendingUp } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
+import { Activity, AlertTriangle, BarChart3, Boxes, ChevronDown, ClipboardList, Image, Mail, MessageSquareText, PackageCheck, RotateCcw, Save, Settings, ShieldCheck, Star, Tags, TrendingUp } from "lucide-react";
 import {
   createAdminCoupon,
   getAdminCoupons,
@@ -201,25 +201,25 @@ function StatCard({ label, value }) {
 }
 
 const adminSections = [
-  { href: "/admin", key: "overview", label: "Overview" },
-  { href: "/admin/reports", key: "reports", label: "Reports" },
-  { href: "/admin/products", key: "products", label: "Products" },
-  { href: "/admin/inventory", key: "inventory", label: "Inventory" },
-  { href: "/admin/orders", key: "orders", label: "Orders" },
-  { href: "/admin/delivery", key: "delivery", label: "Delivery" },
-  { href: "/admin/support", key: "support", label: "Support" },
-  { href: "/admin/returns", key: "returns", label: "Returns" },
-  { href: "/admin/reviews", key: "reviews", label: "Reviews" },
-  { href: "/admin/coupons", key: "coupons", label: "Coupons" },
-  { href: "/admin/content", key: "content", label: "Content" },
-  { href: "/admin/settings", key: "settings", label: "Settings" },
-  { href: "/admin/staff", key: "staff", label: "Staff" },
+  { href: "/admin", key: "overview", label: "Overview", description: "See what needs attention today" },
+  { href: "/admin/orders", key: "orders", label: "Orders", description: "Process and update customer orders" },
+  { href: "/admin/products", key: "products", label: "Products", description: "Add and edit catalogue items" },
+  { href: "/admin/inventory", key: "inventory", label: "Stock", description: "Check quantities and low stock" },
+  { href: "/admin/delivery", key: "delivery", label: "Delivery", description: "Manage areas, fees, and timing" },
+  { href: "/admin/returns", key: "returns", label: "Returns", description: "Review returns and refunds" },
+  { href: "/admin/support", key: "support", label: "Support", description: "Reply to customer requests" },
+  { href: "/admin/reviews", key: "reviews", label: "Reviews", description: "Approve customer feedback" },
+  { href: "/admin/coupons", key: "coupons", label: "Discounts", description: "Create and manage coupon codes" },
+  { href: "/admin/reports", key: "reports", label: "Reports", description: "Understand sales and payments" },
+  { href: "/admin/content", key: "content", label: "Store content", description: "Update homepage messages" },
+  { href: "/admin/staff", key: "staff", label: "Staff access", description: "Manage staff roles and access" },
+  { href: "/admin/settings", key: "settings", label: "Settings", description: "Update store-wide details" },
 ];
 
 function AdminSectionNav({ activeSection }) {
   return (
     <nav className="mb-6 rounded-[1.6rem] border border-black/8 bg-white p-3 shadow-[0_14px_45px_rgba(28,34,31,.05)]" aria-label="Admin sections">
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Choose an admin workspace">
         {adminSections.map((item) => (
           <a key={item.key} href={item.href} className={`shrink-0 rounded-full px-4 py-2.5 text-sm font-black transition ${activeSection === item.key ? "bg-[var(--accent)] text-[var(--ink)] shadow-[0_10px_24px_rgba(244,133,61,.22)]" : "text-[var(--muted)] hover:bg-[#fff3e8] hover:text-[var(--ink)]"}`}>{item.label}</a>
         ))}
@@ -234,7 +234,7 @@ function AdminDropdown({ value, options, placeholder = "Select", onValueChange, 
     <DropdownMenu>
       <DropdownMenuTrigger className={`flex min-h-12 w-full items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm font-black outline-none transition ${dark ? "border-black/10 bg-[#fff3e8] text-[var(--ink)]" : "border-black/10 bg-[#fff3e8] text-[var(--ink)] hover:border-[var(--accent)]/40"}`}>
         <span className="truncate">{active?.label ?? placeholder}</span>
-        <span className="ml-3 text-[var(--accent-dark)]">â–¾</span>
+        <ChevronDown className="ml-3 size-4 shrink-0 text-[var(--accent-dark)]" aria-hidden="true" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="max-h-72 w-full min-w-[14rem] overflow-y-auto">
         {options.map((option) => (
@@ -323,7 +323,6 @@ export function AdminDashboardClient({ section = "overview" }: { section?: strin
     const loadReviews = loadOverview || activeSection === "reviews";
     const loadReturns = loadOverview || activeSection === "returns";
     const loadSupport = loadOverview || activeSection === "support";
-    const loadDelivery = loadOverview || activeSection === "delivery";
     const loadContent = loadOverview || activeSection === "content";
     const loadSettings = loadOverview || activeSection === "settings";
     const loadStaff = loadOverview || activeSection === "staff";
@@ -669,7 +668,7 @@ export function AdminDashboardClient({ section = "overview" }: { section?: strin
         </div> : null}
 
         {showSection("overview") ? <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {adminSections.filter((item) => item.key !== "overview").map((item) => <a key={item.key} href={item.href} className="group rounded-[1.5rem] border border-black/8 bg-white p-5 shadow-[0_14px_40px_rgba(28,34,31,.04)] transition hover:-translate-y-1 hover:border-[var(--accent)]/40 hover:shadow-[0_18px_55px_rgba(28,34,31,.08)]"><p className="text-xs font-black uppercase tracking-[.14em] text-[var(--accent-dark)]">Admin page</p><h2 className="mt-2 text-xl font-black text-[var(--ink)]">{item.label}</h2><p className="mt-3 text-sm font-bold leading-6 text-[var(--muted)]">Open the dedicated {item.label.toLowerCase()} workspace.</p><span className="mt-5 inline-flex text-sm font-black text-[var(--accent-dark)] group-hover:underline">Open page</span></a>)}
+          {adminSections.filter((item) => item.key !== "overview").map((item) => <a key={item.key} href={item.href} className="group rounded-[1.5rem] border border-black/8 bg-white p-5 shadow-[0_14px_40px_rgba(28,34,31,.04)] transition hover:-translate-y-1 hover:border-[var(--accent)]/40 hover:shadow-[0_18px_55px_rgba(28,34,31,.08)]"><p className="text-xs font-black uppercase tracking-[.14em] text-[var(--accent-dark)]">Workspace</p><h2 className="mt-2 text-xl font-black text-[var(--ink)]">{item.label}</h2><p className="mt-3 text-sm font-bold leading-6 text-[var(--muted)]">{item.description}</p><span className="mt-5 inline-flex text-sm font-black text-[var(--accent-dark)] group-hover:underline">Open {item.label.toLowerCase()}</span></a>)}
         </div> : null}
 
 

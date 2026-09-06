@@ -45,7 +45,7 @@ export function Footer() {
           <form className="mt-4 flex overflow-hidden rounded-full border border-black/10 bg-white" onSubmit={submitNewsletter}>
             <label className="sr-only" htmlFor="newsletter-email">Email address</label>
             <input id="newsletter-email" type="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" className="min-w-0 flex-1 bg-transparent px-4 py-3 text-sm outline-none" />
-            <button type="submit" disabled={isPending} className="grid size-12 place-items-center bg-white text-white disabled:opacity-60" aria-label="Subscribe to newsletter"><Mail className="size-4" /></button>
+            <button type="submit" disabled={isPending} className="grid size-12 place-items-center bg-[var(--accent)] text-[var(--ink)] transition hover:bg-[#ff9b5b] disabled:cursor-not-allowed disabled:opacity-60" aria-label={isPending ? "Subscribing" : "Subscribe to newsletter"}><Mail className="size-4" /></button>
           </form>
           {message ? <p className="mt-3 text-xs font-bold leading-5 text-[var(--accent-dark)]">{message}</p> : null}
         </div>

@@ -6,23 +6,37 @@ export const openApiDocument = swaggerJsdoc({
         info: {
             title: "Just Adure Nigeria Ltd API",
             version: "0.1.0",
-            description: "REST API for the placeholder-branded UK-used products marketplace.",
+            description: [
+                "The API behind the Just Adure storefront and admin workspace.",
+                "",
+                "Start with **Catalogue** to browse products, **Cart** to prepare a purchase, then **Checkout** and **Payments** to complete it.",
+                "Customer account endpoints require a signed-in customer. Admin endpoints require an authorized staff account.",
+                "All successful responses place their result in `data`. Errors include a plain-language message and a `requestId` for support and debugging.",
+            ].join("\n"),
         },
         servers: [{ url: env.API_URL, description: env.NODE_ENV }],
         tags: [
-            { name: "System", description: "Service health and readiness" },
-            { name: "Authentication", description: "Customer and staff authentication" },
-            { name: "Account", description: "Customer profile and saved delivery addresses" },
-            { name: "Admin", description: "Protected administration dashboard and management endpoints" },
-            { name: "Catalogue", description: "Public products, categories, brands and condition grades" },
-            { name: "Cart", description: "Guest and customer shopping cart" },
-            { name: "Wishlist", description: "Saved customer products and move-to-cart actions" },
-            { name: "Newsletter", description: "Newsletter subscriptions and customer marketing opt-ins" },
-            { name: "Checkout", description: "Delivery fee, pending orders, and inventory reservation" },
-            { name: "Orders", description: "Customer order history and tracking" },
-            { name: "Payments", description: "Paystack integration endpoints" },
+            { name: "System", description: "Check whether the API and database are available." },
+            { name: "Authentication", description: "Create an account, sign in, sign out, and recover account access." },
+            { name: "Account", description: "Manage the signed-in customer's profile and delivery addresses." },
+            { name: "Admin", description: "Run the store: products, stock, orders, customers, support, content, and reports. Staff access is required." },
+            { name: "Catalogue", description: "Browse searchable public products, categories, brands, and condition grades." },
+            { name: "Cart", description: "Add, update, remove, or review products before checkout. Works for guests and customers." },
+            { name: "Wishlist", description: "Save products for later, move them to the cart, or request a restock alert. Customer login is required." },
+            { name: "Newsletter", description: "Subscribe to or leave product and restock updates." },
+            { name: "Checkout", description: "Calculate delivery cost and create an order using prices and stock verified by the server." },
+            { name: "Orders", description: "View, cancel, or track customer orders." },
+            { name: "Payments", description: "Start and verify secure Paystack payments. The backend confirms the final payment status." },
         ],
         components: {
+            securitySchemes: {
+                cookieSession: {
+                    type: "apiKey",
+                    in: "cookie",
+                    name: "access_token",
+                    description: "Created automatically after a successful login. Browser requests send this secure cookie for you.",
+                },
+            },
             schemas: {
                 PublicUser: {
                     type: "object",
@@ -185,6 +199,14 @@ function enhanceOpenApiDocument(document) {
                         },
                     },
                 };
+            }
+            if (!operation.description) {
+                const access = operation.tags?.includes("Admin")
+                    ? "Requires an authorized staff session."
+                    : ["Account", "Wishlist"].some((tag) => operation.tags?.includes(tag))
+                        ? "Requires a signed-in customer session."
+                        : "See the response examples below for the returned data.";
+                operation.description = `${operation.summary}. ${access}`;
             }
         }
     }

@@ -1,6 +1,6 @@
 # Just Adure Nigeria Ltd
 
-A secure, mobile-first e-commerce platform for Just Adure Nigeria Ltd, selling UK-used electronics and appliances in Nigeria.
+A secure, mobile-first e-commerce platform for Just Adure Nigeria Ltd, selling inspected UK-used products in Nigeria.
 
 The project is organized into two top-level application folders:
 
@@ -8,14 +8,16 @@ The project is organized into two top-level application folders:
 Just Adure Nigeria Ltd/
   Just Adure Nigeria Ltd Frontend/  React/Vite storefront and admin dashboard
   Just Adure Nigeria Backend/       Express API, workspace configuration, and documentation
-    docs/                           Architecture, data, API, page, and delivery plans
+    docs/                           Architecture, setup, API, and data guides
 ```
 
-## Current status
+## What works now
 
-Milestone 1 is implemented: the project structure, shared validation package, MongoDB development configuration, realistic seed catalogue, Express API foundation, Swagger documentation, and responsive React/Vite design foundation are in place.
+The storefront includes catalogue search and filters, product details, cart, wishlist, customer accounts, checkout, Paystack payment verification, order tracking, support, returns, and responsive customer pages.
 
-Authentication and live catalogue APIs are intentionally not enabled yet. They belong to later controlled milestones.
+The protected admin workspace manages products, images, stock, orders, delivery zones, returns, support, reviews, discounts, reports, homepage content, store settings, newsletter subscribers, and staff access.
+
+Open `http://localhost:4000/api/docs` while the backend is running for interactive API documentation. The endpoints are grouped by the task they perform and include example request and response bodies.
 
 ## Blueprint
 
@@ -33,7 +35,7 @@ Authentication and live catalogue APIs are intentionally not enabled yet. They b
 | Area | Technology |
 | --- | --- |
 | Project structure | Separate npm installs for backend and frontend |
-| Web | React, Vite, JavaScript, Tailwind CSS |
+| Web | Next.js, React, TypeScript, Tailwind CSS |
 | Forms and validation | React Hook Form and Zod |
 | Server state | TanStack Query |
 | API | Node.js, Express, JavaScript, REST, OpenAPI |
@@ -42,7 +44,7 @@ Authentication and live catalogue APIs are intentionally not enabled yet. They b
 | Payments | Paystack, initialized and verified by the API |
 | Email | Brevo transactional email API |
 | Images | Cloudinary |
-| Tests | Vitest, Supertest, Testing Library, and Playwright |
+| Tests | Vitest, Supertest, and Testing Library |
 
 ## Delivery approach
 
@@ -66,3 +68,12 @@ npm.cmd run dev:all
 ```
 
 The web app runs at `http://localhost:3000`, the API at `http://localhost:4000`, and Swagger UI at `http://localhost:4000/api/docs`.
+
+## Everyday workflow
+
+1. Start MongoDB or confirm the Atlas connection in `MONGODB_URL` is available.
+2. Run `npm.cmd run dev:all` from this backend folder.
+3. Use the storefront at `http://localhost:3000` and the API guide at `http://localhost:4000/api/docs`.
+4. Run `npm.cmd run check:all` before releasing changes.
+
+Never place Paystack secret keys, database credentials, or JWT secrets in frontend environment variables or commit them to Git.

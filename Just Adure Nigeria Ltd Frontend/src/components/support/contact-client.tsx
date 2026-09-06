@@ -75,13 +75,13 @@ export function ContactClient() {
 
   return (
     <main className="min-h-screen bg-[#f6f1e8]">
-      <section className="relative overflow-hidden border-b border-black/8 bg-[radial-gradient(circle_at_top_left,#fff7ed_0,#f6f1e8_42%,#efe6d8_100%)]">
+      <section className="relative overflow-hidden border-b border-black/8 bg-[#fbfaf6]">
         <div className="absolute right-[-8rem] top-[-10rem] size-[28rem] rounded-full bg-[var(--accent)]/15 blur-3xl" />
         <div className="absolute bottom-[-12rem] left-[10%] size-[24rem] rounded-full bg-white/60 blur-3xl" />
         <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.05fr_.95fr] lg:px-8 lg:py-20">
           <div className="flex flex-col justify-center">
             <p className="section-kicker text-[var(--accent-dark)]">Customer care desk</p>
-            <h1 className="mt-4 max-w-3xl font-serif text-5xl font-bold leading-none tracking-[-.06em] text-[var(--ink)] sm:text-7xl">Support that helps you buy with confidence.</h1>
+            <h1 className="mt-4 max-w-3xl text-4xl font-black leading-tight tracking-[-.045em] text-[var(--ink)] sm:text-5xl">How can we help?</h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-[var(--muted)]">Ask about a product condition, follow up on an order, or send a general enquiry. We keep every conversation organized with a ticket number.</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a href="#support-form" className="cta-primary">Open a ticket <ArrowRight className="size-4" /></a>
@@ -89,7 +89,7 @@ export function ContactClient() {
             </div>
           </div>
 
-          <div className="rounded-[2.25rem] border border-black/8 bg-white/85 p-5 shadow-[0_24px_70px_rgba(28,34,31,.09)] backdrop-blur">
+          <div className="surface-card p-5">
             <div className="rounded-[1.75rem] border border-black/8 bg-[#fbfaf6] p-6 text-[var(--ink)]">
               <Headphones className="size-9 text-[var(--accent)]" />
               <h2 className="mt-6 text-3xl font-black tracking-[-.04em]">How we handle requests</h2>
@@ -111,7 +111,7 @@ export function ContactClient() {
       </section>
 
       <section className="mx-auto grid max-w-7xl gap-8 px-4 pb-16 sm:px-6 lg:grid-cols-[1fr_25rem] lg:px-8">
-        <form id="support-form" onSubmit={submitTicket} className="rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_24px_70px_rgba(28,34,31,.08)] sm:p-8">
+        <form id="support-form" onSubmit={submitTicket} className="surface-card p-6 sm:p-8">
           <div className="flex flex-col gap-3 border-b border-black/8 pb-6 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="section-kicker text-[var(--accent-dark)]">New request</p>
@@ -134,7 +134,7 @@ export function ContactClient() {
           <button type="submit" disabled={isPending} className="cta-primary mt-8 w-full"><MessageSquareText className="size-4" /> {isPending ? "Submitting..." : "Submit ticket"}</button>
         </form>
 
-        <aside className="h-fit rounded-[2rem] border border-black/8 bg-white p-6 text-[var(--ink)] shadow-[0_24px_70px_rgba(28,34,31,.08)]">
+        <aside className="surface-card h-fit p-6 text-[var(--ink)]">
           <div className="rounded-[1.5rem] bg-[#fff3e7] p-5">
             <Search className="size-6 text-[var(--accent-dark)]" />
             <h2 className="mt-4 text-2xl font-black tracking-[-.03em]">Track ticket</h2>

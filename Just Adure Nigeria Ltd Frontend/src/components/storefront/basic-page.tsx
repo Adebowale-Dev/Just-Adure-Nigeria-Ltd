@@ -52,10 +52,10 @@ export function BasicPage({ title }) {
 
   return (
     <main className="bg-[#f6f3ec] px-4 py-12 sm:px-6 lg:px-8">
-      <section className="mx-auto max-w-5xl overflow-hidden rounded-[2.2rem] border border-black/8 bg-white shadow-[0_22px_70px_rgba(28,34,31,.07)]">
-        <div className="bg-[linear-gradient(135deg,#fff,#fff4ea)] p-8 sm:p-10">
+      <section className="surface-card mx-auto max-w-5xl overflow-hidden">
+        <div className="border-b border-black/8 bg-white p-8 sm:p-10">
           <p className="section-kicker">{content.eyebrow}</p>
-          <h1 className="mt-4 font-serif text-5xl font-bold capitalize leading-none tracking-[-.05em] text-[var(--ink)] sm:text-6xl">{content.title}</h1>
+          <h1 className="mt-4 text-4xl font-black capitalize leading-tight tracking-[-.045em] text-[var(--ink)] sm:text-5xl">{content.title}</h1>
           <p className="mt-5 max-w-3xl text-lg font-bold leading-8 text-[var(--muted)]">{content.intro}</p>
         </div>
         <div className="grid gap-4 p-6 sm:p-8 md:grid-cols-2">

@@ -389,24 +389,38 @@ authRouter.post("/reset-password", async (request, response, next) => {
  */
 authRouter.get("/me", async (request, response, next) => {
     try {
-        const token = request.cookies?.[authCookieNames.access];
-        if (!token) {
-            response.json({ data: { user: null } });
-            return;
+        const accessToken = request.cookies?.[authCookieNames.access];
+        let payload = null;
+        if (accessToken) {
+            try {
+                payload = verifyToken(accessToken, env.JWT_ACCESS_SECRET, "access");
+            }
+            catch {
+                payload = null;
+            }
         }
-        let payload;
-        try {
-            payload = verifyToken(token, env.JWT_ACCESS_SECRET, "access");
+        if (!payload) {
+            const refreshToken = request.cookies?.[authCookieNames.refresh];
+            if (!refreshToken) {
+                response.json({ data: { user: null } });
+                return;
+            }
+            try {
+                payload = verifyToken(refreshToken, env.JWT_REFRESH_SECRET, "refresh");
+            }
+            catch {
+                response.clearCookie(authCookieNames.access, { path: "/" });
+                response.clearCookie(authCookieNames.refresh, { path: "/" });
+                response.json({ data: { user: null } });
+                return;
+            }
         }
-        catch {
-            response.json({ data: { user: null } });
-            return;
-        }
-        const user = await User.findById(payload.sub).lean();
+        const user = await User.findById(payload.sub);
         if (!user || !user.isActive) {
             response.json({ data: { user: null } });
             return;
         }
+        setAuthCookies(response, user);
         response.json({ data: { user: publicUser(user) } });
     }
     catch (error) {

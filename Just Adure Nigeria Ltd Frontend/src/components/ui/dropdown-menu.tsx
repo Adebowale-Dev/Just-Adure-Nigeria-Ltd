@@ -16,19 +16,28 @@ export function DropdownMenu({ children }) {
     if (!trigger) return;
 
     const rect = trigger.getBoundingClientRect();
-    const safeHeaderSpace = 112;
-    const gap = 8;
+    const gap = 6;
     const minWidth = Math.max(rect.width, 224);
     const availableRight = window.innerWidth - 16;
     const preferredLeft = rect.left;
     const left = Math.min(Math.max(16, preferredLeft), Math.max(16, availableRight - minWidth));
 
-    setPosition({
-      top: Math.max(rect.bottom + gap, safeHeaderSpace),
+    const nextPosition = {
+      top: rect.bottom + gap,
       left,
       minWidth,
       triggerWidth: rect.width,
-    });
+    };
+
+    setPosition((current) => (
+      current
+      && current.top === nextPosition.top
+      && current.left === nextPosition.left
+      && current.minWidth === nextPosition.minWidth
+      && current.triggerWidth === nextPosition.triggerWidth
+        ? current
+        : nextPosition
+    ));
   }
 
   useEffect(() => {
@@ -40,10 +49,10 @@ export function DropdownMenu({ children }) {
     }
 
     window.addEventListener("resize", handleReposition);
-    window.addEventListener("scroll", handleReposition, true);
+    window.addEventListener("scroll", handleReposition, { passive: true });
     return () => {
       window.removeEventListener("resize", handleReposition);
-      window.removeEventListener("scroll", handleReposition, true);
+      window.removeEventListener("scroll", handleReposition);
     };
   }, [open]);
 
@@ -64,7 +73,7 @@ export function DropdownMenu({ children }) {
     };
   }, []);
 
-  return <DropdownMenuContext.Provider value={{ open, setOpen, triggerRef, position }}><div ref={ref} className="relative">{children}</div></DropdownMenuContext.Provider>;
+  return <DropdownMenuContext.Provider value={{ open, setOpen, triggerRef, position }}><div ref={ref} className={cn("relative", open ? "z-40" : "z-0")}>{children}</div></DropdownMenuContext.Provider>;
 }
 
 export function DropdownMenuTrigger({ children, className = "", ...props }) {
@@ -97,12 +106,25 @@ export function DropdownMenuContent({ children, className, align = "end" }) {
     ...(className?.includes("w-full") ? { width: context.position.triggerWidth } : {}),
   } : undefined;
 
+  function containMenuScroll(event) {
+    const menu = event.currentTarget;
+    const reachedTop = menu.scrollTop <= 0;
+    const reachedBottom = menu.scrollTop + menu.clientHeight >= menu.scrollHeight - 1;
+
+    if ((event.deltaY < 0 && reachedTop) || (event.deltaY > 0 && reachedBottom)) {
+      event.preventDefault();
+    }
+    event.stopPropagation();
+  }
+
   return (
     <div
       role="menu"
       style={fixedStyle}
+      onWheel={containMenuScroll}
+      onTouchMove={(event) => event.stopPropagation()}
       className={cn(
-        "fixed z-[120] max-h-[min(22rem,calc(100vh-8rem))] overflow-y-auto overscroll-contain rounded-2xl border border-black/8 bg-white p-3 opacity-100 shadow-[0_24px_70px_rgba(28,34,31,.18)]",
+        "fixed z-40 max-h-[min(22rem,calc(100vh-8rem))] touch-pan-y overflow-y-auto overscroll-y-contain rounded-2xl border border-black/8 bg-white p-3 opacity-100 shadow-[0_24px_70px_rgba(28,34,31,.18)]",
         className,
       )}
     >

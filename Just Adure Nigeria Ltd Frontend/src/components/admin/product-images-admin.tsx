@@ -1,5 +1,5 @@
 import { useState, useTransition } from "react";
-import { ImagePlus, Save, Star, Trash2 } from "lucide-react";
+import { ImagePlus, Star, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { attachAdminProductImage, removeAdminProductImage, setAdminProductPrimaryImage, uploadAdminProductImage } from "@/lib/api.js";
 
@@ -87,7 +87,7 @@ export function ProductImagesAdmin({ products = [], onProductsChanged }) {
   }
 
   return (
-    <section className="mt-8 rounded-[2rem] border border-black/8 bg-[#fbfaf6]0 p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
+    <section className="surface-card mt-8 p-6">
       <div className="flex items-center gap-3"><ImagePlus className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Product images</h2></div>
       <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Upload actual UK-used item photos, attach them to products, and choose the main storefront image. If Cloudinary is not configured yet, uploads are saved locally for development.</p>
       {error ? <p className="mt-4 rounded-2xl border border-[var(--accent)]/30 bg-[#fff8ed] p-4 text-sm font-bold text-[var(--accent-dark)]">{error}</p> : null}

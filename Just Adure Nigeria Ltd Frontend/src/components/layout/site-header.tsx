@@ -28,7 +28,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getCurrentUser, getNotifications, logoutUser, markNotificationRead } from "@/lib/api.js";
+import { getCart, getCurrentUser, getNotifications, logoutUser, markNotificationRead } from "@/lib/api.js";
+import { cartUpdatedEventName, getCartItemCount } from "@/lib/cart-events";
 
 const storeName = process.env.NEXT_PUBLIC_STORE_NAME || "Just Adure Nigeria Ltd";
 
@@ -60,6 +61,7 @@ export function SiteHeader() {
   const [user, setUser] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [cartCount, setCartCount] = useState(0);
   const [isPending, startTransition] = useTransition();
 
   function loadNotifications(nextUser = user) {
@@ -88,8 +90,22 @@ export function SiteHeader() {
         if (!mounted) return;
         setUser(null);
       });
+    getCart()
+      .then((cart) => {
+        if (mounted) setCartCount(getCartItemCount(cart));
+      })
+      .catch(() => {
+        if (mounted) setCartCount(0);
+      });
+
+    function handleCartUpdated(event) {
+      setCartCount(Number(event.detail?.itemCount ?? 0));
+    }
+
+    window.addEventListener(cartUpdatedEventName, handleCartUpdated);
     return () => {
       mounted = false;
+      window.removeEventListener(cartUpdatedEventName, handleCartUpdated);
     };
   }, []);
 
@@ -161,7 +177,7 @@ export function SiteHeader() {
 
           <a href="/wishlist" className="header-action hidden sm:grid" aria-label="Wishlist"><Heart className="size-5" /></a>
           {user ? <DropdownMenu><DropdownMenuTrigger className="header-action relative" aria-label="Notifications"><Bell className="size-5" />{unreadCount > 0 ? <span className="absolute -right-0.5 -top-0.5 grid size-4 place-items-center rounded-full bg-[var(--accent)] text-[10px] font-black text-white">{Math.min(unreadCount, 9)}</span> : null}</DropdownMenuTrigger><DropdownMenuContent className="w-80"><DropdownMenuLabel>Notifications</DropdownMenuLabel>{notifications.length === 0 ? <p className="rounded-xl bg-[#fbfaf6] p-3 text-sm font-bold text-[var(--muted)]">No notifications yet.</p> : null}{notifications.slice(0, 5).map((notification) => <DropdownMenuItem key={notification.id} disabled={isPending} onClick={() => markRead(notification)} className="p-3"><span className="flex items-center justify-between gap-3"><strong className="text-sm">{notification.title}</strong>{notification.readAt ? null : <span className="size-2 rounded-full bg-[var(--accent-dark)]" />}</span><span className="mt-1 block text-xs leading-5 text-[var(--muted)]">{notification.message}</span><span className="mt-1 block text-[11px] font-black uppercase tracking-[.1em] text-[var(--accent-dark)]">{timeAgo(notification.createdAt)}</span></DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu> : null}
-          <a href="/cart" className="flex items-center gap-2 rounded-md px-2 py-2 text-sm font-black hover:bg-[#f6f3ec] sm:px-3"><span className="relative"><ShoppingCart className="size-7" /><span className="absolute -right-2 -top-2 grid size-5 place-items-center rounded-full bg-[var(--accent)] text-[10px] font-black text-white">0</span></span><span className="hidden sm:inline">Cart</span></a>
+          <a href="/cart" className="flex items-center gap-2 rounded-md px-2 py-2 text-sm font-black hover:bg-[#f6f3ec] sm:px-3"><span className="relative"><ShoppingCart className="size-7" /><span className="absolute -right-2 -top-2 grid size-5 place-items-center rounded-full bg-[var(--accent)] text-[10px] font-black text-white">{Math.min(cartCount, 99)}</span></span><span className="hidden sm:inline">Cart</span></a>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
-"use client";
+﻿  "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { AlertTriangle, ArrowRight, CheckCircle2, Home, MapPin, Pencil, Plus, Trash2, UserRound } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, Home, Mail, MapPin, Pencil, Phone, Plus, ShieldCheck, Trash2, UserRound } from "lucide-react";
 import { addAccountAddress, deleteAccountAddress, getAccount, updateAccountAddress, updateAccountProfile } from "@/lib/api.js";
 
 type Address = {
@@ -47,8 +47,20 @@ function TextInput({ label, name, value, onChange, placeholder, required = false
   return (
     <label className="grid gap-2 text-sm font-black text-[var(--ink)]">
       {label}
-      <input name={name} value={value} onChange={onChange} required={required} placeholder={placeholder} className="rounded-2xl border border-black/10 bg-[#fbfaf6] px-4 py-3.5 text-[var(--ink)] outline-none transition placeholder:text-black/35 focus:border-[var(--accent-dark)] focus:bg-white focus:shadow-[0_0_0_4px_rgba(255,123,37,.12)]" />
+      <input name={name} value={value} onChange={onChange} required={required} placeholder={placeholder} className="min-h-12 rounded-2xl border border-black/10 bg-[#fbfaf6] px-4 py-3 text-[var(--ink)] outline-none transition placeholder:text-black/35 focus:border-[var(--accent-dark)] focus:bg-white focus:shadow-[0_0_0_4px_rgba(255,123,37,.12)]" />
     </label>
+  );
+}
+
+function ProfileFact({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-black/8 bg-[#fbfaf6] p-4">
+      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white text-[var(--accent-dark)] shadow-sm"><Icon className="size-5" /></span>
+      <span className="min-w-0">
+        <span className="block text-[.68rem] font-black uppercase tracking-[.14em] text-[var(--muted)]">{label}</span>
+        <span className="mt-1 block truncate text-sm font-black text-[var(--ink)]">{value || "Not added"}</span>
+      </span>
+    </div>
   );
 }
 
@@ -150,6 +162,9 @@ export function CustomerProfileClient() {
     });
   }
 
+  const addresses = account?.addresses ?? [];
+  const defaultAddress = addresses.find((item) => item.isDefault);
+
   if (error && !account) {
     return (
       <main className="auth-shell min-h-screen px-4 py-16 sm:px-6 lg:px-8">
@@ -166,22 +181,31 @@ export function CustomerProfileClient() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f6f3ec] px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+    <main className="page-shell px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
       <section className="mx-auto max-w-7xl">
-        <div className="mb-8 grid gap-5 rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)] lg:grid-cols-[1fr_auto] lg:items-center lg:p-8">
-          <div>
-            <p className="section-kicker">Account settings</p>
-            <h1 className="mt-3 font-serif text-4xl font-bold leading-none tracking-[-.05em] text-[var(--ink)] sm:text-6xl">Profile and delivery</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--muted)]">Update the details used for checkout, support and delivery notifications.</p>
+        <div className="surface-card p-5 sm:p-6">
+          <div className="flex flex-col gap-4 border-b border-black/8 pb-5 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="section-kicker text-[var(--accent-dark)]">Account settings</p>
+              <h1 className="mt-2 text-3xl font-black tracking-[-.04em] text-[var(--ink)] sm:text-4xl">Profile and delivery details</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--muted)]">Manage the contact and delivery information used for checkout, order tracking and support.</p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <a href="/account" className="cta-outline">Dashboard</a>
+              <a href="/account/orders" className="cta-primary">My orders <ArrowRight className="size-4" /></a>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <a href="/account" className="cta-outline">Dashboard</a>
-            <a href="/shop" className="cta-primary">Continue shopping <ArrowRight className="size-4" /></a>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <ProfileFact icon={UserRound} label="Customer" value={account?.name ?? "Loading..."} />
+            <ProfileFact icon={Mail} label="Email" value={account?.email ?? "Loading..."} />
+            <ProfileFact icon={Phone} label="Phone" value={account?.phone ?? "Loading..."} />
+            <ProfileFact icon={MapPin} label="Default city" value={defaultAddress ? `${defaultAddress.city}, ${defaultAddress.state}` : "No default address"} />
           </div>
         </div>
 
         {(message || error) ? (
-          <div className={`mb-6 rounded-2xl border p-4 text-sm font-bold ${error ? "border-[var(--accent)]/30 bg-[#fff8ed] text-[var(--accent-dark)]" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`}>
+          <div className={`mt-6 rounded-2xl border p-4 text-sm font-bold ${error ? "border-[var(--accent)]/30 bg-[#fff8ed] text-[var(--accent-dark)]" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`}>
             <div className="flex items-start gap-3">
               {error ? <AlertTriangle className="mt-.5 size-5 shrink-0" /> : <CheckCircle2 className="mt-.5 size-5 shrink-0" />}
               <span>{error || message}</span>
@@ -189,34 +213,39 @@ export function CustomerProfileClient() {
           </div>
         ) : null}
 
-        <div className="grid gap-8 xl:grid-cols-[.78fr_1.22fr]">
-          <form onSubmit={saveProfile} className="h-fit rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)] sm:p-8">
-            <div className="flex items-start justify-between gap-5">
-              <div>
-                <p className="section-kicker">Personal details</p>
-                <h2 className="mt-2 text-2xl font-black tracking-[-.03em] text-[var(--ink)]">Customer information</h2>
-                <p className="mt-2 text-sm leading-6 text-[var(--muted)]">This information appears on your customer profile and order records.</p>
+        <div className="mt-8 grid gap-8 xl:grid-cols-[24rem_1fr]">
+          <aside className="grid h-fit gap-5 xl:sticky xl:top-32">
+            <form onSubmit={saveProfile} className="surface-card p-6">
+              <div className="flex items-start justify-between gap-5">
+                <div>
+                  <p className="section-kicker text-[var(--accent-dark)]">Personal details</p>
+                  <h2 className="mt-2 text-2xl font-black tracking-[-.03em] text-[var(--ink)]">Customer profile</h2>
+                </div>
+                <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#fff3e8] text-[var(--accent-dark)]"><UserRound className="size-5" /></div>
               </div>
-              <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#fff3e8] text-[var(--accent-dark)]">
-                <UserRound className="size-5" />
+              {!account ? <p className="mt-6 rounded-2xl bg-[#fbfaf6] p-4 text-sm font-bold text-[var(--muted)]">Loading profile...</p> : null}
+              <div className="mt-6 grid gap-5">
+                <TextInput label="Full name" name="name" value={profile.name} onChange={updateProfileField} required placeholder="Your full name" />
+                <TextInput label="Phone number" name="phone" value={profile.phone} onChange={updateProfileField} required placeholder="08012345678" />
               </div>
+              {account?.email ? <div className="mt-5 rounded-2xl border border-dashed border-black/15 bg-[#fbfaf6] p-4 text-sm leading-6 text-[var(--muted)]"><strong className="text-[var(--ink)]">Login email:</strong><br />{account.email}</div> : null}
+              <button disabled={isPending || !account} className="cta-primary mt-6 w-full disabled:opacity-50" type="submit"><Pencil className="size-4" /> Save profile</button>
+            </form>
+
+            <div className="surface-card p-6">
+              <ShieldCheck className="size-6 text-[var(--accent-dark)]" />
+              <h3 className="mt-4 text-lg font-black text-[var(--ink)]">Checkout ready</h3>
+              <p className="mt-2 text-sm leading-6 text-[var(--muted)]">A complete profile helps the store confirm delivery fees, contact you about orders and resolve support requests faster.</p>
             </div>
-            {!account ? <p className="mt-6 rounded-2xl bg-[#fbfaf6] p-4 text-sm font-bold text-[var(--muted)]">Loading profile...</p> : null}
-            {account?.email ? <p className="mt-6 rounded-2xl bg-[#fbfaf6] p-4 text-sm font-bold text-[var(--muted)]">Email address: <span className="text-[var(--ink)]">{account.email}</span></p> : null}
-            <div className="mt-6 grid gap-5">
-              <TextInput label="Full name" name="name" value={profile.name} onChange={updateProfileField} required placeholder="Your full name" />
-              <TextInput label="Phone number" name="phone" value={profile.phone} onChange={updateProfileField} required placeholder="08012345678" />
-            </div>
-            <button disabled={isPending || !account} className="cta-primary mt-7 w-full disabled:opacity-50" type="submit"><Pencil className="size-4" /> Save profile</button>
-          </form>
+          </aside>
 
           <div className="grid gap-8">
-            <form onSubmit={saveAddress} className="rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)] sm:p-8">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <form onSubmit={saveAddress} className="surface-card p-6 sm:p-8">
+              <div className="flex flex-col gap-4 border-b border-black/8 pb-6 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="section-kicker">Delivery address</p>
+                  <p className="section-kicker text-[var(--accent-dark)]">Delivery address</p>
                   <h2 className="mt-2 text-2xl font-black tracking-[-.03em] text-[var(--ink)]">{editingAddressId ? "Edit saved address" : "Add a new address"}</h2>
-                  <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Use accurate state, city and phone details so delivery fees and tracking stay correct.</p>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--muted)]">Use accurate state, city, phone and landmark details so delivery can be calculated and completed smoothly.</p>
                 </div>
                 {editingAddressId ? <button type="button" className="cta-outline px-5 py-2.5" onClick={() => { setEditingAddressId(""); setAddress(emptyAddress); }}>Cancel edit</button> : null}
               </div>
@@ -235,25 +264,25 @@ export function CustomerProfileClient() {
                 </label>
               </div>
 
-              <div className="mt-6 flex flex-col gap-4 rounded-3xl bg-[#fbfaf6] p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="mt-6 flex flex-col gap-4 rounded-3xl border border-black/8 bg-[#fbfaf6] p-4 sm:flex-row sm:items-center sm:justify-between">
                 <label className="flex items-center gap-3 text-sm font-bold text-[var(--ink)]"><input type="checkbox" name="isDefault" checked={address.isDefault} onChange={updateAddressField} /> Use as default delivery address</label>
                 <button disabled={isPending || !account} className="cta-primary disabled:opacity-50" type="submit"><Plus className="size-4" /> {editingAddressId ? "Update address" : "Add address"}</button>
               </div>
             </form>
 
-            <section className="rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)] sm:p-8">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <section className="surface-card p-6 sm:p-8">
+              <div className="flex flex-col gap-2 border-b border-black/8 pb-6 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className="section-kicker">Address book</p>
-                  <h2 className="mt-2 text-2xl font-black tracking-[-.03em] text-[var(--ink)]">Saved addresses</h2>
+                  <p className="section-kicker text-[var(--accent-dark)]">Address book</p>
+                  <h2 className="mt-2 text-2xl font-black tracking-[-.03em] text-[var(--ink)]">Saved delivery addresses</h2>
                 </div>
-                <p className="text-sm font-bold text-[var(--muted)]">{account?.addresses?.length ?? 0} saved</p>
+                <p className="rounded-full bg-[#fbfaf6] px-4 py-2 text-sm font-black text-[var(--muted)]">{addresses.length} saved</p>
               </div>
 
-              {account?.addresses?.length ? (
+              {addresses.length ? (
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  {account.addresses.map((savedAddress) => (
-                    <article key={savedAddress.id} className="rounded-3xl border border-black/8 bg-[#fbfaf6] p-5 transition hover:border-[var(--accent)]/40 hover:bg-white">
+                  {addresses.map((savedAddress) => (
+                    <article key={savedAddress.id} className="rounded-3xl border border-black/8 bg-[#fbfaf6] p-5 transition hover:border-[var(--accent)]/40 hover:bg-white hover:shadow-[0_16px_45px_rgba(28,34,31,.06)]">
                       <div className="flex items-start justify-between gap-4">
                         <div className="grid size-11 place-items-center rounded-2xl bg-white text-[var(--accent-dark)] shadow-sm"><Home className="size-5" /></div>
                         {savedAddress.isDefault ? <span className="rounded-full bg-[#fff3e8] px-3 py-1 text-xs font-black text-[var(--accent-dark)]">Default</span> : null}
@@ -269,9 +298,10 @@ export function CustomerProfileClient() {
                   ))}
                 </div>
               ) : (
-                <div className="mt-6 rounded-3xl border border-dashed border-black/15 bg-[#fbfaf6] p-6 text-center">
-                  <MapPin className="mx-auto size-7 text-[var(--accent-dark)]" />
-                  <p className="mt-3 text-sm font-bold text-[var(--muted)]">No saved delivery addresses yet. Add one above to make checkout faster.</p>
+                <div className="mt-6 rounded-3xl border border-dashed border-black/15 bg-[#fbfaf6] p-8 text-center">
+                  <MapPin className="mx-auto size-8 text-[var(--accent-dark)]" />
+                  <h3 className="mt-4 text-xl font-black tracking-[-.03em] text-[var(--ink)]">No saved address yet.</h3>
+                  <p className="mx-auto mt-2 max-w-md text-sm font-bold leading-6 text-[var(--muted)]">Add your first delivery address above so checkout can be faster and more accurate.</p>
                 </div>
               )}
             </section>

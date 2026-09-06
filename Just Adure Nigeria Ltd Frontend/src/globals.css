@@ -16,11 +16,19 @@ body {
   color: var(--ink);
   font-family: "Avenir Next", "Segoe UI", sans-serif;
   text-rendering: optimizeLegibility;
+  line-height: 1.5;
 }
 
 ::selection { background: var(--accent); color: var(--ink); }
 a { transition: color 160ms ease, background-color 160ms ease, transform 160ms ease, border-color 160ms ease; }
 button, a { -webkit-tap-highlight-color: transparent; }
+button, input, textarea, select { font: inherit; }
+:focus-visible {
+  outline: 3px solid rgba(185, 80, 25, .42);
+  outline-offset: 3px;
+}
+button:disabled { cursor: not-allowed; }
+img { max-width: 100%; }
 
 .font-serif { font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif; }
 .header-action { display: grid; width: 2.75rem; height: 2.75rem; place-items: center; border-radius: 999px; }
@@ -59,12 +67,40 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .section-title { margin-top: .8rem; font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif; font-size: clamp(2.5rem, 5vw, 4.5rem); font-weight: 700; letter-spacing: -.05em; line-height: .95; }
 .cta-primary, .cta-outline { display: inline-flex; min-height: 3rem; align-items: center; justify-content: center; gap: .6rem; border-radius: 999px; padding: .75rem 1.25rem; font-size: .875rem; font-weight: 900; }
 .cta-primary { background: var(--accent); color: var(--ink); box-shadow: 0 12px 30px rgba(244, 133, 61, .24); }
-.cta-primary:hover { transform: translateY(-2px); background: #000; }
+.cta-primary:hover { transform: translateY(-2px); background: #ff9b58; color: var(--ink); }
+.cta-primary:active { transform: translateY(0); background: #ed762c; }
 .cta-outline { border: 1px solid rgba(22, 29, 27, .16); background: rgba(255, 255, 255, .55); }
 .cta-outline:hover { border-color: rgba(22, 29, 27, .35); background: white; }
 .category-pill { display: inline-flex; min-height: 3.4rem; align-items: center; gap: .8rem; border: 1px solid rgba(22, 29, 27, .1); border-radius: 999px; background: white; padding: .8rem 1.15rem; font-weight: 900; box-shadow: 0 8px 24px rgba(22, 29, 27, .04); }
 .category-pill:hover { transform: translateY(-2px); border-color: rgba(22, 29, 27, .25); }
 .footer-heading { font-size: .75rem; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; }
+
+/* Shared surfaces keep storefront, customer, and admin pages visually consistent. */
+.page-shell { min-height: 100vh; background: var(--paper); }
+.page-container { width: min(100% - 2rem, 80rem); margin-inline: auto; padding-block: clamp(2rem, 4vw, 4rem); }
+.surface-card { border: 1px solid rgba(22, 29, 27, .08); border-radius: 1.25rem; background: #fff; box-shadow: 0 10px 30px rgba(22, 29, 27, .055); }
+.status-message { border: 1px solid rgba(22, 29, 27, .1); border-radius: 1rem; background: #fff; padding: 1rem; font-size: .875rem; font-weight: 700; line-height: 1.5; }
+
+/* Calm legacy surfaces while page components are progressively consolidated. */
+.rounded-\[2rem\],
+.rounded-\[2\.2rem\],
+.rounded-\[2\.25rem\] { border-radius: 1.25rem; }
+[class*="shadow-[0_18px_50px"],
+[class*="shadow-[0_22px_70px"],
+[class*="shadow-[0_24px_70px"],
+[class*="shadow-[0_24px_80px"],
+[class*="shadow-[0_28px_90px"] { box-shadow: 0 10px 30px rgba(22, 29, 27, .055); }
+input:not([type="checkbox"]):not([type="radio"]), textarea, select {
+  border-color: rgba(22, 29, 27, .14);
+}
+input:not([type="checkbox"]):not([type="radio"]):hover, textarea:hover, select:hover {
+  border-color: rgba(22, 29, 27, .28);
+}
+
+@media (max-width: 640px) {
+  .section-title { font-size: clamp(2.15rem, 12vw, 3.25rem); }
+  .cta-primary, .cta-outline { min-height: 3.25rem; }
+}
 
 @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
 .animate-rise { animation: rise .7s cubic-bezier(.2,.8,.2,1) both; }

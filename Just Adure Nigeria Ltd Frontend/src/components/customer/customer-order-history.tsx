@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { AlertTriangle, ArrowRight, Clock3, FileText, PackageCheck, ReceiptText, ShoppingBag, Truck, XCircle } from "lucide-react";
+import { AlertTriangle, ArrowRight, FileText, ReceiptText, ShoppingBag, Truck, XCircle } from "lucide-react";
 import { cancelMyOrder, getMyOrder, getMyOrders } from "@/lib/api.js";
 import { formatNaira } from "@/lib/utils.js";
 

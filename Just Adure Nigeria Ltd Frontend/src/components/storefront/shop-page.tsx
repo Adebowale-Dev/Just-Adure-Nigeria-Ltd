@@ -9,7 +9,6 @@ import { productToCard } from "@/lib/product-card-mapper";
 
 const defaultFilters = { q: "", category: "", brand: "", condition: "", sort: "newest" };
 
-const quickSearches = ["Fridge", "Desktop", "Monitor", "Plasma TV", "Washing machine", "Bicycle"];
 const sortOptions = [
   { label: "Newest", value: "newest" },
   { label: "Oldest", value: "oldest" },
@@ -66,10 +65,9 @@ export function ShopPage({ defaultCategory = "", defaultQuery = "" }) {
   const updateFilter = (event) => setFilters((current) => ({ ...current, [event.target.name]: event.target.value }));
   const setFilterValue = (name, value) => setFilters((current) => ({ ...current, [name]: value }));
   const clearFilters = () => setFilters({ ...defaultFilters });
-  const applyQuickSearch = (value) => setFilters((current) => ({ ...current, q: value }));
 
   return (
-    <main className="min-h-screen bg-[#ededed]">
+    <main className="page-shell">
 
 
       <section className="mx-auto grid max-w-7xl gap-7 px-4 pb-14 pt-8 sm:px-6 sm:pt-10 lg:grid-cols-[18rem_1fr] lg:px-8 lg:pt-12">

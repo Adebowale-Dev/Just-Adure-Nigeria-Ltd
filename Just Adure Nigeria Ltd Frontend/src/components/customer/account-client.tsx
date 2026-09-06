@@ -16,7 +16,7 @@ const dashboardActions = [
   {
     title: "Edit profile",
     text: "Update your name, phone number and account details.",
-    href: "/profile",
+    href: "/account/addresses",
     icon: UserRound,
   },
   {

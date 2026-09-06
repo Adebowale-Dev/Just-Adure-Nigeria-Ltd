@@ -10,14 +10,14 @@ import { Wishlist } from "../models/wishlist.js";
 export const wishlistRouter = Router();
 
 const addWishlistSchema = z.object({
-  productId: z.string().trim().optional(),
+  productId: z.string().trim().refine((value) => !value || mongoose.Types.ObjectId.isValid(value), "Invalid product ID.").optional(),
   slug: z.string().trim().optional(),
 }).refine((value) => Boolean(value.productId || value.slug), {
   message: "Provide either productId or slug.",
   path: ["productId"],
 });
 
-const productIdParamSchema = z.object({ productId: z.string().trim().min(1) });
+const productIdParamSchema = z.object({ productId: z.string().trim().refine((value) => mongoose.Types.ObjectId.isValid(value), "Invalid product ID.") });
 
 function availableQuantity(product) {
   return Math.max(0, Number(product.stockQuantity ?? 0) - Number(product.reservedQuantity ?? 0));

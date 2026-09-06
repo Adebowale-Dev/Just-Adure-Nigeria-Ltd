@@ -143,9 +143,9 @@ export function CustomerAddressesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f6f3ec] px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+    <main className="page-shell px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
       <section className="mx-auto max-w-7xl">
-        <div className="mb-8 grid gap-5 rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)] lg:grid-cols-[1fr_auto] lg:items-center lg:p-8">
+        <div className="surface-card mb-8 grid gap-5 p-6 lg:grid-cols-[1fr_auto] lg:items-center lg:p-8">
           <div>
             <p className="section-kicker">Address book</p>
             <h1 className="mt-3 font-serif text-4xl font-bold leading-none tracking-[-.05em] text-[var(--ink)] sm:text-6xl">Saved addresses</h1>
@@ -167,7 +167,7 @@ export function CustomerAddressesPage() {
         ) : null}
 
         <div className="grid gap-8 lg:grid-cols-[.95fr_1.05fr]">
-          <form onSubmit={saveAddress} className="h-fit rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)] sm:p-8 lg:sticky lg:top-28">
+          <form onSubmit={saveAddress} className="surface-card h-fit p-6 sm:p-8 lg:sticky lg:top-28">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <p className="section-kicker">Delivery details</p>
@@ -197,7 +197,7 @@ export function CustomerAddressesPage() {
             </div>
           </form>
 
-          <section className="rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)] sm:p-8">
+          <section className="surface-card p-6 sm:p-8">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="section-kicker">Delivery locations</p>

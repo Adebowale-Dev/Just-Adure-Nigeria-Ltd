@@ -99,7 +99,7 @@ export function OrderTrackingClient({ initialOrderNumber = "" }) {
   return (
     <main className="min-h-screen bg-[#f6f3ec] px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
       <section className="mx-auto max-w-7xl">
-        <div className="mb-8 grid gap-5 rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)] lg:grid-cols-[1fr_auto] lg:items-center lg:p-8">
+        <div className="surface-card mb-8 grid gap-5 p-6 lg:grid-cols-[1fr_auto] lg:items-center lg:p-8">
           <div>
             <p className="section-kicker">Order tracking</p>
             <h1 className="mt-3 font-serif text-4xl font-bold leading-none tracking-[-.05em] text-[var(--ink)] sm:text-6xl">Track your delivery</h1>
@@ -109,7 +109,7 @@ export function OrderTrackingClient({ initialOrderNumber = "" }) {
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[25rem_1fr]">
-          <form onSubmit={submitTracking} className="h-fit rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)] sm:p-8">
+          <form onSubmit={submitTracking} className="surface-card h-fit p-6 sm:p-8">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="section-kicker">Find order</p>
@@ -134,7 +134,7 @@ export function OrderTrackingClient({ initialOrderNumber = "" }) {
             </div>
           </form>
 
-          <section className="rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)] sm:p-8">
+          <section className="surface-card p-6 sm:p-8">
             {error ? <div className="mb-6 rounded-2xl border border-[var(--accent)]/30 bg-[#fff8ed] p-4 text-sm font-bold text-[var(--accent-dark)]"><AlertTriangle className="mb-2 size-5" />{error}</div> : null}
             {returnMessage ? <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-900">{returnMessage}</div> : null}
 

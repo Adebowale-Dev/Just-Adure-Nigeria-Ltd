@@ -1,4 +1,4 @@
-import { connectMongo, disconnectMongo } from "../config/mongo.js";
+﻿import { connectMongo, disconnectMongo } from "../config/mongo.js";
 import { Brand, Category, ConditionGrade, DeliveryZone, Product, } from "../models/catalogue.js";
 import { User } from "../models/user.js";
 import { Order } from "../models/order.js";
@@ -318,7 +318,7 @@ const catalogue = [
         colour: "Silver",
         modelNumber: "Standing Fridge Freezer",
         featured: true,
-        imageUrl: "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?auto=format&fit=crop&w=1200&q=85",
+        imageUrl: "/product-images/standing-fridge-freezer.jpg",
         specs: { Type: "Fridge freezer", Size: "Large standing", Cooling: "Fridge and freezer", Status: "Tested working" },
     },
     {
@@ -387,7 +387,7 @@ const catalogue = [
         colour: "Black",
         modelNumber: "Medium Bicycle",
         featured: false,
-        imageUrl: "https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=1200&q=85",
+        imageUrl: "/product-images/medium-bicycle.jpg",
         specs: { Type: "Bicycle", Size: "Medium", Brakes: "Checked", Status: "Ride tested" },
     },
     {
@@ -410,7 +410,7 @@ const catalogue = [
         colour: "Mixed",
         modelNumber: "Small Bicycle",
         featured: false,
-        imageUrl: "https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=1200&q=85",
+        imageUrl: "/product-images/small-bicycle.jpg",
         specs: { Type: "Bicycle", Size: "Small", Use: "Child or small rider", Status: "Ride tested" },
     },
     {
@@ -525,7 +525,7 @@ const catalogue = [
         colour: "Brown",
         modelNumber: "2/3 Seater Leather Sofa",
         featured: true,
-        imageUrl: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=85",
+        imageUrl: "/product-images/sofa-chair.jpg",
         specs: { Type: "Leather sofa", Seats: "2/3 seater", Material: "Leather", Status: "Inspected" },
     },
 ];
@@ -746,8 +746,7 @@ main()
     console.error(error);
     process.exitCode = 1;
 })
-    .finally(async () => {
+.finally(async () => {
     await disconnectMongo();
 });
-
 

@@ -12,7 +12,7 @@ export const cartRouter = Router();
 const cartCookieName = "ja_cart_id";
 const guestCartMaxAgeMs = 30 * 24 * 60 * 60 * 1000;
 const addItemSchema = z.object({
-    productId: z.string().trim().optional(),
+    productId: z.string().trim().refine((value) => !value || mongoose.Types.ObjectId.isValid(value), "Invalid product ID.").optional(),
     slug: z.string().trim().optional(),
     quantity: z.coerce.number().int().min(1).max(20).default(1),
 }).refine((value) => Boolean(value.productId || value.slug), {
@@ -22,7 +22,7 @@ const addItemSchema = z.object({
 const updateItemSchema = z.object({
     quantity: z.coerce.number().int().min(1).max(20),
 });
-const productIdParamSchema = z.object({ productId: z.string().trim().min(1) });
+const productIdParamSchema = z.object({ productId: z.string().trim().refine((value) => mongoose.Types.ObjectId.isValid(value), "Invalid product ID.") });
 function cookieOptions() {
     return {
         httpOnly: true,

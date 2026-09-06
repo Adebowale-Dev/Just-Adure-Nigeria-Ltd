@@ -132,8 +132,8 @@ describe("authentication", () => {
             .expect(200);
         expect(me.body.data.user).toMatchObject({ email: payload.email, roles: ["customer"] });
     });
-    it("protects current-user lookup when no auth cookie is present", async () => {
-        const response = await request(app).get("/api/v1/auth/me").expect(401);
-        expect(response.body.error.code).toBe("AUTH_REQUIRED");
+    it("returns an empty auth state when no auth cookie is present", async () => {
+        const response = await request(app).get("/api/v1/auth/me").expect(200);
+        expect(response.body.data.user).toBeNull();
     });
 });

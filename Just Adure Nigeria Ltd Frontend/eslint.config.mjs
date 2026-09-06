@@ -1,9 +1,11 @@
 import eslint from "@eslint/js";
 import globals from "globals";
+import tseslint from "typescript-eslint";
 
 export default [
   { ignores: [".next/**", "coverage/**", "node_modules/**"] },
   eslint.configs.recommended,
+  ...tseslint.configs.recommended,
   {
     files: ["**/*.{js,jsx,ts,tsx}"],
     languageOptions: {
@@ -19,8 +21,8 @@ export default [
       },
     },
     rules: {
-      "no-unused-vars": ["error", { "argsIgnorePattern": "^_|^[A-Z]", "varsIgnorePattern": "^[A-Z]" }],
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_|^[A-Z]", "varsIgnorePattern": "^[A-Z]" }],
     },
   },
 ];
-

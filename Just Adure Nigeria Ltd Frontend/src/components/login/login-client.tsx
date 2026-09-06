@@ -43,11 +43,11 @@ export function LoginClient() {
   }
 
   return (
-    <main className="min-h-screen bg-[#ededed]">
+    <main className="page-shell">
       <section className="mx-auto flex min-h-[calc(100vh-9rem)] max-w-7xl items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
-        <form onSubmit={submitLogin} className="w-full max-w-xl rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_24px_80px_rgba(28,34,31,.08)] sm:p-8 lg:p-10">
+        <form onSubmit={submitLogin} className="surface-card w-full max-w-lg p-6 sm:p-8">
           <div>
-            <h1 className="font-serif text-5xl font-bold leading-[.95] tracking-[-.055em]">Sign in.</h1>
+            <h1 className="text-4xl font-black tracking-[-.045em]">Sign in</h1>
             <p className="mt-3 max-w-md text-sm leading-6 text-[var(--muted)]">Use your customer, admin or staff account to continue.</p>
           </div>
 

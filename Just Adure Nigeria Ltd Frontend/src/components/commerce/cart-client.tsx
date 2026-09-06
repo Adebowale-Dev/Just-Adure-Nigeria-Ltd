@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { AlertTriangle, ArrowRight, CreditCard, PackageCheck, ShieldCheck, ShoppingBag, Trash2, Truck } from "lucide-react";
 import { clearCart, getCart, removeCartItem, updateCartItem } from "@/lib/api.js";
+import { notifyCartUpdated } from "@/lib/cart-events";
 import { formatNaira } from "@/lib/utils.js";
 
 type CartItem = {
@@ -39,7 +40,7 @@ export function CartClient() {
     let mounted = true;
     getCart()
       .then((nextCart) => {
-        if (mounted) setCart(nextCart);
+        if (mounted) { setCart(nextCart); notifyCartUpdated(nextCart); }
       })
       .catch(() => {
         if (mounted) setError("Cart is not available. Please confirm the backend is running on port 4000.");
@@ -53,7 +54,9 @@ export function CartClient() {
     startTransition(async () => {
       try {
         setError("");
-        setCart(await action());
+        const nextCart = await action();
+        setCart(nextCart);
+        notifyCartUpdated(nextCart);
       } catch (actionError) {
         setError(actionError instanceof Error ? actionError.message : "Cart update failed.");
       }
@@ -65,7 +68,7 @@ export function CartClient() {
   return (
     <main className="min-h-screen bg-[#f6f3ec] px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
       <section className="mx-auto max-w-7xl">
-        <div className="mb-8 grid gap-5 rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)] lg:grid-cols-[1fr_auto] lg:items-center lg:p-8">
+        <div className="surface-card mb-8 grid gap-5 p-6 lg:grid-cols-[1fr_auto] lg:items-center lg:p-8">
           <div>
             <p className="section-kicker">Shopping cart</p>
             <h1 className="mt-3 font-serif text-4xl font-bold leading-none tracking-[-.05em] text-[var(--ink)] sm:text-6xl">Review your cart</h1>
@@ -81,13 +84,13 @@ export function CartClient() {
         ) : null}
 
         {!cart ? (
-          <div className="rounded-[2rem] border border-black/8 bg-white p-8 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
+          <div className="surface-card p-8">
             <div className="h-60 animate-pulse rounded-[1.5rem] bg-[#ede8de]" />
           </div>
         ) : null}
 
         {cart && cart.items.length === 0 ? (
-          <div className="rounded-[2rem] border border-dashed border-black/15 bg-white p-10 text-center shadow-[0_18px_50px_rgba(28,34,31,.04)]">
+          <div className="surface-card border-dashed p-10 text-center">
             <div className="mx-auto grid size-16 place-items-center rounded-3xl bg-[#fff3e8] text-[var(--accent-dark)]"><ShoppingBag className="size-8" /></div>
             <h2 className="mt-6 font-serif text-4xl font-bold tracking-[-.04em] text-[var(--ink)]">Your cart is empty.</h2>
             <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[var(--muted)]">Browse inspected UK-used computers, appliances, TVs, furniture and home essentials, then add available products here.</p>
@@ -99,7 +102,7 @@ export function CartClient() {
           <div className="grid gap-8 lg:grid-cols-[1fr_25rem]">
             <section className="grid gap-4">
               {cart?.items.map((item) => (
-                <article key={item.productId} className="grid gap-4 rounded-[2rem] border border-black/8 bg-white p-4 shadow-[0_18px_50px_rgba(28,34,31,.06)] transition hover:shadow-[0_24px_70px_rgba(28,34,31,.1)] sm:grid-cols-[9rem_1fr] xl:grid-cols-[10rem_1fr_auto]">
+                <article key={item.productId} className="surface-card grid gap-4 p-4 transition hover:border-[var(--accent)]/40 sm:grid-cols-[9rem_1fr] xl:grid-cols-[10rem_1fr_auto]">
                   <a href={`/product/${item.slug}`} className="relative aspect-square overflow-hidden rounded-[1.5rem] bg-[#e9e8e2]">
                     <img src={itemImage(item)} alt={item.image?.altText ?? item.name} className="h-full w-full object-cover transition duration-500 hover:scale-105" />
                     <span className="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1 text-[.65rem] font-black uppercase tracking-[.08em] text-[var(--ink)] shadow-sm">{item.condition ?? "UK-used"}</span>
@@ -126,7 +129,7 @@ export function CartClient() {
               ))}
             </section>
 
-            <aside className="h-fit rounded-[2rem] bg-white p-6 text-[var(--ink)] shadow-[0_18px_50px_rgba(28,34,31,.06)] lg:sticky lg:top-28 sm:p-8">
+            <aside className="surface-card h-fit p-6 text-[var(--ink)] lg:sticky lg:top-28 sm:p-8">
               <p className="section-kicker text-[var(--accent)]">Order summary</p>
               <h2 className="mt-3 text-3xl font-black tracking-[-.04em]">Ready for checkout</h2>
               <div className="mt-7 grid gap-4 text-sm">
@@ -138,7 +141,7 @@ export function CartClient() {
               <div className="mt-7 border-t border-black/10 pt-6">
                 <div className="flex items-baseline justify-between gap-4"><span className="font-black">Total</span><strong className="text-3xl tracking-[-.04em]">{formatNaira(cart?.totalKobo ?? 0)}</strong></div>
               </div>
-              <a href="/checkout" className="cta-primary mt-7 w-full bg-[var(--accent)] text-[var(--ink)] hover:bg-white">Proceed to checkout <ArrowRight className="size-4" /></a>
+              <a href="/checkout" className="cta-primary mt-7 w-full">Proceed to checkout <ArrowRight className="size-4" /></a>
               <button className="mt-4 w-full rounded-full border border-black/10 px-5 py-3 text-sm font-black text-[var(--muted)] transition hover:bg-[#fff3e8] disabled:opacity-50" disabled={isPending} type="button" onClick={() => runCartAction(clearCart)}>Clear cart</button>
               <div className="mt-7 grid gap-3 border-t border-black/10 pt-6 text-sm text-[var(--muted)]">
                 <p className="flex items-center gap-3"><ShieldCheck className="size-5 text-[var(--accent)]" /> Backend validates prices</p>

@@ -179,7 +179,7 @@ export function ProductManagementAdmin({ products = [], onProductsChanged }) {
   }
 
   return (
-    <section className="mt-8 rounded-[2rem] border border-black/8 bg-[#fbfaf6]0 p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
+    <section className="surface-card mt-8 p-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div><div className="flex items-center gap-3"><PackagePlus className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Product management</h2></div><p className="mt-2 text-sm leading-6 text-[var(--muted)]">Create and edit UK-used products with honest condition, pricing, stock and warranty details.</p></div>
         <button type="button" onClick={resetForm} className="cta-outline">New product</button>

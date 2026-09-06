@@ -34,9 +34,9 @@ export function ProductDetailsPage({ slug }) {
       <section className="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_.9fr] lg:px-8 lg:py-16">
         <div>
           <a href="/shop" className="mb-5 inline-flex items-center gap-2 text-sm font-black text-[var(--accent-dark)]"><ArrowLeft className="size-4" /> Back to shop</a>
-          <div className="overflow-hidden rounded-[2rem] border border-black/8 bg-[#e9e8e2]">
+          <div className="overflow-hidden rounded-2xl border border-black/8 bg-[#e9e8e2]">
             <div className="relative aspect-[4/3]">
-              <img src={image} alt={`${product.name} actual product`} className="h-full w-full object-cover" />
+              <img src={image} alt={`${product.name} actual product`} className="h-full w-full object-cover" onError={(event) => { event.currentTarget.src = fallbackImage; }} />
               <span className="absolute left-5 top-5 rounded-full bg-white/90 px-4 py-2 text-xs font-black uppercase tracking-[.12em] text-[var(--ink)]">{product.conditionGrade?.name ?? "UK-used"}</span>
             </div>
           </div>
@@ -44,7 +44,7 @@ export function ProductDetailsPage({ slug }) {
 
         <div className="lg:pt-10">
           <p className="section-kicker">{product.brand?.name ?? "Verified product"}</p>
-          <h1 className="mt-4 font-serif text-5xl font-bold leading-none tracking-[-.055em] sm:text-6xl">{product.name}</h1>
+          <h1 className="mt-4 text-4xl font-black leading-tight tracking-[-.045em] sm:text-5xl">{product.name}</h1>
           <p className="mt-5 text-lg leading-8 text-[var(--muted)]">{product.shortDescription}</p>
           <div className="mt-7 flex flex-wrap items-baseline gap-3">
             <span className="text-3xl font-black text-[var(--ink)]">{formatNaira(product.priceKobo)}</span>
@@ -67,9 +67,9 @@ export function ProductDetailsPage({ slug }) {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="rounded-[2rem] border border-black/8 bg-[#fbfaf6]0 p-8 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
+        <div className="surface-card p-6 sm:p-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div><p className="section-kicker">Customer reviews</p><h2 className="mt-2 font-serif text-4xl font-bold tracking-[-.04em]">What buyers are saying.</h2></div>
+            <div><p className="section-kicker">Customer reviews</p><h2 className="mt-2 text-3xl font-black tracking-[-.04em]">What buyers are saying</h2></div>
             <div className="inline-flex w-fit items-center gap-2 rounded-full bg-[#fff8ed] px-4 py-2 text-sm font-black text-[var(--ink)]"><Star className="size-4 fill-[var(--accent)] text-[var(--accent)]" />{product.reviewSummary?.reviewCount ? `${product.reviewSummary.averageRating.toFixed(1)} from ${product.reviewSummary.reviewCount} review${product.reviewSummary.reviewCount === 1 ? "" : "s"}` : "No reviews yet"}</div>
           </div>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -77,10 +77,6 @@ export function ProductDetailsPage({ slug }) {
           </div>
           <ProductReviewForm productId={product.id} onSubmitted={handleReviewSubmitted} />
         </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
-        <ProductEnquiryForm product={product} />
       </section>
 
     </main>

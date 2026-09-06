@@ -1,8 +1,9 @@
-﻿import { randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { Router } from "express";
 import mongoose from "mongoose";
 import { z } from "zod";
 import { AppError } from "../errors/app-error.js";
+import { optionalAuth } from "../middleware/auth.js";
 import { Order } from "../models/order.js";
 import { ReturnRequest, returnReasons } from "../models/return-request.js";
 import { notifyAdmins } from "../services/notifications.js";
@@ -65,12 +66,15 @@ function selectedItems(order, requestedItems) {
  *       201:
  *         description: Return request submitted
  */
-returnsRouter.post("/orders/:orderId/returns", async (request, response, next) => {
+returnsRouter.post("/orders/:orderId/returns", optionalAuth, async (request, response, next) => {
   try {
     const { orderId } = z.object({ orderId: objectIdSchema }).parse(request.params);
     const input = returnRequestSchema.parse(request.body);
     const order = await Order.findOne({ _id: orderId, "customer.email": input.email });
     if (!order) throw new AppError(404, "ORDER_NOT_FOUND", "We could not find an order with those details.");
+    if (request.user?.id && order.userId && String(order.userId) !== request.user.id) {
+      throw new AppError(403, "ORDER_ACCESS_DENIED", "This return request does not belong to your account.");
+    }
     if (order.paymentStatus !== "successful") throw new AppError(409, "ORDER_NOT_PAID", "Only paid orders can be returned or refunded.");
     if (!["delivered", "returned", "refunded"].includes(order.orderStatus)) {
       throw new AppError(409, "ORDER_NOT_RETURNABLE", "This order is not eligible for a return request yet.");
