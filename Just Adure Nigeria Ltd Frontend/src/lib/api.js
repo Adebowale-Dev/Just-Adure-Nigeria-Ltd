@@ -49,6 +49,7 @@ export async function updateAdminProductStock(productId, input) { return (await 
 export async function getAdminOrders() { return (await cartRequest("/admin/orders", { method: "GET" })).items; }
 export async function updateAdminOrderStatus(orderId, input) { return (await cartRequest(`/admin/orders/${orderId}/status`, { method: "PATCH", body: JSON.stringify(input) })).order; }
 export async function loginUser(input) { return (await cartRequest("/auth/login", { method: "POST", body: JSON.stringify(input) })).user; }
+export async function continueWithGoogle(credential) { return (await cartRequest("/auth/google", { method: "POST", headers: { "X-Auth-Intent": "google-sign-in" }, body: JSON.stringify({ credential }) })).user; }
 export async function getCurrentUser() { return (await cartRequest("/auth/me", { method: "GET" })).user; }
 export async function logoutUser() { await fetch(`${apiUrl}/auth/logout`, { method: "POST", credentials: "include" }); }
 export async function getAdminCoupons() { return (await cartRequest("/admin/coupons", { method: "GET" })).items; }

@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { Router } from "express";
+import { OAuth2Client } from "google-auth-library";
 import { z } from "zod";
 import { env } from "../config/env.js";
 import { AppError } from "../errors/app-error.js";
@@ -33,6 +34,10 @@ const resetPasswordSchema = z.object({
     token: z.string().trim().min(32),
     password: z.string().min(8).max(128),
 });
+const googleCredentialSchema = z.object({
+    credential: z.string().trim().min(100),
+});
+const googleClient = new OAuth2Client();
 function authCookieOptions(maxAgeMs) {
     return {
         httpOnly: true,
@@ -222,7 +227,9 @@ authRouter.post("/login", async (request, response, next) => {
         if (!user || !user.isActive) {
             throw new AppError(401, "INVALID_CREDENTIALS", "Invalid email address or password.");
         }
-        const passwordMatches = await verifyPassword(input.password, user.passwordHash);
+        const passwordMatches = user.passwordHash
+            ? await verifyPassword(input.password, user.passwordHash)
+            : false;
         if (!passwordMatches) {
             throw new AppError(401, "INVALID_CREDENTIALS", "Invalid email address or password.");
         }
@@ -230,6 +237,79 @@ authRouter.post("/login", async (request, response, next) => {
         await user.save();
         setAuthCookies(response, user);
         response.json({ data: { user: publicUser(user) } });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * @openapi
+ * /api/v1/auth/google:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Register or sign in with a verified Google account
+ *     responses:
+ *       200:
+ *         description: Google authentication successful
+ *       503:
+ *         description: Google authentication is not configured
+ */
+authRouter.post("/google", async (request, response, next) => {
+    try {
+        if (!env.GOOGLE_CLIENT_ID) {
+            throw new AppError(503, "GOOGLE_AUTH_NOT_CONFIGURED", "Google sign-in is not configured yet.");
+        }
+        if (request.get("X-Auth-Intent") !== "google-sign-in") {
+            throw new AppError(403, "INVALID_AUTH_INTENT", "The Google sign-in request could not be verified.");
+        }
+
+        const { credential } = googleCredentialSchema.parse(request.body);
+        let ticket;
+        try {
+            ticket = await googleClient.verifyIdToken({
+                idToken: credential,
+                audience: env.GOOGLE_CLIENT_ID,
+            });
+        }
+        catch {
+            throw new AppError(401, "INVALID_GOOGLE_TOKEN", "Google sign-in expired or could not be verified. Please try again.");
+        }
+        const profile = ticket.getPayload();
+        if (!profile?.sub || !profile.email || !profile.email_verified) {
+            throw new AppError(401, "INVALID_GOOGLE_ACCOUNT", "Google could not verify this email address.");
+        }
+
+        const email = profile.email.trim().toLowerCase();
+        let user = await User.findOne({ $or: [{ googleSubject: profile.sub }, { email }] }).select("+googleSubject");
+        if (user && !user.isActive) {
+            throw new AppError(403, "ACCOUNT_DISABLED", "This account is currently disabled.");
+        }
+        if (user?.googleSubject && user.googleSubject !== profile.sub) {
+            throw new AppError(409, "GOOGLE_ACCOUNT_MISMATCH", "This email is already connected to another Google account.");
+        }
+
+        const isNewUser = !user;
+        if (isNewUser) {
+            user = await User.create({
+                name: profile.name?.trim() || email.split("@")[0],
+                email,
+                phone: "",
+                googleSubject: profile.sub,
+                emailVerifiedAt: new Date(),
+                roles: ["customer"],
+            });
+        }
+        else {
+            user.googleSubject = profile.sub;
+            user.emailVerifiedAt ||= new Date();
+            if (!user.name && profile.name) user.name = profile.name.trim();
+        }
+
+        user.lastLoginAt = new Date();
+        await user.save();
+        setAuthCookies(response, user);
+        response.json({ data: { user: publicUser(user), isNewUser } });
     }
     catch (error) {
         next(error);

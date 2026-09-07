@@ -1,70 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  ArrowRight,
-  BadgeCheck,
-  Bike,
-  Camera,
-  CreditCard,
-  Headphones,
-  Home,
-  Laptop,
-  MapPin,
-  Monitor,
-  PackageCheck,
-  Refrigerator,
-  ShieldCheck,
-  Sparkles,
-  Truck,
-  Tv,
-  Warehouse,
-  WashingMachine,
-} from "lucide-react";
+import { ArrowRight, BadgeCheck, Bike, Home, Laptop, Monitor, PackageCheck, Refrigerator, Tv, WashingMachine } from "lucide-react";
 import { ProductCard } from "@/components/storefront/product-card";
-import { TrustCard } from "@/components/storefront/trust-card";
 import { getHomepage } from "@/lib/api.js";
 import { fallbackImage, productToCard } from "@/lib/product-card-mapper";
 
 const fallbackProducts = [
-  {
-    name: "Apple Desktop Computer",
-    slug: "apple-desktop-computer-uk-used",
-    priceKobo: 52000000,
-    previousPriceKobo: 56000000,
-    condition: "Excellent",
-    imageUrl: fallbackImage,
-    defectNote: "Display, ports and power checked before listing.",
-    isSoldOut: false,
-  },
-  {
-    name: "Big Standing Fridge and Freezer",
-    slug: "big-standing-fridge-and-freezer-uk-used",
-    priceKobo: 42000000,
-    condition: "Good",
-    imageUrl: fallbackImage,
-    defectNote: "Cooling, thermostat, seals and compressor tested.",
-    isSoldOut: false,
-  },
-  {
-    name: "2/3 Seater Leather Chair",
-    slug: "two-three-seater-leather-chair-uk-used",
-    priceKobo: 32000000,
-    condition: "Excellent",
-    imageUrl: fallbackImage,
-    defectNote: "Leather surface, seat support and frame inspected.",
-    isSoldOut: false,
-  },
+  { name: "Apple Desktop Computer", slug: "apple-desktop-computer-uk-used", priceKobo: 52000000, previousPriceKobo: 56000000, condition: "Excellent", imageUrl: fallbackImage, defectNote: "Display, ports and power checked before listing.", isSoldOut: false },
+  { name: "Big Standing Fridge and Freezer", slug: "big-standing-fridge-and-freezer-uk-used", priceKobo: 42000000, condition: "Good", imageUrl: fallbackImage, defectNote: "Cooling, thermostat, seals and compressor tested.", isSoldOut: false },
+  { name: "2/3 Seater Leather Chair", slug: "two-three-seater-leather-chair-uk-used", priceKobo: 32000000, condition: "Excellent", imageUrl: fallbackImage, defectNote: "Leather surface, seat support and frame inspected.", isSoldOut: false },
 ];
 
 const fallbackCategories = [
-  { name: "Computers", slug: "computers", description: "Desktop computers and monitors tested for work, study and office use." },
-  { name: "Home Appliances", slug: "home-appliances", description: "Fridges, freezers, washers, dryers and kitchen appliances checked before sale." },
-  { name: "Televisions", slug: "televisions", description: "UK-used plasma TVs and entertainment items with clear condition notes." },
-  { name: "Furniture", slug: "furniture", description: "Leather chairs and home pieces inspected for strength, comfort and finish." },
+  { name: "Computers", slug: "computers", description: "Desktops and monitors for work, study, and business." },
+  { name: "Home Appliances", slug: "home-appliances", description: "Fridges, freezers, washers, dryers, and kitchen appliances." },
+  { name: "Televisions", slug: "televisions", description: "Televisions and entertainment equipment with clear condition notes." },
+  { name: "Furniture", slug: "furniture", description: "Practical home and office furniture inspected before sale." },
 ];
 
-const quickDepartments = [
+const departments = [
   { name: "Computers", href: "/category/computers", icon: Laptop },
   { name: "TVs & DVD", href: "/category/televisions", icon: Tv },
   { name: "Appliances", href: "/category/home-appliances", icon: Refrigerator },
@@ -73,56 +28,11 @@ const quickDepartments = [
   { name: "Bicycles", href: "/shop?q=bicycle", icon: Bike },
   { name: "Monitors", href: "/shop?q=monitor", icon: Monitor },
 ];
-const heroSlides = [
-  {
-    eyebrow: "Just Adure stock festival",
-    title: "UK-used deals for homes, offices and shops.",
-    subtitle: "Computers, appliances, TVs, furniture and bicycles with honest condition notes and secure naira checkout.",
-    cta: "Discover deals",
-    href: "/shop",
-    badgeOne: "Quality checked",
-    badgeTwo: "Paystack ready",
-    gradient: "bg-[linear-gradient(135deg,#ff8b2d_0%,#f46d1f_42%,#1d241f_100%)]",
-  },
-  {
-    eyebrow: "Appliance clearance",
-    title: "Fridges, washers and dryers ready for Nigerian homes.",
-    subtitle: "Shop tested UK-used appliances with cooling, spinning, heating and power notes clearly shown.",
-    cta: "Shop appliances",
-    href: "/category/home-appliances",
-    badgeOne: "Tested stock",
-    badgeTwo: "Delivery fees ready",
-    gradient: "bg-[linear-gradient(135deg,#0f3d35_0%,#1f6b55_45%,#f4853d_100%)]",
-  },
-  {
-    eyebrow: "Office and study setup",
-    title: "Desktop computers and monitors for serious work.",
-    subtitle: "Find Apple desktops, Dell monitors and everyday office equipment inspected before listing.",
-    cta: "Shop computers",
-    href: "/category/computers",
-    badgeOne: "Ports checked",
-    badgeTwo: "Stock verified",
-    gradient: "bg-[linear-gradient(135deg,#1b263b_0%,#30476d_48%,#f4853d_100%)]",
-  },
-  {
-    eyebrow: "Living room finds",
-    title: "Furniture, TVs and DVD units with clear condition notes.",
-    subtitle: "Actual product condition, accessories, visible defects and warranty details stay clear before checkout.",
-    cta: "Shop home finds",
-    href: "/shop?q=furniture",
-    badgeOne: "Condition shown",
-    badgeTwo: "One-off items",
-    gradient: "bg-[linear-gradient(135deg,#50311f_0%,#a45b2c_45%,#111816_100%)]",
-  },
-];
-
-const conditionNotes = ["Like New", "Excellent", "Very Good", "Good", "Fair"];
 
 export function HomePage() {
   const [homepage, setHomepage] = useState(null);
   const [products, setProducts] = useState(fallbackProducts);
   const [categories, setCategories] = useState(fallbackCategories);
-  const [activeSlide, setActiveSlide] = useState(0);
 
   useEffect(() => {
     getHomepage()
@@ -131,149 +41,60 @@ export function HomePage() {
         if (data?.featuredProducts?.length) setProducts(data.featuredProducts.map(productToCard));
         if (data?.categories?.length) setCategories(data.categories);
       })
-      .catch(() => {
-        setHomepage(null);
-      });
-  }, []);
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setActiveSlide((current) => (current + 1) % heroSlides.length);
-    }, 5500);
-    return () => window.clearInterval(timer);
+      .catch(() => setHomepage(null));
   }, []);
 
   const primaryBanner = homepage?.content?.banners?.find((banner) => banner.isActive) ?? null;
-  const currentSlide = heroSlides[activeSlide];
-  const heroImage = primaryBanner?.imageUrl || products[activeSlide % products.length]?.imageUrl || fallbackImage;
+  const heroProduct = products.find((product) => product.imageUrl !== fallbackImage) ?? products[0];
+  const heroImage = primaryBanner?.imageUrl || heroProduct?.imageUrl || fallbackImage;
 
   return (
-    <main className="overflow-hidden bg-[#ededed]">
-      <section className="py-5">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className={`relative overflow-hidden rounded-[1.35rem] ${currentSlide.gradient} shadow-[0_22px_70px_rgba(28,34,31,.18)]`}>
-            <div className="absolute right-[4%] top-[-8rem] h-[32rem] w-[32rem] rounded-full bg-[#fff3e8]" aria-hidden="true" />
-            <div className="absolute bottom-[-9rem] right-[18%] h-[24rem] w-[24rem] rounded-full bg-black/18" aria-hidden="true" />
-            <div className="relative grid min-h-[25rem] items-center gap-8 p-7 text-[var(--ink)] sm:p-10 lg:grid-cols-[.9fr_1.1fr] lg:p-12">
-              <div className="relative z-10 animate-rise">
-                <p className="text-sm font-black uppercase tracking-[.16em] text-[var(--muted)]"><Sparkles className="mr-2 inline size-4" /> {currentSlide.eyebrow}</p>
-                <h1 className="mt-4 max-w-xl font-serif text-5xl font-bold leading-[.92] tracking-[-.06em] sm:text-7xl">
-                  {primaryBanner?.title ?? currentSlide.title}
-                </h1>
-                <p className="mt-5 max-w-lg text-lg leading-8 text-[var(--muted)]">
-                  {primaryBanner?.subtitle ?? currentSlide.subtitle}
-                </p>
-                <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                  <a href={primaryBanner?.href || currentSlide.href} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-6 font-black text-[var(--ink)] hover:bg-[#fff3e7]">{currentSlide.cta} <ArrowRight className="size-4" /></a>
-                  <a href="/order-tracking" className="inline-flex min-h-12 items-center justify-center rounded-full border border-black/10 px-6 font-black text-[var(--ink)] hover:bg-[#fff3e8]">Track order</a>
-                </div>
-              </div>
-
-              <div className="relative z-10 hidden min-h-[22rem] items-end justify-end lg:flex">
-                <div className="absolute right-0 top-1/2 h-56 w-[34rem] -translate-y-1/2 rotate-[-8deg] rounded-[3rem] bg-[#fff3e8]" aria-hidden="true" />
-                <img src={heroImage} alt="Featured UK-used product" className="relative h-[21rem] w-[34rem] rounded-[1.15rem] object-cover shadow-[0_30px_80px_rgba(0,0,0,.22)]" />
-                <div className="absolute bottom-8 left-8 rounded-full bg-white px-5 py-3 text-sm font-black text-[var(--ink)] shadow-xl">{currentSlide.badgeOne}</div>
-                <div className="absolute right-8 top-7 rounded-full bg-white px-5 py-3 text-sm font-black text-[var(--ink)] shadow-xl">{currentSlide.badgeTwo}</div>
-              </div>
-            </div>
-            <div className="relative flex justify-center gap-2 pb-4">
-              {heroSlides.map((slide, index) => <button key={slide.title} type="button" aria-label={`Show ${slide.eyebrow} slide`} onClick={() => setActiveSlide(index)} className={`h-2 rounded-full transition ${index === activeSlide ? "w-8 bg-white" : "w-2 bg-white/55 hover:bg-white/80"}`} />)}
+    <main className="bg-[#f8f7f3] text-[var(--ink)]">
+      <section className="border-b border-black/8 bg-white">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1fr_.9fr] lg:items-center lg:px-8 lg:py-16">
+          <div>
+            <p className="section-kicker"><BadgeCheck className="size-4" /> Inspected UK-used products</p>
+            <h1 className="mt-5 max-w-2xl font-serif text-5xl font-bold leading-[.98] tracking-[-.055em] sm:text-6xl lg:text-7xl">{primaryBanner?.title || "Good products. Honest condition. Fair prices."}</h1>
+            <p className="mt-6 max-w-xl text-lg leading-8 text-[var(--muted)]">{primaryBanner?.subtitle || "Shop computers, appliances, televisions, furniture, and bicycles with clear condition notes before you pay."}</p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <a href={primaryBanner?.href || "/shop"} className="cta-primary px-7">Shop all products <ArrowRight className="size-4" /></a>
+              <a href="#departments" className="cta-outline px-7">Browse categories</a>
             </div>
           </div>
-        </div>
-      </section>
 
-      <section className="mx-auto max-w-7xl px-4 pb-4 sm:px-6 lg:px-8">
-        <div className="grid gap-3 rounded-[1.25rem] bg-white p-4 shadow-[0_14px_40px_rgba(28,34,31,.04)] sm:grid-cols-2 lg:grid-cols-7">
-          {quickDepartments.map(({ name, href, icon: Icon }) => (
-            <a key={name} href={href} className="flex items-center gap-2 rounded-xl px-3 py-3 text-sm font-black hover:bg-[#f6f3ec]"><Icon className="size-5 text-[var(--accent-dark)]" /> {name}</a>
-          ))}
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid gap-4 md:grid-cols-3">
-          <a href="/delivery-information" className="flex items-center gap-4 rounded-[1.25rem] border border-black/8 bg-white p-5 shadow-[0_14px_40px_rgba(28,34,31,.04)]"><Truck className="size-7 text-[var(--accent-dark)]" /><span><strong className="block">Delivery across Nigeria</strong><small className="text-[var(--muted)]">Fees calculated by location.</small></span></a>
-          <a href="/order-tracking" className="flex items-center gap-4 rounded-[1.25rem] border border-black/8 bg-white p-5 shadow-[0_14px_40px_rgba(28,34,31,.04)]"><PackageCheck className="size-7 text-[var(--accent-dark)]" /><span><strong className="block">Track your order</strong><small className="text-[var(--muted)]">Follow payment and delivery status.</small></span></a>
-          <a href="/contact" className="flex items-center gap-4 rounded-[1.25rem] border border-black/8 bg-white p-5 shadow-[0_14px_40px_rgba(28,34,31,.04)]"><Headphones className="size-7 text-[var(--accent-dark)]" /><span><strong className="block">Ask before buying</strong><small className="text-[var(--muted)]">Support for product enquiries.</small></span></a>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="rounded-[1.75rem] border border-black/8 bg-white p-5 shadow-[0_18px_60px_rgba(28,34,31,.06)] sm:p-7">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="section-kicker">Featured stock</p>
-              <h2 className="section-title">Deals worth checking today.</h2>
+          <a href={`/product/${heroProduct?.slug ?? ""}`} className="group relative block overflow-hidden rounded-2xl bg-[#ece9e1]">
+            <div className="aspect-[4/3]"><img src={heroImage} alt={heroProduct ? `${heroProduct.name} featured product` : "Featured Just Adure product"} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.02]" onError={(event) => { event.currentTarget.src = fallbackImage; }} /></div>
+            <div className="absolute inset-x-4 bottom-4 flex items-center justify-between gap-4 rounded-xl bg-white/95 p-4 shadow-sm backdrop-blur">
+              <span><span className="block text-xs font-black uppercase tracking-[.12em] text-[var(--accent-dark)]">Featured today</span><strong className="mt-1 block">{heroProduct?.name ?? "Browse available stock"}</strong></span>
+              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[var(--accent)]"><ArrowRight className="size-4" /></span>
             </div>
-            <a href="/shop" className="cta-outline w-fit">See all products <ArrowRight className="size-4" /></a>
-          </div>
-          <div className="mt-7 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {products.slice(0, 3).map((product) => <ProductCard key={product.slug} product={product} />)}
-          </div>
+          </a>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <nav className="border-b border-black/8 bg-white" aria-label="Shop departments">
+        <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 py-4 sm:px-6 lg:px-8">
+          {departments.map(({ name, href, icon: Icon }) => <a key={name} href={href} className="flex shrink-0 items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm font-black hover:border-[var(--accent)] hover:bg-[#fff7ed]"><Icon className="size-4 text-[var(--accent-dark)]" />{name}</a>)}
+        </div>
+      </nav>
+
+      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="section-kicker">Popular categories</p>
-            <h2 className="section-title">Shop by what you need.</h2>
-          </div>
-          <a href="/shop" className="cta-outline w-fit">Browse catalogue</a>
+          <div><p className="section-kicker">Available now</p><h2 className="mt-2 text-3xl font-black tracking-[-.04em] sm:text-4xl">Featured products</h2><p className="mt-2 text-sm text-[var(--muted)]">One-off stock selected from the latest catalogue.</p></div>
+          <a href="/shop" className="inline-flex items-center gap-2 text-sm font-black text-[var(--accent-dark)] hover:underline">View all products <ArrowRight className="size-4" /></a>
         </div>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {categories.slice(0, 4).map((category) => (
-            <a key={category.slug} href={`/category/${category.slug}`} className="group rounded-[1.5rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.05)] transition hover:-translate-y-1">
-              <PackageCheck className="size-7 text-[var(--accent-dark)]" />
-              <h3 className="mt-5 text-2xl font-black tracking-[-.04em]">{category.name}</h3>
-              <p className="mt-3 text-sm leading-6 text-[var(--muted)]">{category.description || "Browse verified UK-used products in this category."}</p>
-            </a>
-          ))}
-        </div>
+        <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">{products.slice(0, 6).map((product) => <ProductCard key={product.slug} product={product} />)}</div>
       </section>
 
-      <section className="bg-[#fbfaf6] py-16 text-[var(--ink)]">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[.9fr_1.1fr] lg:px-8">
-          <div>
-            <p className="section-kicker text-[var(--accent)]">Condition-first shopping</p>
-            <h2 className="mt-3 font-serif text-5xl font-bold leading-[.95] tracking-[-.055em]">No hidden story after delivery.</h2>
-            <p className="mt-5 max-w-xl leading-8 text-[var(--muted)]">UK-used products need honesty. The store is structured to show the exact grade, visible faults, included accessories, testing status and warranty before the customer pays.</p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-5 lg:items-end">
-            {conditionNotes.map((condition, index) => (
-              <div key={condition} className="rounded-[1.25rem] border border-black/10 bg-[#fbfaf6] p-4" style={{ minHeight: `${8 + index * 1.2}rem` }}>
-                <p className="text-xs font-black uppercase tracking-[.14em] text-[var(--accent)]">Grade {index + 1}</p>
-                <p className="mt-3 text-xl font-black tracking-[-.04em]">{condition}</p>
-              </div>
-            ))}
+      <section id="departments" className="border-y border-black/8 bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="section-kicker">Shop by department</p><h2 className="mt-2 text-3xl font-black tracking-[-.04em] sm:text-4xl">Find what you need</h2></div><a href="/shop" className="text-sm font-black text-[var(--accent-dark)] hover:underline">Browse the full catalogue</a></div>
+          <div className="mt-8 grid gap-px overflow-hidden rounded-2xl border border-black/8 bg-black/8 sm:grid-cols-2 lg:grid-cols-4">
+            {categories.slice(0, 4).map((category) => <a key={category.slug} href={`/category/${category.slug}`} className="group bg-white p-6 hover:bg-[#fffaf5]"><PackageCheck className="size-5 text-[var(--accent-dark)]" /><h3 className="mt-5 text-xl font-black">{category.name}</h3><p className="mt-2 min-h-12 text-sm leading-6 text-[var(--muted)]">{category.description || "Browse inspected products in this department."}</p><span className="mt-5 inline-flex items-center gap-2 text-sm font-black text-[var(--accent-dark)]">Shop now <ArrowRight className="size-4 transition group-hover:translate-x-1" /></span></a>)}
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-          <TrustCard tone="light" icon={BadgeCheck} title="Honest grading" description="Every item carries a condition grade and plain-language inspection note." />
-          <TrustCard tone="light" icon={Camera} title="Real images ready" description="Admins can upload actual product photos and mark the primary image." />
-          <TrustCard tone="light" icon={CreditCard} title="Secure payments" description="Paystack secret keys stay on the backend and payment totals are verified server-side." />
-          <TrustCard tone="light" icon={ShieldCheck} title="Stock protected" description="Inventory reservation helps stop one-off products from being sold twice." />
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-[2.25rem] bg-[#ebe1cf] p-8 shadow-[0_28px_90px_rgba(28,34,31,.12)] lg:p-12">
-          <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
-            <div>
-              <p className="section-kicker"><Warehouse className="size-4" /> Built for real ecommerce operations</p>
-              <h2 className="mt-3 max-w-3xl font-serif text-5xl font-bold leading-[.95] tracking-[-.055em]">Products, payment, delivery and support working together.</h2>
-              <p className="mt-4 max-w-2xl leading-7 text-[var(--muted)]">Customers can browse products, ask questions, pay securely, track orders and receive updates. Admins can manage catalogue, stock, delivery zones and reports from the dashboard.</p>
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
-              <a href="/contact" className="cta-primary">Contact support</a>
-              <a href="/delivery-information" className="cta-outline"><MapPin className="size-4" /> Delivery info</a>
-            </div>
-          </div>
-        </div>
-      </section>
     </main>
   );
 }

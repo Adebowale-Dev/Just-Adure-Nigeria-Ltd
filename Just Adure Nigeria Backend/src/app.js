@@ -50,7 +50,7 @@ app.use(cors({
     origin: env.WEB_URL,
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "X-CSRF-Token", "Idempotency-Key", "X-Request-ID"],
+    allowedHeaders: ["Content-Type", "X-CSRF-Token", "X-Auth-Intent", "Idempotency-Key", "X-Request-ID"],
 }));
 // The webhook route must retain the exact bytes used to compute Paystack's signature.
 app.use("/api/v1/webhooks/paystack", express.raw({ type: "application/json", limit: "256kb" }), paystackWebhookRouter);

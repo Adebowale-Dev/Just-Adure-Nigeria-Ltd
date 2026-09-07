@@ -5,7 +5,7 @@ export function TrustCard({ icon: Icon, title, description, tone = "dark" }) {
     <article
       className={
         isLight
-          ? "rounded-[1.35rem] border border-black/8 bg-[#fbfaf6]2 p-5 shadow-[0_18px_50px_rgba(28,34,31,.06)] backdrop-blur"
+          ? "rounded-[1.35rem] border border-black/8 bg-white p-5 shadow-[0_18px_50px_rgba(28,34,31,.06)]"
           : "rounded-[1.35rem] border border-black/10 bg-[#fbfaf6] p-5"
       }
     >

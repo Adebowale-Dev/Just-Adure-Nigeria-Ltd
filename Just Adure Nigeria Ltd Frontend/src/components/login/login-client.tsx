@@ -1,6 +1,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { AlertTriangle, ArrowRight, BadgeCheck, Eye, EyeOff, LogIn } from "lucide-react";
 import { getCurrentUser, loginUser } from "@/lib/api.js";
+import { GoogleSignInButton } from "@/components/login/google-sign-in-button";
 
 function isAdminUser(user) {
   return user?.roles?.some((role) => ["admin", "super_admin", "inventory_manager", "order_manager"].includes(role));
@@ -55,7 +56,12 @@ export function LoginClient() {
           {message ? <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-900">{message}</div> : null}
           {currentUser ? <div className="mt-6 rounded-2xl bg-[#f6f3ec] p-4 text-sm font-bold">Signed in as {currentUser.email}</div> : null}
 
-          <div className="mt-8 grid gap-5">
+          <div className="mt-7">
+            <GoogleSignInButton />
+            <div className="my-5 flex items-center gap-3 text-xs font-bold uppercase tracking-[.14em] text-[var(--muted)]"><span className="h-px flex-1 bg-black/10" />or sign in with email<span className="h-px flex-1 bg-black/10" /></div>
+          </div>
+
+          <div className="grid gap-5">
             <label className="grid gap-2 text-sm font-bold">Email address
               <input name="email" type="email" value={form.email} onChange={updateField} required placeholder="you@example.com" className="rounded-2xl border border-black/10 bg-[#fbfaf6] px-4 py-4 outline-none transition focus:border-[var(--accent-dark)] focus:bg-white" />
             </label>

@@ -23,8 +23,9 @@ const addressSchema = new Schema({
 const userSchema = new Schema({
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, lowercase: true, trim: true },
-    phone: { type: String, required: true, trim: true },
-    passwordHash: { type: String, required: true, select: false },
+    phone: { type: String, trim: true, default: "" },
+    passwordHash: { type: String, select: false },
+    googleSubject: { type: String, trim: true, select: false },
     roles: { type: [String], enum: userRoles, required: true, default: ["customer"] },
     permissions: { type: [String], required: true, default: [] },
     emailVerifiedAt: { type: Date },
@@ -37,6 +38,7 @@ const userSchema = new Schema({
     lastLoginAt: { type: Date },
 }, { timestamps: true });
 userSchema.index({ email: 1 }, { unique: true });
+userSchema.index({ googleSubject: 1 }, { unique: true, sparse: true });
 userSchema.index({ roles: 1, isActive: 1 });
 userSchema.index({ emailVerificationTokenHash: 1 }, { sparse: true });
 userSchema.index({ passwordResetTokenHash: 1 }, { sparse: true });

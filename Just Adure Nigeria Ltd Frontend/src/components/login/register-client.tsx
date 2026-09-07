@@ -1,6 +1,7 @@
 import { useState, useTransition } from "react";
 import { AlertTriangle, ArrowRight, Eye, EyeOff, UserPlus } from "lucide-react";
 import { registerUser } from "@/lib/api.js";
+import { GoogleSignInButton } from "@/components/login/google-sign-in-button";
 
 type RegistrationForm = {
   name: string;
@@ -48,6 +49,11 @@ export function RegisterClient() {
 
           {error ? <div className="mt-6 rounded-2xl border border-[var(--accent)]/30 bg-[#fff8ed] p-4 text-sm font-bold text-[var(--ink)]"><AlertTriangle className="mb-2 size-5 text-[var(--accent-dark)]" />{error}</div> : null}
           {message ? <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-900">{message}</div> : null}
+
+          <div className="mt-7">
+            <GoogleSignInButton registration />
+            <div className="my-5 flex items-center gap-3 text-xs font-bold uppercase tracking-[.14em] text-[var(--muted)]"><span className="h-px flex-1 bg-black/10" />or register with email<span className="h-px flex-1 bg-black/10" /></div>
+          </div>
 
           <div className="mt-8 grid gap-5 sm:grid-cols-2">
             <label className="grid gap-2 text-sm font-black text-[var(--ink)]">Full name<input name="name" value={form.name} onChange={updateField} required autoComplete="name" placeholder="Your full name" className="rounded-2xl border border-black/10 bg-[#fbfaf6] px-4 py-3.5 outline-none transition focus:border-[var(--accent-dark)] focus:bg-white" /></label>
