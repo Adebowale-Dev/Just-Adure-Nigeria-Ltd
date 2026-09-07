@@ -1,4 +1,4 @@
-export const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
+export const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
 
 async function apiGet(path) {
   const response = await fetch(`${apiUrl}${path}`, { headers: { Accept: "application/json" }, credentials: "include" });

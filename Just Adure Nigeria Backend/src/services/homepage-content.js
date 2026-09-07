@@ -22,6 +22,7 @@ export function serializeHomepageProduct(product) {
     slug: product.slug,
     priceKobo: product.priceKobo,
     previousPriceKobo: product.previousPriceKobo ?? null,
+    productType: product.productType ?? "used",
     conditionGrade: serializeLookup(product.conditionGradeId),
     category: serializeLookup(product.categoryId),
     brand: serializeLookup(product.brandId),

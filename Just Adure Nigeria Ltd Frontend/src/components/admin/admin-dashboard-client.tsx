@@ -773,7 +773,7 @@ export function AdminDashboardClient({ section = "overview" }: { section?: strin
         </section> : null}
         {showSection("returns") ? <section className="mt-8 space-y-6">
           <div className="overflow-hidden rounded-[2.2rem] border border-black/8 bg-white shadow-[0_20px_70px_rgba(28,34,31,.07)]">
-            <div className="grid gap-6 bg-[linear-gradient(135deg,#fff,#fff7ef)] p-6 sm:p-8 lg:grid-cols-[1fr_auto] lg:items-end">
+            <div className="grid gap-6 bg-white p-6 sm:p-8 lg:grid-cols-[1fr_auto] lg:items-end">
               <div>
                 <div className="flex items-center gap-3">
                   <span className="grid size-12 place-items-center rounded-2xl bg-[#fff3e8] text-[var(--accent-dark)]"><RotateCcw className="size-5" /></span>

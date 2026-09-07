@@ -51,9 +51,9 @@ const productSchema = new Schema({
     sku: { type: String, required: true, unique: true, trim: true },
     brandId: { type: Schema.Types.ObjectId, required: true, ref: "Brand" },
     categoryId: { type: Schema.Types.ObjectId, required: true, ref: "Category" },
+    productType: { type: String, enum: ["used", "brand_new"], required: true, default: "used" },
     conditionGradeId: {
         type: Schema.Types.ObjectId,
-        required: true,
         ref: "ConditionGrade",
     },
     priceKobo: { type: Number, required: true, min: 0 },

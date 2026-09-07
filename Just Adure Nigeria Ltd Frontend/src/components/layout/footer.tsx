@@ -1,10 +1,21 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Mail } from "lucide-react";
+import { Instagram, Mail, MapPin } from "lucide-react";
 import { subscribeNewsletter } from "@/lib/api.js";
 
 const storeName = process.env.NEXT_PUBLIC_STORE_NAME || "Just Adure Nigeria Ltd";
+const footerLinkClass = "w-fit border-b border-transparent py-0.5 transition duration-200 hover:translate-x-1 hover:border-[var(--accent)] hover:text-[var(--accent-dark)]";
+
+function TikTokLogo() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true">
+      <path fill="#25f4ee" transform="translate(-.45 .35)" d="M14.5 3c.4 2.3 1.7 3.7 4 4.1v3.1a8.2 8.2 0 0 1-4-1.2v6.3a5.8 5.8 0 1 1-5-5.7v3.2a2.7 2.7 0 1 0 1.8 2.5V3h3.2Z" />
+      <path fill="#fe2c55" transform="translate(.45 -.25)" d="M14.5 3c.4 2.3 1.7 3.7 4 4.1v3.1a8.2 8.2 0 0 1-4-1.2v6.3a5.8 5.8 0 1 1-5-5.7v3.2a2.7 2.7 0 1 0 1.8 2.5V3h3.2Z" />
+      <path fill="white" d="M14.5 3c.4 2.3 1.7 3.7 4 4.1v3.1a8.2 8.2 0 0 1-4-1.2v6.3a5.8 5.8 0 1 1-5-5.7v3.2a2.7 2.7 0 1 0 1.8 2.5V3h3.2Z" />
+    </svg>
+  );
+}
 
 export function Footer() {
   const [email, setEmail] = useState("");
@@ -30,14 +41,25 @@ export function Footer() {
         <div>
           <p className="text-lg font-black">{storeName}</p>
           <p className="mt-3 max-w-xs text-sm leading-6 text-[var(--muted)]">Trusted UK-used electronics and appliances for customers across Nigeria.</p>
+          <address className="mt-4 flex max-w-xs gap-2 text-sm not-italic leading-6 text-[var(--muted)]">
+            <MapPin className="mt-1 size-4 shrink-0 text-[var(--accent-dark)]" />
+            <span>Shop 8, Temitope Shopping Complex, Iyana Ilogbo Bus Stop.</span>
+          </address>
+          <div className="mt-6">
+            <p className="text-xs font-black uppercase tracking-[.14em] text-[var(--muted)]">Follow us</p>
+            <div className="mt-3 flex gap-2">
+              <span className="grid size-10 place-items-center rounded-full bg-gradient-to-br from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white shadow-sm" aria-label="Instagram profile coming soon" title="Instagram profile coming soon"><Instagram className="size-5" strokeWidth={2.2} /></span>
+              <span className="grid size-10 place-items-center rounded-full bg-black shadow-sm" aria-label="TikTok profile coming soon" title="TikTok profile coming soon"><TikTokLogo /></span>
+            </div>
+          </div>
         </div>
         <div>
           <p className="footer-heading">Customer care</p>
-          <div className="mt-3 grid gap-2 text-sm"><a href="/faq">Frequently asked questions</a><a href="/delivery-returns">Delivery and returns</a><a href="/contact">Contact us</a></div>
+          <div className="mt-3 grid gap-2 text-sm"><a className={footerLinkClass} href="/faq">Frequently asked questions</a><a className={footerLinkClass} href="/delivery-returns">Delivery and returns</a><a className={footerLinkClass} href="/warranty-information">Warranty information</a><a className={footerLinkClass} href="/contact">Contact us</a></div>
         </div>
         <div>
           <p className="footer-heading">Policies</p>
-          <div className="mt-3 grid gap-2 text-sm"><a href="/privacy">Privacy policy</a><a href="/terms">Terms and conditions</a></div>
+          <div className="mt-3 grid gap-2 text-sm"><a className={footerLinkClass} href="/return-and-refund-policy">Return and refund policy</a><a className={footerLinkClass} href="/privacy">Privacy policy</a><a className={footerLinkClass} href="/terms">Terms and conditions</a><a className={footerLinkClass} href="/about">About us</a></div>
         </div>
         <div>
           <p className="footer-heading">Newsletter</p>
@@ -49,6 +71,9 @@ export function Footer() {
           </form>
           {message ? <p className="mt-3 text-xs font-bold leading-5 text-[var(--accent-dark)]">{message}</p> : null}
         </div>
+      </div>
+      <div className="px-4 pb-7 text-center text-sm font-bold text-[var(--muted)]">
+        <p className="mx-auto w-fit border-t border-black/15 px-2 pt-3">&copy; 2026 Just Adure Nigeria Ltd.com</p>
       </div>
     </footer>
   );

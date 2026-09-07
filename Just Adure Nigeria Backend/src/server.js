@@ -7,6 +7,7 @@ import { connectMongo, disconnectMongo } from "./config/mongo.js";
 async function start() {
     await connectMongo();
     const server = createServer(app);
+    const port = Number(process.env.PORT || env.API_PORT);
     server.on("error", (error) => {
         if (error.code === "EADDRINUSE") {
             console.error(`\nPort ${env.API_PORT} is already in use.`);
@@ -16,9 +17,9 @@ async function start() {
         logger.fatal({ error }, "API server error");
         process.exit(1);
     });
-    server.listen(env.API_PORT, () => {
+    server.listen(port, () => {
         printStartupBanner();
-        logger.info({ port: env.API_PORT, environment: env.NODE_ENV }, "Just Adure Nigeria Ltd API is listening");
+        logger.info({ port, environment: env.NODE_ENV }, "Just Adure Nigeria Ltd API is listening");
     });
     const shutdown = async (signal) => {
         logger.info({ signal }, "Graceful shutdown started");

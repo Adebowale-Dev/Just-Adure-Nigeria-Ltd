@@ -6,7 +6,7 @@ export function productToCard(product) {
     slug: product.slug,
     priceKobo: product.priceKobo,
     previousPriceKobo: product.previousPriceKobo ?? undefined,
-    condition: product.conditionGrade?.name ?? "UK-used",
+    condition: product.productType === "brand_new" ? "Brand New" : "Used",
     imageUrl: product.primaryImage?.secureUrl ?? product.images?.[0]?.secureUrl ?? fallbackImage,
     defectNote: product.visibleDefects || "Condition checked and listed honestly.",
     isSoldOut: product.isSoldOut,

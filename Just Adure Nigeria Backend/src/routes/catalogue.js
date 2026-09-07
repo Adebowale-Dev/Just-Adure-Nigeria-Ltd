@@ -57,6 +57,7 @@ function serializeProduct(product) {
         sku: product.sku,
         brand: serializeLookup(product.brandId),
         category: serializeLookup(product.categoryId),
+        productType: product.productType ?? "used",
         conditionGrade: serializeLookup(product.conditionGradeId),
         priceKobo: product.priceKobo,
         previousPriceKobo: product.previousPriceKobo ?? null,

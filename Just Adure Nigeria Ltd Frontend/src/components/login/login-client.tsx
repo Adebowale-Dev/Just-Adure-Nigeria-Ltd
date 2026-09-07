@@ -47,10 +47,7 @@ export function LoginClient() {
     <main className="page-shell">
       <section className="mx-auto flex min-h-[calc(100vh-9rem)] max-w-7xl items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
         <form onSubmit={submitLogin} className="surface-card w-full max-w-lg p-6 sm:p-8">
-          <div>
-            <h1 className="text-4xl font-black tracking-[-.045em]">Sign in</h1>
-            <p className="mt-3 max-w-md text-sm leading-6 text-[var(--muted)]">Use your customer, admin or staff account to continue.</p>
-          </div>
+          <h1 className="text-center text-4xl font-black tracking-[-.045em]">Sign in</h1>
 
           {error ? <div className="mt-6 rounded-2xl border border-[var(--accent)]/30 bg-[#fff8ed] p-4 text-sm font-bold"><AlertTriangle className="mb-2 size-5 text-[var(--accent-dark)]" />{error}</div> : null}
           {message ? <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-900">{message}</div> : null}

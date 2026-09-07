@@ -37,7 +37,7 @@ export function ProductDetailsPage({ slug }) {
           <div className="overflow-hidden rounded-2xl border border-black/8 bg-[#e9e8e2]">
             <div className="relative aspect-[4/3]">
               <img src={image} alt={`${product.name} actual product`} className="h-full w-full object-cover" onError={(event) => { event.currentTarget.src = fallbackImage; }} />
-              <span className="absolute left-5 top-5 rounded-full bg-white/90 px-4 py-2 text-xs font-black uppercase tracking-[.12em] text-[var(--ink)]">{product.conditionGrade?.name ?? "UK-used"}</span>
+              <span className="absolute left-5 top-5 rounded-full bg-white/90 px-4 py-2 text-xs font-black uppercase tracking-[.12em] text-[var(--ink)]">{product.productType === "brand_new" ? "Brand New" : "Used"}</span>
             </div>
           </div>
         </div>

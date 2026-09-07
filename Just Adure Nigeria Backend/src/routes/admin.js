@@ -165,7 +165,8 @@ const productSchema = z.object({
   sku: z.string().trim().min(2).max(80),
   brandId: objectIdSchema,
   categoryId: objectIdSchema,
-  conditionGradeId: objectIdSchema,
+  productType: z.enum(["used", "brand_new"]).default("used"),
+  conditionGradeId: objectIdSchema.optional(),
   priceKobo: z.number().int().min(0),
   previousPriceKobo: z.number().int().min(0).optional(),
   stockQuantity: z.number().int().min(0).default(0),
@@ -289,6 +290,7 @@ function serializeProduct(product) {
     sku: product.sku,
     brand: serializeLookup(product.brandId),
     category: serializeLookup(product.categoryId),
+    productType: product.productType ?? "used",
     conditionGrade: serializeLookup(product.conditionGradeId),
     priceKobo: product.priceKobo,
     previousPriceKobo: product.previousPriceKobo ?? null,
@@ -1000,6 +1002,9 @@ adminRouter.get("/products", requirePermissions("products:read", "products:manag
 adminRouter.post("/products", requirePermissions("products:manage"), async (request, response, next) => {
   try {
     const input = productSchema.parse(request.body);
+    if (input.productType === "used" && !input.conditionGradeId) {
+      throw new AppError(400, "CONDITION_GRADE_REQUIRED", "Choose a condition grade for this used product.");
+    }
     await assertLookupsExist(input);
     const product = await Product.create({ ...input, availability: input.isArchived ? "archived" : availabilityForStock(input.stockQuantity, input.reservedQuantity, input.lowStockThreshold) });
     await logAdminActivity(request, { action: "product.created", resourceType: "product", resourceId: product._id, details: { name: product.name, sku: product.sku, priceKobo: product.priceKobo, stockQuantity: product.stockQuantity } });

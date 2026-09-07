@@ -1,5 +1,5 @@
 import { useState, useTransition } from "react";
-import { AlertTriangle, ArrowRight, Eye, EyeOff, UserPlus } from "lucide-react";
+import { AlertTriangle, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { registerUser } from "@/lib/api.js";
 import { GoogleSignInButton } from "@/components/login/google-sign-in-button";
 
@@ -41,11 +41,7 @@ export function RegisterClient() {
     <main className="auth-shell min-h-screen px-4 py-12 sm:px-6 lg:px-8">
       <section className="mx-auto flex min-h-[calc(100vh-9rem)] w-full max-w-2xl items-center justify-center">
         <form onSubmit={submitRegistration} className="surface-card mx-auto w-full max-w-2xl p-6 sm:p-8">
-          <div className="flex size-14 items-center justify-center rounded-2xl bg-[#fff3e8] text-[var(--accent-dark)]">
-            <UserPlus className="size-6" />
-          </div>
-          <h1 className="mt-5 text-4xl font-black tracking-[-.045em] text-[var(--ink)] sm:text-5xl">Create account</h1>
-          <p className="mt-3 max-w-xl text-base leading-7 text-[var(--muted)]">Join Just Adure Nigeria Ltd to checkout faster, save your address and receive order updates.</p>
+          <h1 className="text-center text-4xl font-black tracking-[-.045em] text-[var(--ink)] sm:text-5xl">Create account</h1>
 
           {error ? <div className="mt-6 rounded-2xl border border-[var(--accent)]/30 bg-[#fff8ed] p-4 text-sm font-bold text-[var(--ink)]"><AlertTriangle className="mb-2 size-5 text-[var(--accent-dark)]" />{error}</div> : null}
           {message ? <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-900">{message}</div> : null}

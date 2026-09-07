@@ -7,9 +7,9 @@ import { getHomepage } from "@/lib/api.js";
 import { fallbackImage, productToCard } from "@/lib/product-card-mapper";
 
 const fallbackProducts = [
-  { name: "Apple Desktop Computer", slug: "apple-desktop-computer-uk-used", priceKobo: 52000000, previousPriceKobo: 56000000, condition: "Excellent", imageUrl: fallbackImage, defectNote: "Display, ports and power checked before listing.", isSoldOut: false },
-  { name: "Big Standing Fridge and Freezer", slug: "big-standing-fridge-and-freezer-uk-used", priceKobo: 42000000, condition: "Good", imageUrl: fallbackImage, defectNote: "Cooling, thermostat, seals and compressor tested.", isSoldOut: false },
-  { name: "2/3 Seater Leather Chair", slug: "two-three-seater-leather-chair-uk-used", priceKobo: 32000000, condition: "Excellent", imageUrl: fallbackImage, defectNote: "Leather surface, seat support and frame inspected.", isSoldOut: false },
+  { name: "Apple Desktop Computer", slug: "apple-desktop-computer-uk-used", priceKobo: 52000000, previousPriceKobo: 56000000, condition: "Used", imageUrl: fallbackImage, defectNote: "Display, ports and power checked before listing.", isSoldOut: false },
+  { name: "Big Standing Fridge and Freezer", slug: "big-standing-fridge-and-freezer-uk-used", priceKobo: 42000000, condition: "Used", imageUrl: fallbackImage, defectNote: "Cooling, thermostat, seals and compressor tested.", isSoldOut: false },
+  { name: "2/3 Seater Leather Chair", slug: "two-three-seater-leather-chair-uk-used", priceKobo: 32000000, condition: "Used", imageUrl: fallbackImage, defectNote: "Leather surface, seat support and frame inspected.", isSoldOut: false },
 ];
 
 const fallbackCategories = [
@@ -73,8 +73,14 @@ export function HomePage() {
       </section>
 
       <nav className="border-b border-black/8 bg-white" aria-label="Shop departments">
-        <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 py-4 sm:px-6 lg:px-8">
-          {departments.map(({ name, href, icon: Icon }) => <a key={name} href={href} className="flex shrink-0 items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm font-black hover:border-[var(--accent)] hover:bg-[#fff7ed]"><Icon className="size-4 text-[var(--accent-dark)]" />{name}</a>)}
+        <div className="department-ticker mx-auto max-w-7xl overflow-hidden py-4">
+          <div className="department-ticker-track">
+            {[false, true].map((duplicate) => (
+              <div key={String(duplicate)} className="department-ticker-group" aria-hidden={duplicate || undefined}>
+                {departments.map(({ name, href, icon: Icon }) => <a key={name} href={href} tabIndex={duplicate ? -1 : undefined} className="flex shrink-0 items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm font-black hover:border-[var(--accent)] hover:bg-[#fff7ed]"><Icon className="size-4 text-[var(--accent-dark)]" />{name}</a>)}
+              </div>
+            ))}
+          </div>
         </div>
       </nav>
 

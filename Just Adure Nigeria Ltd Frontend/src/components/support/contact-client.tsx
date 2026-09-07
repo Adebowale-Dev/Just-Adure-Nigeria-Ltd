@@ -74,11 +74,9 @@ export function ContactClient() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f6f1e8]">
-      <section className="relative overflow-hidden border-b border-black/8 bg-[#fbfaf6]">
-        <div className="absolute right-[-8rem] top-[-10rem] size-[28rem] rounded-full bg-[var(--accent)]/15 blur-3xl" />
-        <div className="absolute bottom-[-12rem] left-[10%] size-[24rem] rounded-full bg-white/60 blur-3xl" />
-        <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.05fr_.95fr] lg:px-8 lg:py-20">
+    <main className="min-h-screen bg-[var(--paper)]">
+      <section className="border-b border-black/8 bg-white">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.05fr_.95fr] lg:px-8 lg:py-20">
           <div className="flex flex-col justify-center">
             <p className="section-kicker text-[var(--accent-dark)]">Customer care desk</p>
             <h1 className="mt-4 max-w-3xl text-4xl font-black leading-tight tracking-[-.045em] text-[var(--ink)] sm:text-5xl">How can we help?</h1>

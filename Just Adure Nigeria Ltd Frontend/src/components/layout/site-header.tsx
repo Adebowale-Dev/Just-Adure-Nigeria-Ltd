@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import {
   Bell,
   Bike,
+  Check,
   ChevronDown,
   CircleHelp,
   Globe2,
@@ -44,6 +45,12 @@ const navCategories = [
   { label: "Monitors", href: "/shop?q=monitor", icon: Monitor },
 ];
 
+const languages = [
+  { code: "EN", name: "English", lang: "en" },
+  { code: "FR", name: "French", lang: "fr" },
+  { code: "YO", name: "Yoruba", lang: "yo" },
+];
+
 function timeAgo(value) {
   const date = new Date(value);
   const minutes = Math.max(1, Math.round((Date.now() - date.getTime()) / 60000));
@@ -62,6 +69,7 @@ export function SiteHeader() {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [cartCount, setCartCount] = useState(0);
+  const [language, setLanguage] = useState("EN");
   const [isPending, startTransition] = useTransition();
 
   function loadNotifications(nextUser = user) {
@@ -80,6 +88,10 @@ export function SiteHeader() {
 
   useEffect(() => {
     let mounted = true;
+    const savedLanguage = window.localStorage.getItem("store-language");
+    const selectedLanguage = languages.find(({ code }) => code === savedLanguage) ?? languages[0];
+    setLanguage(selectedLanguage.code);
+    document.documentElement.lang = selectedLanguage.lang;
     getCurrentUser()
       .then((nextUser) => {
         if (!mounted) return;
@@ -126,6 +138,12 @@ export function SiteHeader() {
     });
   }
 
+  function selectLanguage(nextLanguage) {
+    setLanguage(nextLanguage.code);
+    window.localStorage.setItem("store-language", nextLanguage.code);
+    document.documentElement.lang = nextLanguage.lang;
+  }
+
   return (
     <header className="sticky top-0 z-50 bg-white shadow-[0_2px_16px_rgba(28,34,31,.08)]">
       <div className="mx-auto flex min-h-20 max-w-7xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
@@ -161,7 +179,20 @@ export function SiteHeader() {
             </div>
           ) : (
             <div className="hidden items-center gap-2 text-sm font-bold sm:flex">
-              <span className="inline-flex items-center gap-1 text-[var(--muted)]"><Globe2 className="size-4" /> EN</span>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="inline-flex items-center gap-1 rounded-md px-2 py-2 text-[var(--muted)] hover:bg-[#f6f3ec] hover:text-[var(--ink)] data-[state=open]:bg-[#f6f3ec]" aria-label="Choose language">
+                  <Globe2 className="size-4" /> {language} <ChevronDown className="size-3.5" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-48">
+                  <DropdownMenuLabel>Choose language</DropdownMenuLabel>
+                  {languages.map((option) => (
+                    <DropdownMenuItem key={option.code} onClick={() => selectLanguage(option)} className="flex items-center justify-between">
+                      <span>{option.name}</span>
+                      <span className="flex items-center gap-2 text-xs font-black text-[var(--muted)]">{option.code}{language === option.code ? <Check className="size-4 text-[var(--accent-dark)]" /> : null}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
               <a href="/login" className="px-1 py-2 hover:text-[var(--accent-dark)]">Sign in</a>
               <span className="text-black/25" aria-hidden="true">|</span>
               <a href="/register" className="px-1 py-2 hover:text-[var(--accent-dark)]">Registration</a>
@@ -191,7 +222,7 @@ export function SiteHeader() {
       </div>
 
       <nav className="border-t border-black/5 bg-white" aria-label="Product categories">
-        <div className="mx-auto flex max-w-7xl gap-7 overflow-x-auto px-4 py-3 text-sm font-black sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl gap-7 overflow-x-auto px-4 py-3 text-sm font-black sm:px-6 lg:justify-center lg:px-8">
           {navCategories.map(({ label, href, icon: Icon }) => (
             <a key={label} href={href} className="flex shrink-0 items-center gap-2 text-[var(--ink)] hover:text-[var(--accent-dark)]"><Icon className="size-5 text-[var(--muted)]" /> {label}</a>
           ))}

@@ -10,6 +10,7 @@ const initialForm = {
   sku: "",
   brandId: "",
   categoryId: "",
+  productType: "used",
   conditionGradeId: "",
   priceNaira: "",
   previousPriceNaira: "",
@@ -55,7 +56,8 @@ function formToPayload(form) {
     sku: form.sku,
     brandId: form.brandId,
     categoryId: form.categoryId,
-    conditionGradeId: form.conditionGradeId,
+    productType: form.productType,
+    conditionGradeId: form.productType === "used" ? form.conditionGradeId : undefined,
     priceKobo: nairaToKobo(form.priceNaira) ?? 0,
     previousPriceKobo: nairaToKobo(form.previousPriceNaira),
     stockQuantity: Number(form.stockQuantity || 0),
@@ -79,6 +81,7 @@ function productToForm(product) {
     sku: product.sku ?? "",
     brandId: product.brand?.id ?? "",
     categoryId: product.category?.id ?? "",
+    productType: product.productType ?? "used",
     conditionGradeId: product.conditionGrade?.id ?? "",
     priceNaira: String(Math.round((product.priceKobo ?? 0) / 100)),
     previousPriceNaira: product.previousPriceKobo ? String(Math.round(product.previousPriceKobo / 100)) : "",
@@ -147,6 +150,10 @@ export function ProductManagementAdmin({ products = [], onProductsChanged }) {
       try {
         setMessage("");
         setError("");
+        if (form.productType === "used" && !form.conditionGradeId) {
+          setError("Choose a condition grade for this used product.");
+          return;
+        }
         if (selectedProductId) {
           await updateAdminProduct(selectedProductId, formToPayload(form));
           setMessage(`${form.name} updated.`);
@@ -195,7 +202,8 @@ export function ProductManagementAdmin({ products = [], onProductsChanged }) {
         <label className="grid gap-2 text-sm font-bold">SKU<input name="sku" value={form.sku} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 uppercase outline-none" /></label>
         <label className="grid gap-2 text-sm font-bold">Brand<AdminDropdown value={form.brandId} placeholder="Select brand" options={lookups.brands.map((brand) => ({ value: brand.id, label: brand.name }))} onValueChange={(value) => setForm((current) => ({ ...current, brandId: value }))} /></label>
         <label className="grid gap-2 text-sm font-bold">Category<AdminDropdown value={form.categoryId} placeholder="Select category" options={lookups.categories.map((category) => ({ value: category.id, label: category.name }))} onValueChange={(value) => setForm((current) => ({ ...current, categoryId: value }))} /></label>
-        <label className="grid gap-2 text-sm font-bold">Condition<AdminDropdown value={form.conditionGradeId} placeholder="Select condition" options={lookups.grades.map((grade) => ({ value: grade.id, label: grade.name }))} onValueChange={(value) => setForm((current) => ({ ...current, conditionGradeId: value }))} /></label>
+        <label className="grid gap-2 text-sm font-bold">Product type<AdminDropdown value={form.productType} placeholder="Select product type" options={[{ value: "used", label: "Used" }, { value: "brand_new", label: "Brand New" }]} onValueChange={(value) => setForm((current) => ({ ...current, productType: value }))} /></label>
+        {form.productType === "used" ? <label className="grid gap-2 text-sm font-bold">Condition grade<AdminDropdown value={form.conditionGradeId} placeholder="Select condition grade" options={lookups.grades.map((grade) => ({ value: grade.id, label: grade.name }))} onValueChange={(value) => setForm((current) => ({ ...current, conditionGradeId: value }))} /></label> : null}
         <label className="grid gap-2 text-sm font-bold">Price (NGN)<input name="priceNaira" type="number" min={0} value={form.priceNaira} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
         <label className="grid gap-2 text-sm font-bold">Previous price<input name="previousPriceNaira" type="number" min={0} value={form.previousPriceNaira} onChange={updateField} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
         <label className="grid gap-2 text-sm font-bold">Stock<input name="stockQuantity" type="number" min={0} value={form.stockQuantity} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
