@@ -233,25 +233,14 @@ export function SiteHeader() {
       </div>
 
       {isMobileMenuOpen ? (
-        <div id="mobile-navigation" className="border-t border-black/8 bg-white px-4 py-4 shadow-[0_12px_24px_rgba(28,34,31,.08)] lg:hidden">
-          <nav className="mx-auto grid max-w-7xl gap-1" aria-label="Mobile navigation">
-            {navCategories.map(({ label, href, icon: Icon }) => (
-              <a key={label} href={href} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 font-black text-[var(--ink)] hover:bg-[#fff3e8] hover:text-[var(--accent-dark)]">
-                <Icon className="size-5 text-[var(--accent-dark)]" />
-                {label}
-              </a>
-            ))}
-            <div className="my-2 border-t border-black/8" />
+        <div id="mobile-navigation" className="absolute inset-x-0 top-full border-t border-black/8 bg-white px-4 py-4 shadow-[0_16px_30px_rgba(28,34,31,.14)] lg:hidden">
+          <nav className="mx-auto grid max-w-7xl gap-2" aria-label="Mobile navigation">
             <a href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="rounded-xl px-3 py-3 font-bold hover:bg-[#fff3e8]">Contact support</a>
             <a href="/order-tracking" onClick={() => setIsMobileMenuOpen(false)} className="rounded-xl px-3 py-3 font-bold hover:bg-[#fff3e8]">Track an order</a>
-            {user ? (
-              <a href="/account" onClick={() => setIsMobileMenuOpen(false)} className="rounded-xl px-3 py-3 font-bold hover:bg-[#fff3e8]">My account</a>
-            ) : (
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                <a href="/login" onClick={() => setIsMobileMenuOpen(false)} className="rounded-xl border border-[var(--accent)] px-3 py-3 text-center font-black text-[var(--accent-dark)]">Sign in</a>
-                <a href="/register" onClick={() => setIsMobileMenuOpen(false)} className="rounded-xl bg-[var(--accent)] px-3 py-3 text-center font-black text-white">Register</a>
-              </div>
-            )}
+            <div className="mt-1 grid grid-cols-2 gap-2">
+              <a href="/login" onClick={() => setIsMobileMenuOpen(false)} className="rounded-xl border border-[var(--accent)] px-3 py-3 text-center font-black text-[var(--accent-dark)]">Sign in</a>
+              <a href="/register" onClick={() => setIsMobileMenuOpen(false)} className="rounded-xl bg-[var(--accent)] px-3 py-3 text-center font-black text-white">Register</a>
+            </div>
           </nav>
         </div>
       ) : null}
