@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowRight, BadgeCheck, Bike, Home, Laptop, Monitor, PackageCheck, Refrigerator, Tv, WashingMachine } from "lucide-react";
+import { ArrowRight, Bike, Home, Laptop, Monitor, PackageCheck, Refrigerator, Tv, WashingMachine } from "lucide-react";
 import { ProductCard } from "@/components/storefront/product-card";
 import { getHomepage } from "@/lib/api.js";
 import { fallbackImage, productToCard } from "@/lib/product-card-mapper";
@@ -53,8 +53,7 @@ export function HomePage() {
       <section className="border-b border-black/8 bg-white">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1fr_.9fr] lg:items-center lg:px-8 lg:py-16">
           <div>
-            <p className="section-kicker"><BadgeCheck className="size-4" /> Inspected UK-used products</p>
-            <h1 className="mt-5 max-w-2xl font-serif text-5xl font-bold leading-[.98] tracking-[-.055em] sm:text-6xl lg:text-7xl">{primaryBanner?.title || "Good products. Honest condition. Fair prices."}</h1>
+            <h1 className="max-w-2xl font-serif text-5xl font-bold leading-[.98] tracking-[-.055em] sm:text-6xl lg:text-7xl">{primaryBanner?.title || "Good products. Honest condition. Fair prices."}</h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-[var(--muted)]">{primaryBanner?.subtitle || "Shop computers, appliances, televisions, furniture, and bicycles with clear condition notes before you pay."}</p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <a href={primaryBanner?.href || "/shop"} className="cta-primary px-7">Shop all products <ArrowRight className="size-4" /></a>
