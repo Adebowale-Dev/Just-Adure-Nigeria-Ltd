@@ -732,10 +732,15 @@ async function upsertDemoReturnRequest() {
 }
 
 async function main() {
+    const catalogueOnly = process.argv.includes("--catalogue-only");
     await connectMongo(true);
     const gradeByCode = await upsertConditionGrades();
     await upsertDeliveryZones();
     await upsertCatalogue(gradeByCode);
+    if (catalogueOnly) {
+        console.info(`Seeded ${catalogue.length} UK-used product listings without demo account data.`);
+        return;
+    }
     await upsertDemoUsers();
     await upsertDemoReturnRequest();
     console.info(`Seeded ${catalogue.length} UK-used product listings, ${demoUsers.length} demo users and 1 demo return request.`);

@@ -14,6 +14,7 @@
         "lint": "eslint src tests scripts --max-warnings=0",
         "test": "node scripts/run-tests.js",
         "seed": "node src/database/seed.js",
+        "seed:catalogue": "node src/database/seed.js --catalogue-only",
         "db:seed": "npm.cmd run seed",
         "dev:all": "concurrently -n backend,frontend \"npm.cmd run dev\" \"npm.cmd --prefix \\\"../Just Adure Nigeria Ltd Frontend\\\" run dev\"",
         "check:all": "npm.cmd run lint && npm.cmd --prefix \"../Just Adure Nigeria Ltd Frontend\" run lint && npm.cmd run test && npm.cmd --prefix \"../Just Adure Nigeria Ltd Frontend\" run test && npm.cmd run build && npm.cmd --prefix \"../Just Adure Nigeria Ltd Frontend\" run build",
