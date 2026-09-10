@@ -20,6 +20,7 @@ import {
   Store,
   Tv,
   WashingMachine,
+  X,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -65,6 +66,7 @@ function MenuLink({ href, children }) {
 }
 
 export function SiteHeader() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -147,7 +149,16 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 bg-white shadow-[0_2px_16px_rgba(28,34,31,.08)]">
       <div className="mx-auto flex min-h-20 max-w-7xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
-        <button className="grid size-11 place-items-center rounded-md border border-black/10 lg:hidden" aria-label="Open navigation"><Menu className="size-5" /></button>
+        <button
+          type="button"
+          className="grid size-11 shrink-0 place-items-center rounded-md border border-black/10 lg:hidden"
+          aria-label={isMobileMenuOpen ? "Close navigation" : "Open navigation"}
+          aria-expanded={isMobileMenuOpen}
+          aria-controls="mobile-navigation"
+          onClick={() => setIsMobileMenuOpen((open) => !open)}
+        >
+          {isMobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+        </button>
         <a href="/" className="flex shrink-0 items-center gap-2" aria-label={`${storeName} home`}>
           <span className="text-3xl font-black tracking-[-.08em] text-[var(--ink)] sm:text-4xl">JUST ADURE</span>
           <Star className="size-6 fill-[var(--accent)] text-[var(--accent)]" />
@@ -220,6 +231,30 @@ export function SiteHeader() {
           <a href="/cart" className="flex items-center gap-2 rounded-md px-2 py-2 text-sm font-black hover:bg-[#f6f3ec] sm:px-3"><span className="relative"><ShoppingCart className="size-7" /><span className="absolute -right-2 -top-2 grid size-5 place-items-center rounded-full bg-[var(--accent)] text-[10px] font-black text-white">{Math.min(cartCount, 99)}</span></span><span className="hidden sm:inline">Cart</span></a>
         </div>
       </div>
+
+      {isMobileMenuOpen ? (
+        <div id="mobile-navigation" className="border-t border-black/8 bg-white px-4 py-4 shadow-[0_12px_24px_rgba(28,34,31,.08)] lg:hidden">
+          <nav className="mx-auto grid max-w-7xl gap-1" aria-label="Mobile navigation">
+            {navCategories.map(({ label, href, icon: Icon }) => (
+              <a key={label} href={href} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 font-black text-[var(--ink)] hover:bg-[#fff3e8] hover:text-[var(--accent-dark)]">
+                <Icon className="size-5 text-[var(--accent-dark)]" />
+                {label}
+              </a>
+            ))}
+            <div className="my-2 border-t border-black/8" />
+            <a href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="rounded-xl px-3 py-3 font-bold hover:bg-[#fff3e8]">Contact support</a>
+            <a href="/order-tracking" onClick={() => setIsMobileMenuOpen(false)} className="rounded-xl px-3 py-3 font-bold hover:bg-[#fff3e8]">Track an order</a>
+            {user ? (
+              <a href="/account" onClick={() => setIsMobileMenuOpen(false)} className="rounded-xl px-3 py-3 font-bold hover:bg-[#fff3e8]">My account</a>
+            ) : (
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <a href="/login" onClick={() => setIsMobileMenuOpen(false)} className="rounded-xl border border-[var(--accent)] px-3 py-3 text-center font-black text-[var(--accent-dark)]">Sign in</a>
+                <a href="/register" onClick={() => setIsMobileMenuOpen(false)} className="rounded-xl bg-[var(--accent)] px-3 py-3 text-center font-black text-white">Register</a>
+              </div>
+            )}
+          </nav>
+        </div>
+      ) : null}
 
       <nav className="border-t border-black/5 bg-white" aria-label="Product categories">
         <div className="mx-auto flex max-w-7xl gap-7 overflow-x-auto px-4 py-3 text-sm font-black sm:px-6 lg:justify-center lg:px-8">
