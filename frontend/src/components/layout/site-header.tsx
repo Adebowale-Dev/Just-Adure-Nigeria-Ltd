@@ -123,6 +123,17 @@ export function SiteHeader() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setIsMobileMenuOpen(false);
+    }
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [isMobileMenuOpen]);
+
   function markRead(notification) {
     startTransition(async () => {
       await markNotificationRead(notification.id).catch(() => null);
@@ -148,10 +159,10 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-[0_2px_16px_rgba(28,34,31,.08)]">
-      <div className="mx-auto flex min-h-20 max-w-7xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
+      <div className="mx-auto flex min-h-16 max-w-7xl items-center gap-2 px-3 py-2 sm:min-h-20 sm:gap-4 sm:px-6 sm:py-3 lg:px-8">
         <button
           type="button"
-          className="grid size-11 shrink-0 place-items-center rounded-md border border-black/10 lg:hidden"
+          className="grid size-10 shrink-0 place-items-center rounded-md border border-black/10 sm:size-11 lg:hidden"
           aria-label={isMobileMenuOpen ? "Close navigation" : "Open navigation"}
           aria-expanded={isMobileMenuOpen}
           aria-controls="mobile-navigation"
@@ -159,9 +170,9 @@ export function SiteHeader() {
         >
           {isMobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
         </button>
-        <a href="/" className="flex shrink-0 items-center gap-2" aria-label={`${storeName} home`}>
-          <span className="text-3xl font-black tracking-[-.08em] text-[var(--ink)] sm:text-4xl">JUST ADURE</span>
-          <Star className="size-6 fill-[var(--accent)] text-[var(--accent)]" />
+        <a href="/" className="flex min-w-0 shrink items-center gap-1.5 sm:shrink-0 sm:gap-2" aria-label={`${storeName} home`}>
+          <span className="whitespace-nowrap text-xl font-black tracking-[-.06em] text-[var(--ink)] min-[360px]:text-2xl sm:text-4xl sm:tracking-[-.08em]">JUST ADURE</span>
+          <Star className="size-5 shrink-0 fill-[var(--accent)] text-[var(--accent)] sm:size-6" />
         </a>
 
         <form action="/shop" className="mx-auto hidden h-12 max-w-2xl flex-1 items-center overflow-hidden rounded-full bg-[#f1f1f3] pl-5 lg:flex">
@@ -233,7 +244,7 @@ export function SiteHeader() {
       </div>
 
       {isMobileMenuOpen ? (
-        <div id="mobile-navigation" className="absolute inset-x-0 top-full border-t border-black/8 bg-white px-4 py-4 shadow-[0_16px_30px_rgba(28,34,31,.14)] lg:hidden">
+        <div id="mobile-navigation" className="absolute inset-x-0 top-full max-h-[calc(100dvh-7rem)] overflow-y-auto overscroll-contain border-t border-black/8 bg-white px-3 py-4 shadow-[0_16px_30px_rgba(28,34,31,.14)] sm:px-6 lg:hidden">
           <nav className="mx-auto grid max-w-7xl gap-2" aria-label="Mobile navigation">
             <a href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="rounded-xl px-3 py-3 font-bold hover:bg-[#fff3e8]">Contact support</a>
             <a href="/order-tracking" onClick={() => setIsMobileMenuOpen(false)} className="rounded-xl px-3 py-3 font-bold hover:bg-[#fff3e8]">Track an order</a>
