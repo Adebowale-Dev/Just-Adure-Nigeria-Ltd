@@ -88,7 +88,8 @@ const catalogue = [
         colour: "Silver",
         modelNumber: "Apple Desktop",
         featured: true,
-        imageUrl: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=1200&q=85",
+        imageUrl: "/product-images/apple-desktop-1.jpeg",
+        additionalImageUrls: ["/product-images/apple-desktop-2.jpeg"],
         specs: { Type: "Desktop computer", Usage: "Office, school and design", Display: "Desktop display", Status: "Tested working" },
     },
     {
@@ -134,7 +135,7 @@ const catalogue = [
         colour: "Black",
         modelNumber: "Dell OptiPlex Series",
         featured: true,
-        imageUrl: "https://images.unsplash.com/photo-1587831990711-23ca6441447b?auto=format&fit=crop&w=1200&q=85",
+        imageUrl: "/product-images/dell-desktop-computer.jpeg",
         specs: { Type: "Desktop tower", Usage: "Office and home", Ports: "USB, display and network ports", Status: "Tested working" },
     },
     {
@@ -180,7 +181,7 @@ const catalogue = [
         colour: "Black",
         modelNumber: "LG Plasma TV",
         featured: false,
-        imageUrl: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=1200&q=85",
+        imageUrl: "/product-images/big-lg-plasma-tv.jpeg",
         specs: { Type: "Plasma TV", Size: "Large", Usage: "Home entertainment", Status: "Tested working" },
     },
     {
@@ -203,7 +204,7 @@ const catalogue = [
         colour: "Black",
         modelNumber: "Luxor Plasma TV",
         featured: false,
-        imageUrl: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=1200&q=85",
+        imageUrl: "/product-images/luxor-plasma-tv.jpeg",
         specs: { Type: "Plasma TV", Size: "Large", Condition: "UK-used", Status: "Tested working" },
     },
     {
@@ -226,7 +227,7 @@ const catalogue = [
         colour: "Black",
         modelNumber: "Panasonic Plasma TV",
         featured: false,
-        imageUrl: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=1200&q=85",
+        imageUrl: "/product-images/panasonic-plasma-tv.jpeg",
         specs: { Type: "Plasma TV", Size: "Large", Display: "Colour screen", Status: "Tested working" },
     },
     {
@@ -249,7 +250,7 @@ const catalogue = [
         colour: "White",
         modelNumber: "Compact Freezer",
         featured: false,
-        imageUrl: "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?auto=format&fit=crop&w=1200&q=85",
+        imageUrl: "/product-images/small-freezer.jpeg",
         specs: { Type: "Freezer", Size: "Small", Cooling: "Tested cold", Status: "Working" },
     },
     {
@@ -364,7 +365,7 @@ const catalogue = [
         colour: "White",
         modelNumber: "Large Clothes Dryer",
         featured: false,
-        imageUrl: "https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?auto=format&fit=crop&w=1200&q=85",
+        imageUrl: "/product-images/big-dryer.jpeg",
         specs: { Type: "Clothes dryer", Size: "Large", Function: "Drying cycle", Status: "Tested working" },
     },
     {
@@ -387,7 +388,7 @@ const catalogue = [
         colour: "Black",
         modelNumber: "Medium Bicycle",
         featured: false,
-        imageUrl: "/product-images/medium-bicycle.jpg",
+        imageUrl: "/product-images/medium-bicycle.jpeg",
         specs: { Type: "Bicycle", Size: "Medium", Brakes: "Checked", Status: "Ride tested" },
     },
     {
@@ -410,7 +411,7 @@ const catalogue = [
         colour: "Mixed",
         modelNumber: "Small Bicycle",
         featured: false,
-        imageUrl: "/product-images/small-bicycle.jpg",
+        imageUrl: "/product-images/small-bicycle.jpeg",
         specs: { Type: "Bicycle", Size: "Small", Use: "Child or small rider", Status: "Ride tested" },
     },
     {
@@ -625,15 +626,13 @@ async function upsertCatalogue(gradeByCode) {
                 isArchived: false,
                 seoTitle: `${item.name} | Just Adure Nigeria Ltd`,
                 seoDescription: item.shortDescription,
-                images: [
-                    {
-                        cloudinaryPublicId: `demo/${item.slug}`,
-                        secureUrl: item.imageUrl,
-                        altText: `${item.name} demonstration product photograph`,
-                        sortOrder: 0,
-                        isPrimary: true,
-                    },
-                ],
+                images: [item.imageUrl, ...(item.additionalImageUrls ?? [])].map((secureUrl, index) => ({
+                    cloudinaryPublicId: index === 0 ? `demo/${item.slug}` : `demo/${item.slug}-${index + 1}`,
+                    secureUrl,
+                    altText: `${item.name} demonstration product photograph`,
+                    sortOrder: index,
+                    isPrimary: index === 0,
+                })),
                 specifications: Object.entries(item.specs).map(([label, value], index) => ({
                     groupName: "Key specifications",
                     label,
