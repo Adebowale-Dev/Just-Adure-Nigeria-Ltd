@@ -296,7 +296,7 @@ const catalogue = [
         colour: "Silver",
         modelNumber: "Freestanding Dishwasher",
         featured: false,
-        imageUrl: "https://images.unsplash.com/photo-1606676539940-12768ce0e762?auto=format&fit=crop&w=1200&q=85",
+        imageUrl: "/product-images/dish-washer.png",
         specs: { Type: "Dishwasher", Installation: "Freestanding", Finish: "Silver", Status: "Tested working" },
     },
     {
@@ -342,7 +342,7 @@ const catalogue = [
         colour: "White",
         modelNumber: "Salon Steamer",
         featured: false,
-        imageUrl: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1200&q=85",
+        imageUrl: "/product-images/hair-dryer-steamer.png",
         specs: { Type: "Hair steamer", Usage: "Salon and home care", Stand: "Mobile stand", Status: "Tested working" },
     },
     {
@@ -457,7 +457,7 @@ const catalogue = [
         colour: "Black",
         modelNumber: "DVD Player",
         featured: false,
-        imageUrl: "https://images.unsplash.com/photo-1601944179066-29786cb9d32a?auto=format&fit=crop&w=1200&q=85",
+        imageUrl: "/product-images/big-dvd-player.png",
         specs: { Type: "DVD player", Output: "AV/HDMI depending on unit", Media: "DVD/CD", Status: "Tested working" },
     },
     {
@@ -480,7 +480,7 @@ const catalogue = [
         colour: "White",
         modelNumber: "Two-slot Toaster",
         featured: false,
-        imageUrl: "https://images.unsplash.com/photo-1585515320310-259814833e62?auto=format&fit=crop&w=1200&q=85",
+        imageUrl: "/product-images/toaster-machine.png",
         specs: { Type: "Toaster", Slots: "Two", Power: "220-240V", Status: "Tested heating" },
     },
     {
