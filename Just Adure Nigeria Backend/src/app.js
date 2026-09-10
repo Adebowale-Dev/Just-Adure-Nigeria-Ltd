@@ -60,6 +60,7 @@ app.use(express.urlencoded({ extended: false, limit: "64kb" }));
 app.use(cookieParser());
 app.use(sanitizeMongoInput);
 app.use(developmentRequestLogger);
+app.get("/", (_request, response) => response.redirect("/api/docs"));
 app.use("/uploads", express.static(path.resolve(process.cwd(), "public", "uploads"), { maxAge: env.NODE_ENV === "production" ? "30d" : 0 }));
 app.use("/api/v1", rateLimit({
     windowMs: 15 * 60 * 1000,

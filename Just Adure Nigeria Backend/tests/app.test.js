@@ -2,6 +2,10 @@ import request from "supertest";
 import { describe, expect, it } from "vitest";
 import { app } from "../src/app.js";
 describe("API foundation", () => {
+    it("redirects the service root to the API documentation", async () => {
+        const response = await request(app).get("/").expect(302);
+        expect(response.headers.location).toBe("/api/docs");
+    });
     it("reports process health with security and request headers", async () => {
         const response = await request(app).get("/health").expect(200);
         expect(response.body.data.status).toBe("ok");
