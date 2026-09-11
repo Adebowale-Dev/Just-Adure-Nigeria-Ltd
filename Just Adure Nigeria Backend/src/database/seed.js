@@ -112,7 +112,7 @@ const catalogue = [
         colour: "Black",
         modelNumber: "Dell LED Monitor",
         featured: false,
-        imageUrl: "/product-images/dell-monitor.png",
+        imageUrl: "/product-images/dell-monitor.webp",
         specs: { Type: "Monitor", Input: "HDMI/VGA depending on unit", Screen: "Wide display", Status: "Tested working" },
     },
     {
@@ -158,7 +158,7 @@ const catalogue = [
         colour: "Black",
         modelNumber: "Toshiba Plasma TV",
         featured: true,
-        imageUrl: "/product-images/big-toshiba-plasma-tv.png",
+        imageUrl: "/product-images/big-toshiba-plasma-tv.webp",
         specs: { Type: "Plasma TV", Size: "Large", Ports: "HDMI/AV depending on unit", Status: "Tested working" },
     },
     {
@@ -273,7 +273,7 @@ const catalogue = [
         colour: "White",
         modelNumber: "Washer Spinner",
         featured: true,
-        imageUrl: "/product-images/washing-spinning-machine.png",
+        imageUrl: "/product-images/washing-spinning-machine.webp",
         specs: { Type: "Washing machine", Function: "Wash and spin", Capacity: "Large", Status: "Tested working" },
     },
     {
@@ -296,7 +296,7 @@ const catalogue = [
         colour: "Silver",
         modelNumber: "Freestanding Dishwasher",
         featured: false,
-        imageUrl: "/product-images/dish-washer.png",
+        imageUrl: "/product-images/dish-washer.webp",
         specs: { Type: "Dishwasher", Installation: "Freestanding", Finish: "Silver", Status: "Tested working" },
     },
     {
@@ -319,7 +319,7 @@ const catalogue = [
         colour: "Silver",
         modelNumber: "Standing Fridge Freezer",
         featured: true,
-        imageUrl: "/product-images/standing-fridge-freezer.png",
+        imageUrl: "/product-images/standing-fridge-freezer.webp",
         specs: { Type: "Fridge freezer", Size: "Large standing", Cooling: "Fridge and freezer", Status: "Tested working" },
     },
     {
@@ -342,7 +342,7 @@ const catalogue = [
         colour: "White",
         modelNumber: "Salon Steamer",
         featured: false,
-        imageUrl: "/product-images/hair-dryer-steamer.png",
+        imageUrl: "/product-images/hair-dryer-steamer.webp",
         specs: { Type: "Hair steamer", Usage: "Salon and home care", Stand: "Mobile stand", Status: "Tested working" },
     },
     {
@@ -434,7 +434,7 @@ const catalogue = [
         colour: "Black",
         modelNumber: "Speaker Pair",
         featured: false,
-        imageUrl: "/product-images/pair-of-speakers.png",
+        imageUrl: "/product-images/pair-of-speakers.webp",
         specs: { Type: "Speakers", Quantity: "Pair", Usage: "Home audio", Status: "Sound tested" },
     },
     {
@@ -457,7 +457,7 @@ const catalogue = [
         colour: "Black",
         modelNumber: "DVD Player",
         featured: false,
-        imageUrl: "/product-images/big-dvd-player.png",
+        imageUrl: "/product-images/big-dvd-player.webp",
         specs: { Type: "DVD player", Output: "AV/HDMI depending on unit", Media: "DVD/CD", Status: "Tested working" },
     },
     {
@@ -480,7 +480,7 @@ const catalogue = [
         colour: "White",
         modelNumber: "Two-slot Toaster",
         featured: false,
-        imageUrl: "/product-images/toaster-machine.png",
+        imageUrl: "/product-images/toaster-machine.webp",
         specs: { Type: "Toaster", Slots: "Two", Power: "220-240V", Status: "Tested heating" },
     },
     {
@@ -503,7 +503,7 @@ const catalogue = [
         colour: "Silver",
         modelNumber: "8-Face Burner",
         featured: false,
-        imageUrl: "/product-images/eight-burner-cooker.png",
+        imageUrl: "/product-images/eight-burner-cooker.webp",
         specs: { Type: "Gas burner", Burners: "8-face", Usage: "Cooking", Status: "Inspection required" },
     },
     {
@@ -526,7 +526,7 @@ const catalogue = [
         colour: "Brown",
         modelNumber: "2/3 Seater Leather Sofa",
         featured: true,
-        imageUrl: "/product-images/sofa-chair.png",
+        imageUrl: "/product-images/sofa-chair.webp",
         specs: { Type: "Leather sofa", Seats: "2/3 seater", Material: "Leather", Status: "Inspected" },
     },
 ];
