@@ -112,7 +112,7 @@ const catalogue = [
         colour: "Black",
         modelNumber: "Dell LED Monitor",
         featured: false,
-        imageUrl: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=1200&q=85",
+        imageUrl: "/product-images/dell-monitor.png",
         specs: { Type: "Monitor", Input: "HDMI/VGA depending on unit", Screen: "Wide display", Status: "Tested working" },
     },
     {
@@ -158,7 +158,7 @@ const catalogue = [
         colour: "Black",
         modelNumber: "Toshiba Plasma TV",
         featured: true,
-        imageUrl: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=1200&q=85",
+        imageUrl: "/product-images/big-toshiba-plasma-tv.png",
         specs: { Type: "Plasma TV", Size: "Large", Ports: "HDMI/AV depending on unit", Status: "Tested working" },
     },
     {
@@ -273,7 +273,7 @@ const catalogue = [
         colour: "White",
         modelNumber: "Washer Spinner",
         featured: true,
-        imageUrl: "https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?auto=format&fit=crop&w=1200&q=85",
+        imageUrl: "/product-images/washing-spinning-machine.png",
         specs: { Type: "Washing machine", Function: "Wash and spin", Capacity: "Large", Status: "Tested working" },
     },
     {
@@ -319,7 +319,7 @@ const catalogue = [
         colour: "Silver",
         modelNumber: "Standing Fridge Freezer",
         featured: true,
-        imageUrl: "/product-images/standing-fridge-freezer.jpg",
+        imageUrl: "/product-images/standing-fridge-freezer.png",
         specs: { Type: "Fridge freezer", Size: "Large standing", Cooling: "Fridge and freezer", Status: "Tested working" },
     },
     {
@@ -434,7 +434,7 @@ const catalogue = [
         colour: "Black",
         modelNumber: "Speaker Pair",
         featured: false,
-        imageUrl: "https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=1200&q=85",
+        imageUrl: "/product-images/pair-of-speakers.png",
         specs: { Type: "Speakers", Quantity: "Pair", Usage: "Home audio", Status: "Sound tested" },
     },
     {
@@ -503,7 +503,7 @@ const catalogue = [
         colour: "Silver",
         modelNumber: "8-Face Burner",
         featured: false,
-        imageUrl: "https://images.unsplash.com/photo-1585659722983-3a681dab04e5?auto=format&fit=crop&w=1200&q=85",
+        imageUrl: "/product-images/eight-burner-cooker.png",
         specs: { Type: "Gas burner", Burners: "8-face", Usage: "Cooking", Status: "Inspection required" },
     },
     {
@@ -526,7 +526,7 @@ const catalogue = [
         colour: "Brown",
         modelNumber: "2/3 Seater Leather Sofa",
         featured: true,
-        imageUrl: "/product-images/sofa-chair.jpg",
+        imageUrl: "/product-images/sofa-chair.png",
         specs: { Type: "Leather sofa", Seats: "2/3 seater", Material: "Leather", Status: "Inspected" },
     },
 ];
