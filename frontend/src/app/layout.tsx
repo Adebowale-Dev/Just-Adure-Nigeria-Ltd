@@ -1,5 +1,5 @@
 import "../globals.css";
-import { Manrope, Vollkorn } from "next/font/google";
+import { Manrope, Vast_Shadow, Vollkorn } from "next/font/google";
 import { Providers } from "@/components/layout/providers";
 
 const vollkorn = Vollkorn({
@@ -11,6 +11,13 @@ const vollkorn = Vollkorn({
 const manrope = Manrope({
   subsets: ["latin"],
   variable: "--font-manrope",
+  display: "swap",
+});
+
+const vastShadow = Vast_Shadow({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-vast-shadow",
   display: "swap",
 });
 
@@ -36,7 +43,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en-NG" suppressHydrationWarning>
-      <body className={`${vollkorn.variable} ${manrope.variable}`} suppressHydrationWarning>
+      <body className={`${vollkorn.variable} ${manrope.variable} ${vastShadow.variable}`} suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

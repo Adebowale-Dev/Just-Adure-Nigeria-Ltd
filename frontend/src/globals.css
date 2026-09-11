@@ -34,6 +34,7 @@ img { max-width: 100%; }
 .font-serif { font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif; }
 .landing-page { font-family: var(--font-manrope), sans-serif; }
 .landing-display { font-family: var(--font-vollkorn), serif; }
+.brand-wordmark { font-family: var(--font-vast-shadow), serif; }
 .header-action { display: grid; width: 2.75rem; height: 2.75rem; place-items: center; border-radius: 999px; }
 .header-action:hover { background: rgba(22, 29, 27, 0.07); }
 .hero-grid {
