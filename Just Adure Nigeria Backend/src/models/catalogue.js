@@ -45,6 +45,16 @@ const productSpecificationSchema = new Schema({
     value: { type: String, required: true, trim: true },
     sortOrder: { type: Number, required: true, default: 0 },
 }, { _id: false });
+const vehicleDetailsSchema = new Schema({
+    year: { type: Number, min: 1950, max: 2100 },
+    mileageKm: { type: Number, min: 0 },
+    transmission: { type: String, enum: ["automatic", "manual", "cvt", "other"] },
+    fuelType: { type: String, enum: ["petrol", "diesel", "hybrid", "electric", "other"] },
+    bodyType: { type: String, trim: true },
+    engine: { type: String, trim: true },
+    drivetrain: { type: String, trim: true },
+    location: { type: String, trim: true },
+}, { _id: false });
 const productSchema = new Schema({
     name: { type: String, required: true, trim: true },
     slug: { type: String, required: true, unique: true, trim: true },
@@ -84,6 +94,7 @@ const productSchema = new Schema({
         required: true,
         default: [],
     },
+    vehicleDetails: { type: vehicleDetailsSchema },
 }, { timestamps: true });
 const deliveryZoneSchema = new Schema({
     code: { type: String, required: true, unique: true, trim: true },

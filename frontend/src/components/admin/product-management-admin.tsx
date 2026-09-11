@@ -10,6 +10,7 @@ const initialForm = {
   sku: "",
   brandId: "",
   categoryId: "",
+  categorySlug: "",
   productType: "used",
   conditionGradeId: "",
   priceNaira: "",
@@ -23,6 +24,14 @@ const initialForm = {
   warrantyInformation: "",
   colour: "",
   modelNumber: "",
+  vehicleYear: "",
+  vehicleMileageKm: "",
+  vehicleTransmission: "automatic",
+  vehicleFuelType: "petrol",
+  vehicleBodyType: "",
+  vehicleEngine: "",
+  vehicleDrivetrain: "",
+  vehicleLocation: "",
   isFeatured: false,
 };
 
@@ -50,6 +59,7 @@ function nairaToKobo(value) {
 }
 
 function formToPayload(form) {
+  const isVehicle = form.categorySlug === "cars";
   return {
     name: form.name,
     slug: form.slug || slugify(form.name),
@@ -69,6 +79,16 @@ function formToPayload(form) {
     warrantyInformation: form.warrantyInformation || undefined,
     colour: form.colour || undefined,
     modelNumber: form.modelNumber || undefined,
+    vehicleDetails: isVehicle ? {
+      year: Number(form.vehicleYear),
+      mileageKm: Number(form.vehicleMileageKm),
+      transmission: form.vehicleTransmission,
+      fuelType: form.vehicleFuelType,
+      bodyType: form.vehicleBodyType,
+      engine: form.vehicleEngine || undefined,
+      drivetrain: form.vehicleDrivetrain || undefined,
+      location: form.vehicleLocation,
+    } : null,
     isFeatured: form.isFeatured,
   };
 }
@@ -81,6 +101,7 @@ function productToForm(product) {
     sku: product.sku ?? "",
     brandId: product.brand?.id ?? "",
     categoryId: product.category?.id ?? "",
+    categorySlug: product.category?.slug ?? "",
     productType: product.productType ?? "used",
     conditionGradeId: product.conditionGrade?.id ?? "",
     priceNaira: String(Math.round((product.priceKobo ?? 0) / 100)),
@@ -94,6 +115,14 @@ function productToForm(product) {
     warrantyInformation: product.warrantyInformation ?? "",
     colour: product.colour ?? "",
     modelNumber: product.modelNumber ?? "",
+    vehicleYear: product.vehicleDetails?.year ? String(product.vehicleDetails.year) : "",
+    vehicleMileageKm: product.vehicleDetails?.mileageKm !== undefined ? String(product.vehicleDetails.mileageKm) : "",
+    vehicleTransmission: product.vehicleDetails?.transmission ?? "automatic",
+    vehicleFuelType: product.vehicleDetails?.fuelType ?? "petrol",
+    vehicleBodyType: product.vehicleDetails?.bodyType ?? "",
+    vehicleEngine: product.vehicleDetails?.engine ?? "",
+    vehicleDrivetrain: product.vehicleDetails?.drivetrain ?? "",
+    vehicleLocation: product.vehicleDetails?.location ?? "",
     isFeatured: Boolean(product.isFeatured),
   };
 }
@@ -106,6 +135,7 @@ export function ProductManagementAdmin({ products = [], onProductsChanged }) {
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
   const selectedProduct = products.find((product) => product.id === selectedProductId);
+  const isVehicle = form.categorySlug === "cars";
 
   useEffect(() => {
     Promise.all([getCategories(), getBrands(), getConditionGrades()])
@@ -115,7 +145,7 @@ export function ProductManagementAdmin({ products = [], onProductsChanged }) {
 
   useEffect(() => {
     if (!form.brandId && lookups.brands[0]) setForm((current) => ({ ...current, brandId: lookups.brands[0].id }));
-    if (!form.categoryId && lookups.categories[0]) setForm((current) => ({ ...current, categoryId: lookups.categories[0].id }));
+    if (!form.categoryId && lookups.categories[0]) setForm((current) => ({ ...current, categoryId: lookups.categories[0].id, categorySlug: lookups.categories[0].slug }));
     if (!form.conditionGradeId && lookups.grades[0]) setForm((current) => ({ ...current, conditionGradeId: lookups.grades[0].id }));
   }, [lookups]);
 
@@ -140,6 +170,7 @@ export function ProductManagementAdmin({ products = [], onProductsChanged }) {
       ...initialForm,
       brandId: lookups.brands[0]?.id ?? "",
       categoryId: lookups.categories[0]?.id ?? "",
+      categorySlug: lookups.categories[0]?.slug ?? "",
       conditionGradeId: lookups.grades[0]?.id ?? "",
     });
   }
@@ -201,7 +232,7 @@ export function ProductManagementAdmin({ products = [], onProductsChanged }) {
         <label className="grid gap-2 text-sm font-bold">Slug<input name="slug" value={form.slug} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
         <label className="grid gap-2 text-sm font-bold">SKU<input name="sku" value={form.sku} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 uppercase outline-none" /></label>
         <label className="grid gap-2 text-sm font-bold">Brand<AdminDropdown value={form.brandId} placeholder="Select brand" options={lookups.brands.map((brand) => ({ value: brand.id, label: brand.name }))} onValueChange={(value) => setForm((current) => ({ ...current, brandId: value }))} /></label>
-        <label className="grid gap-2 text-sm font-bold">Category<AdminDropdown value={form.categoryId} placeholder="Select category" options={lookups.categories.map((category) => ({ value: category.id, label: category.name }))} onValueChange={(value) => setForm((current) => ({ ...current, categoryId: value }))} /></label>
+        <label className="grid gap-2 text-sm font-bold">Category<AdminDropdown value={form.categoryId} placeholder="Select category" options={lookups.categories.map((category) => ({ value: category.id, label: category.name }))} onValueChange={(value) => setForm((current) => ({ ...current, categoryId: value, categorySlug: lookups.categories.find((category) => category.id === value)?.slug ?? "" }))} /></label>
         <label className="grid gap-2 text-sm font-bold">Product type<AdminDropdown value={form.productType} placeholder="Select product type" options={[{ value: "used", label: "Used" }, { value: "brand_new", label: "Brand New" }]} onValueChange={(value) => setForm((current) => ({ ...current, productType: value }))} /></label>
         {form.productType === "used" ? <label className="grid gap-2 text-sm font-bold">Condition grade<AdminDropdown value={form.conditionGradeId} placeholder="Select condition grade" options={lookups.grades.map((grade) => ({ value: grade.id, label: grade.name }))} onValueChange={(value) => setForm((current) => ({ ...current, conditionGradeId: value }))} /></label> : null}
         <label className="grid gap-2 text-sm font-bold">Price (NGN)<input name="priceNaira" type="number" min={0} value={form.priceNaira} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
@@ -212,6 +243,17 @@ export function ProductManagementAdmin({ products = [], onProductsChanged }) {
         <label className="grid gap-2 text-sm font-bold">Colour<input name="colour" value={form.colour} onChange={updateField} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
         <label className="grid gap-2 text-sm font-bold">Model<input name="modelNumber" value={form.modelNumber} onChange={updateField} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
         <label className="grid gap-2 text-sm font-bold">Low-stock alert<input name="lowStockThreshold" type="number" min={0} value={form.lowStockThreshold} onChange={updateField} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
+        {isVehicle ? <>
+          <div className="md:col-span-3 mt-2 border-t border-black/8 pt-5"><p className="section-kicker">Vehicle details</p><p className="mt-1 text-sm text-[var(--muted)]">These details help buyers compare cars accurately.</p></div>
+          <label className="grid gap-2 text-sm font-bold">Year<input name="vehicleYear" type="number" min={1950} max={2100} value={form.vehicleYear} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
+          <label className="grid gap-2 text-sm font-bold">Mileage (km)<input name="vehicleMileageKm" type="number" min={0} value={form.vehicleMileageKm} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
+          <label className="grid gap-2 text-sm font-bold">Body type<input name="vehicleBodyType" value={form.vehicleBodyType} onChange={updateField} required placeholder="SUV, Saloon, Hatchback" className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
+          <label className="grid gap-2 text-sm font-bold">Transmission<AdminDropdown value={form.vehicleTransmission} options={["automatic", "manual", "cvt", "other"].map((value) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) }))} onValueChange={(value) => setForm((current) => ({ ...current, vehicleTransmission: value }))} /></label>
+          <label className="grid gap-2 text-sm font-bold">Fuel type<AdminDropdown value={form.vehicleFuelType} options={["petrol", "diesel", "hybrid", "electric", "other"].map((value) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) }))} onValueChange={(value) => setForm((current) => ({ ...current, vehicleFuelType: value }))} /></label>
+          <label className="grid gap-2 text-sm font-bold">Vehicle location<input name="vehicleLocation" value={form.vehicleLocation} onChange={updateField} required placeholder="Ikeja, Lagos" className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
+          <label className="grid gap-2 text-sm font-bold">Engine<input name="vehicleEngine" value={form.vehicleEngine} onChange={updateField} placeholder="2.0L" className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
+          <label className="grid gap-2 text-sm font-bold">Drivetrain<input name="vehicleDrivetrain" value={form.vehicleDrivetrain} onChange={updateField} placeholder="FWD, RWD, AWD" className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
+        </> : null}
         <label className="grid gap-2 text-sm font-bold md:col-span-3">Known defects<textarea name="visibleDefects" value={form.visibleDefects} onChange={updateField} rows={2} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
         <label className="grid gap-2 text-sm font-bold md:col-span-2">Accessories included<input name="includedAccessories" value={form.includedAccessories} onChange={updateField} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
         <label className="grid gap-2 text-sm font-bold">Warranty<input name="warrantyInformation" value={form.warrantyInformation} onChange={updateField} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>

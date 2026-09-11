@@ -29,6 +29,7 @@ export async function getProduct(slug) {
 export async function getCategories() { return (await apiGet("/categories")).items; }
 export async function getBrands() { return (await apiGet("/brands")).items; }
 export async function getConditionGrades() { return (await apiGet("/condition-grades")).items; }
+export async function getCatalogueOptions(category) { return apiGet(`/catalogue-options?category=${encodeURIComponent(category)}`); }
 export async function getCart() { return (await cartRequest("/cart", { method: "GET" })).cart; }
 export async function addCartItem(input) { return (await cartRequest("/cart/items", { method: "POST", body: JSON.stringify(input) })).cart; }
 export async function updateCartItem(productId, quantity) { return (await cartRequest(`/cart/items/${productId}`, { method: "PATCH", body: JSON.stringify({ quantity }) })).cart; }

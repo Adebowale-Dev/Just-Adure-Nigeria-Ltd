@@ -16,6 +16,10 @@ const listProductsQuerySchema = z.object({
     warranty: z.enum(["true", "false"]).optional(),
     discount: z.enum(["true", "false"]).optional(),
     featured: z.enum(["true", "false"]).optional(),
+    transmission: z.enum(["automatic", "manual", "cvt", "other"]).optional(),
+    fuelType: z.enum(["petrol", "diesel", "hybrid", "electric", "other"]).optional(),
+    minYear: z.coerce.number().int().min(1950).max(2100).optional(),
+    maxYear: z.coerce.number().int().min(1950).max(2100).optional(),
     minPriceKobo: z.coerce.number().int().min(0).optional(),
     maxPriceKobo: z.coerce.number().int().min(0).optional(),
     sort: z.enum(["newest", "oldest", "price_asc", "price_desc", "popular", "best_rated"]).default("newest"),
@@ -23,6 +27,9 @@ const listProductsQuerySchema = z.object({
     limit: z.coerce.number().int().min(1).max(48).default(12),
 });
 const slugParamSchema = z.object({ slug: z.string().trim().min(1).max(180) });
+const catalogueOptionsQuerySchema = z.object({
+    category: z.string().trim().min(1).max(120),
+});
 function escapeRegExp(value) {
     return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -80,6 +87,7 @@ function serializeProduct(product) {
         primaryImage,
         images: product.images ?? [],
         specifications: product.specifications ?? [],
+        vehicleDetails: product.vehicleDetails ?? null,
         createdAt: product.createdAt,
         updatedAt: product.updatedAt,
     };
@@ -153,6 +161,13 @@ catalogueRouter.get("/products", async (request, response, next) => {
         if (query.featured) {
             filter.isFeatured = query.featured === "true";
         }
+        if (query.transmission) filter["vehicleDetails.transmission"] = query.transmission;
+        if (query.fuelType) filter["vehicleDetails.fuelType"] = query.fuelType;
+        if (query.minYear !== undefined || query.maxYear !== undefined) {
+            filter["vehicleDetails.year"] = {};
+            if (query.minYear !== undefined) filter["vehicleDetails.year"].$gte = query.minYear;
+            if (query.maxYear !== undefined) filter["vehicleDetails.year"].$lte = query.maxYear;
+        }
         if (query.warranty === "true") {
             filter.warrantyInformation = { $exists: true, $ne: "" };
         }
@@ -182,6 +197,9 @@ catalogueRouter.get("/products", async (request, response, next) => {
                     { modelNumber: search },
                     { shortDescription: search },
                     { description: search },
+                    { "vehicleDetails.bodyType": search },
+                    { "vehicleDetails.engine": search },
+                    { "vehicleDetails.location": search },
                     { brandId: { $in: matchingBrands.map((brand) => brand._id) } },
                     { categoryId: { $in: matchingCategories.map((category) => category._id) } },
                 ],
@@ -209,6 +227,50 @@ catalogueRouter.get("/products", async (request, response, next) => {
                     totalItems,
                     totalPages: Math.ceil(totalItems / query.limit),
                 },
+            },
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+/**
+ * @openapi
+ * /api/v1/catalogue-options:
+ *   get:
+ *     tags: [Catalogue]
+ *     summary: List brands and condition grades available in a category
+ *     responses:
+ *       200:
+ *         description: Contextual catalogue options returned
+ */
+catalogueRouter.get("/catalogue-options", async (request, response, next) => {
+    try {
+        const { category } = catalogueOptionsQuerySchema.parse(request.query);
+        const categoryId = await findLookupId(Category, category);
+        if (!categoryId) {
+            response.json({ data: { brands: [], conditionGrades: [] } });
+            return;
+        }
+        const products = await Product.find({
+            categoryId,
+            isArchived: false,
+            availability: { $ne: "archived" },
+        })
+            .select("brandId conditionGradeId")
+            .populate("brandId")
+            .populate("conditionGradeId")
+            .lean();
+        const brands = new Map();
+        const conditionGrades = new Map();
+        for (const product of products) {
+            if (product.brandId?.isActive !== false) brands.set(objectIdString(product.brandId), serializeLookup(product.brandId));
+            if (product.conditionGradeId?.isActive !== false) conditionGrades.set(objectIdString(product.conditionGradeId), serializeLookup(product.conditionGradeId));
+        }
+        response.json({
+            data: {
+                brands: [...brands.values()].sort((left, right) => left.name.localeCompare(right.name)),
+                conditionGrades: [...conditionGrades.values()].sort((left, right) => left.name.localeCompare(right.name)),
             },
         });
     }

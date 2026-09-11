@@ -10,5 +10,6 @@ export function productToCard(product) {
     imageUrl: product.primaryImage?.secureUrl ?? product.images?.[0]?.secureUrl ?? fallbackImage,
     defectNote: product.visibleDefects || "Condition checked and listed honestly.",
     isSoldOut: product.isSoldOut,
+    vehicleDetails: product.vehicleDetails ?? undefined,
   };
 }

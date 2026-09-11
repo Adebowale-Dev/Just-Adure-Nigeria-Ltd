@@ -37,6 +37,18 @@ const conditionGrades = [
         sortOrder: 5,
     },
 ];
+const vehicleBrands = [
+    "Toyota",
+    "Nissan",
+    "Honda",
+    "Lexus",
+    "Mercedes-Benz",
+    "BMW",
+    "Hyundai",
+    "Kia",
+    "Ford",
+    "Volkswagen",
+];
 const deliveryZones = [
     {
         code: "lagos-mainland",
@@ -587,6 +599,27 @@ async function upsertDeliveryZones() {
 }
 async function upsertCatalogue(gradeByCode) {
     await Product.updateMany({ sku: { $in: deprecatedDemoSkus } }, { $set: { isArchived: true, availability: "archived", stockQuantity: 0, reservedQuantity: 0 } });
+    await Category.findOneAndUpdate({ slug: "cars" }, {
+        $set: {
+            name: "Cars",
+            slug: "cars",
+            description: "Inspected used cars with mileage, specifications, location and known faults clearly listed.",
+            seoTitle: "Used Cars for Sale | Just Adure Nigeria Ltd",
+            seoDescription: "Browse inspected used cars with transparent condition and vehicle details.",
+            isActive: true,
+        },
+    }, { returnDocument: "after", upsert: true, runValidators: true });
+    for (const name of vehicleBrands) {
+        const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+        await Brand.findOneAndUpdate({ slug }, {
+            $set: {
+                name,
+                slug,
+                description: `${name} used vehicles available through Just Adure Nigeria Ltd.`,
+                isActive: true,
+            },
+        }, { returnDocument: "after", upsert: true, runValidators: true });
+    }
     for (const item of catalogue) {
         const brand = (await Brand.findOneAndUpdate({ slug: item.brandSlug }, { $set: { name: item.brand, slug: item.brandSlug, isActive: true } }, { returnDocument: "after", upsert: true, runValidators: true }).orFail());
         const category = (await Category.findOneAndUpdate({ slug: item.categorySlug }, {
@@ -639,6 +672,7 @@ async function upsertCatalogue(gradeByCode) {
                     value,
                     sortOrder: index,
                 })),
+                vehicleDetails: item.vehicleDetails ?? null,
             },
         }, { returnDocument: "after", upsert: true, runValidators: true });
     }

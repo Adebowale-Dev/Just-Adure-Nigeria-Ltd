@@ -32,6 +32,10 @@ export default function App({ initialPath = "/" }) {
   );
   const pathname = url.pathname;
   const hideSiteChrome = ["/login", "/register", "/forgot-password"].includes(pathname);
+  const hideFooter = hideSiteChrome
+    || pathname.startsWith("/admin")
+    || pathname.startsWith("/account")
+    || ["/profile", "/wishlist", "/cart", "/checkout", "/payment-result", "/order-tracking", "/reset-password", "/verify-email"].includes(pathname);
 
   let page;
 
@@ -92,8 +96,7 @@ export default function App({ initialPath = "/" }) {
     <>
       {hideSiteChrome ? null : <SiteHeader />}
       {page}
-      {hideSiteChrome ? null : <Footer />}
+      {hideFooter ? null : <Footer />}
     </>
   );
 }
-

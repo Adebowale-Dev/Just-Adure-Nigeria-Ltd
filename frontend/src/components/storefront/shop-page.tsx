@@ -4,10 +4,34 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, ChevronDown, Filter, PackageSearch, Search, SlidersHorizontal } from "lucide-react";
 import { ProductCard } from "@/components/storefront/product-card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { getBrands, getCategories, getConditionGrades, getProducts } from "@/lib/api.js";
+import { getBrands, getCatalogueOptions, getCategories, getConditionGrades, getProducts } from "@/lib/api.js";
 import { productToCard } from "@/lib/product-card-mapper";
 
 const defaultFilters = { q: "", category: "", brand: "", condition: "", sort: "newest" };
+const carsCategory = {
+  id: "cars",
+  name: "Cars",
+  slug: "cars",
+  description: "Inspected used cars with transparent vehicle details.",
+};
+const carBrands = [
+  { name: "Toyota", slug: "toyota" },
+  { name: "Nissan", slug: "nissan" },
+  { name: "Honda", slug: "honda" },
+  { name: "Lexus", slug: "lexus" },
+  { name: "Mercedes-Benz", slug: "mercedes-benz" },
+  { name: "BMW", slug: "bmw" },
+  { name: "Hyundai", slug: "hyundai" },
+  { name: "Kia", slug: "kia" },
+  { name: "Ford", slug: "ford" },
+  { name: "Volkswagen", slug: "volkswagen" },
+];
+
+function includeCarsCategory(categories) {
+  return categories.some((category) => category.slug === "cars")
+    ? categories
+    : [...categories, carsCategory].sort((left, right) => left.name.localeCompare(right.name));
+}
 
 const sortOptions = [
   { label: "Newest", value: "newest" },
@@ -44,18 +68,34 @@ export function ShopPage({ defaultCategory = "", defaultQuery = "" }) {
   const [filters, setFilters] = useState({ ...defaultFilters, q: defaultQuery, category: defaultCategory });
   const [lookups, setLookups] = useState({ categories: [], brands: [], grades: [] });
   const [errorMessage, setErrorMessage] = useState("");
+  const availableBrands = filters.category === "cars"
+    ? carBrands.map((carBrand) => lookups.brands.find((brand) => brand.slug === carBrand.slug) ?? carBrand)
+    : lookups.brands;
 
   useEffect(() => {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
       if (value) params.set(key, value);
     });
+    params.set("limit", "24");
 
     setProducts(null);
-    Promise.all([getProducts(params), getCategories(), getBrands(), getConditionGrades()])
-      .then(([productData, categoryData, brandData, gradeData]) => {
+    Promise.all([
+      getProducts(params),
+      getCategories(),
+      getBrands(),
+      getConditionGrades(),
+      filters.category ? getCatalogueOptions(filters.category) : null,
+    ])
+      .then(([productData, categoryData, brandData, gradeData, contextualOptions]) => {
         setProducts(productData);
-        setLookups({ categories: categoryData, brands: brandData, grades: gradeData });
+        const contextualBrands = contextualOptions?.brands?.length ? contextualOptions.brands : (filters.category === "cars" ? brandData : []);
+        const contextualGrades = contextualOptions?.conditionGrades?.length ? contextualOptions.conditionGrades : gradeData;
+        setLookups({
+          categories: includeCarsCategory(categoryData),
+          brands: filters.category ? contextualBrands : brandData,
+          grades: filters.category ? contextualGrades : gradeData,
+        });
         setErrorMessage("");
       })
       .catch(() => setErrorMessage("The product catalogue is not available yet. Please confirm the backend is running on port 4000 and MongoDB is ready."));
@@ -63,7 +103,11 @@ export function ShopPage({ defaultCategory = "", defaultQuery = "" }) {
 
 
   const updateFilter = (event) => setFilters((current) => ({ ...current, [event.target.name]: event.target.value }));
-  const setFilterValue = (name, value) => setFilters((current) => ({ ...current, [name]: value }));
+  const setFilterValue = (name, value) => setFilters((current) => ({
+    ...current,
+    [name]: value,
+    ...(name === "category" ? { brand: "" } : {}),
+  }));
   const clearFilters = () => setFilters({ ...defaultFilters });
 
   return (
@@ -87,7 +131,7 @@ export function ShopPage({ defaultCategory = "", defaultQuery = "" }) {
 
             <FilterDropdown label="Category" value={filters.category} placeholder="All categories" options={[{ label: "All categories", value: "" }, ...lookups.categories.map((item) => ({ label: item.name, value: item.slug }))]} onChange={(value) => setFilterValue("category", value)} />
 
-            <FilterDropdown label="Brand" value={filters.brand} placeholder="All brands" options={[{ label: "All brands", value: "" }, ...lookups.brands.map((item) => ({ label: item.name, value: item.slug }))]} onChange={(value) => setFilterValue("brand", value)} />
+            <FilterDropdown label={filters.category === "cars" ? "Car brand" : "Brand"} value={filters.brand} placeholder={filters.category === "cars" ? "All car brands" : "All brands"} options={[{ label: filters.category === "cars" ? "All car brands" : "All brands", value: "" }, ...availableBrands.map((item) => ({ label: item.name, value: item.slug }))]} onChange={(value) => setFilterValue("brand", value)} />
 
             <FilterDropdown label="Condition" value={filters.condition} placeholder="All conditions" options={[{ label: "All conditions", value: "" }, ...lookups.grades.map((item) => ({ label: item.name, value: item.code }))]} onChange={(value) => setFilterValue("condition", value)} />
           </div>

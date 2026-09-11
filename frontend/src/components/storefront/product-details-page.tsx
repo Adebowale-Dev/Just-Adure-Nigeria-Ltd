@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { ArrowLeft, BadgeCheck, Boxes, Heart, PackageCheck, ShieldCheck, Star } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Boxes, CalendarDays, CarFront, Fuel, Gauge, Heart, MapPin, PackageCheck, ShieldCheck, Star } from "lucide-react";
 import { AddToCartButton } from "@/components/commerce/add-to-cart-button";
 import { NotFoundPage } from "@/components/storefront/not-found-page";
 import { ProductEnquiryForm } from "@/components/storefront/product-enquiry-form";
@@ -28,6 +28,7 @@ export function ProductDetailsPage({ slug }) {
   if (!product) return <main className="mx-auto max-w-7xl px-4 py-16 font-black sm:px-6 lg:px-8">Loading product...</main>;
 
   const image = product.primaryImage?.secureUrl ?? product.images?.[0]?.secureUrl ?? fallbackImage;
+  const vehicle = product.vehicleDetails;
 
   return (
     <main className="min-h-screen">
@@ -56,6 +57,7 @@ export function ProductDetailsPage({ slug }) {
             <div className="rounded-2xl border border-black/8 bg-white/70 p-4"><BadgeCheck className="mb-2 size-5 text-[var(--accent-dark)]" /><p className="text-xs font-black uppercase tracking-[.12em]">Known defects</p><p className="mt-1 font-bold">{product.visibleDefects ?? "No major defect listed"}</p></div>
             <div className="rounded-2xl border border-black/8 bg-white/70 p-4"><PackageCheck className="mb-2 size-5 text-[var(--accent-dark)]" /><p className="text-xs font-black uppercase tracking-[.12em]">Accessories</p><p className="mt-1 font-bold">{product.includedAccessories ?? "See product note"}</p></div>
           </div>
+          {vehicle ? <div className="mt-6 rounded-2xl bg-[#17201d] p-5 text-white"><div className="flex items-center gap-2"><CarFront className="size-5 text-[#f6a46f]" /><p className="text-xs font-black uppercase tracking-[.14em]">Vehicle overview</p></div><div className="mt-5 grid grid-cols-2 gap-4 text-sm sm:grid-cols-4"><div><CalendarDays className="mb-2 size-4 text-[#f6a46f]" /><span className="block text-white/55">Year</span><strong>{vehicle.year}</strong></div><div><Gauge className="mb-2 size-4 text-[#f6a46f]" /><span className="block text-white/55">Mileage</span><strong>{Number(vehicle.mileageKm).toLocaleString()} km</strong></div><div><Fuel className="mb-2 size-4 text-[#f6a46f]" /><span className="block text-white/55">Fuel</span><strong className="capitalize">{vehicle.fuelType}</strong></div><div><MapPin className="mb-2 size-4 text-[#f6a46f]" /><span className="block text-white/55">Location</span><strong>{vehicle.location}</strong></div></div><p className="mt-5 border-t border-white/10 pt-4 text-sm text-white/70"><span className="capitalize">{vehicle.transmission}</span> transmission · {vehicle.bodyType}{vehicle.engine ? ` · ${vehicle.engine}` : ""}{vehicle.drivetrain ? ` · ${vehicle.drivetrain}` : ""}</p></div> : null}
           <AddToCartButton productId={product.id} disabled={product.isSoldOut} />
           <button disabled={product.isSoldOut || isWishlistPending} className="cta-outline mt-3 w-full justify-center disabled:cursor-not-allowed disabled:opacity-50" type="button" onClick={() => startWishlistTransition(async () => { try { await addWishlistItem({ productId: product.id }); setWishlistMessage("Saved to wishlist. You can view it from the wishlist page."); } catch (error) { setWishlistMessage(error instanceof Error ? error.message : "Could not save this product to wishlist."); } })}><Heart className="size-4" /> {isWishlistPending ? "Saving..." : "Add to wishlist"}</button>
           {wishlistMessage ? <p className="mt-3 text-center text-sm font-bold text-[var(--accent-dark)]">{wishlistMessage}</p> : null}

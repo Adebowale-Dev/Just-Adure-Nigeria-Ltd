@@ -7,6 +7,7 @@ import {
   Check,
   ChevronDown,
   CircleHelp,
+  CarFront,
   Globe2,
   Heart,
   Home,
@@ -43,6 +44,7 @@ const navCategories = [
   { label: "Furniture", href: "/category/furniture", icon: Home },
   { label: "Washers", href: "/shop?q=washing", icon: WashingMachine },
   { label: "Bicycles", href: "/shop?q=bicycle", icon: Bike },
+  { label: "Cars", href: "/category/cars", icon: CarFront },
   { label: "Monitors", href: "/shop?q=monitor", icon: Monitor },
 ];
 

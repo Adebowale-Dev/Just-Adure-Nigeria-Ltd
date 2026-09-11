@@ -159,6 +159,16 @@ const specificationSchema = z.object({
   value: z.string().trim().min(1),
   sortOrder: z.number().int().min(0).default(0),
 });
+const vehicleDetailsSchema = z.object({
+  year: z.number().int().min(1950).max(2100),
+  mileageKm: z.number().int().min(0),
+  transmission: z.enum(["automatic", "manual", "cvt", "other"]),
+  fuelType: z.enum(["petrol", "diesel", "hybrid", "electric", "other"]),
+  bodyType: z.string().trim().min(2).max(80),
+  engine: z.string().trim().max(80).optional(),
+  drivetrain: z.string().trim().max(80).optional(),
+  location: z.string().trim().min(2).max(120),
+});
 const productSchema = z.object({
   name: z.string().trim().min(2).max(180),
   slug: z.string().trim().min(2).max(180),
@@ -186,6 +196,7 @@ const productSchema = z.object({
   seoDescription: z.string().trim().optional(),
   images: z.array(imageSchema).default([]),
   specifications: z.array(specificationSchema).default([]),
+  vehicleDetails: vehicleDetailsSchema.nullable().optional(),
 });
 const productUpdateSchema = productSchema.partial();
 const imageUploadSchema = z.object({
@@ -308,6 +319,7 @@ function serializeProduct(product) {
     warrantyInformation: product.warrantyInformation ?? null,
     colour: product.colour ?? null,
     modelNumber: product.modelNumber ?? null,
+    vehicleDetails: product.vehicleDetails ?? null,
     images: product.images ?? [],
     specifications: product.specifications ?? [],
     createdAt: product.createdAt,

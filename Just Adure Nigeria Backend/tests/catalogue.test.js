@@ -104,6 +104,16 @@ async function seedCatalogue() {
                 },
             ],
             specifications: [{ label: "RAM", value: "16GB" }],
+            vehicleDetails: {
+                year: 2018,
+                mileageKm: 84000,
+                transmission: "automatic",
+                fuelType: "petrol",
+                bodyType: "Saloon",
+                engine: "2.0L",
+                drivetrain: "FWD",
+                location: "Ikeja, Lagos",
+            },
         },
     ]);
 }
@@ -146,6 +156,24 @@ describe("catalogue API", () => {
             visibleDefects: "Light lid scratches.",
             includedAccessories: "Charger included.",
             warrantyInformation: "14-day limited warranty.",
+            vehicleDetails: {
+                year: 2018,
+                mileageKm: 84000,
+                transmission: "automatic",
+                fuelType: "petrol",
+                bodyType: "Saloon",
+                location: "Ikeja, Lagos",
+            },
+        });
+    });
+    it("filters and returns structured vehicle details", async () => {
+        const response = await request(app)
+            .get("/api/v1/products?transmission=automatic&fuelType=petrol&minYear=2017&maxYear=2019")
+            .expect(200);
+        expect(response.body.data.items).toHaveLength(1);
+        expect(response.body.data.items[0]).toMatchObject({
+            slug: "dell-latitude-7420",
+            vehicleDetails: { year: 2018, mileageKm: 84000, transmission: "automatic" },
         });
     });
     it("returns lookup data for storefront filters", async () => {
@@ -157,6 +185,11 @@ describe("catalogue API", () => {
         expect(categories.body.data.items.map((category) => category.slug)).toContain("phones");
         expect(brands.body.data.items.map((brand) => brand.slug)).toContain("apple");
         expect(grades.body.data.items.map((grade) => grade.code)).toContain("excellent");
+    });
+    it("returns only brands and conditions used by the selected category", async () => {
+        const response = await request(app).get("/api/v1/catalogue-options?category=laptops").expect(200);
+        expect(response.body.data.brands.map((brand) => brand.slug)).toEqual(["dell"]);
+        expect(response.body.data.conditionGrades.map((grade) => grade.code)).toEqual(["good"]);
     });
     it("returns a safe error when a product slug does not exist", async () => {
         const response = await request(app).get("/api/v1/products/not-real").expect(404);
