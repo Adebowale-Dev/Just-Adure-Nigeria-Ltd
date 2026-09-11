@@ -1,10 +1,11 @@
 import "../globals.css";
-import { Manrope, Marcellus, Vollkorn } from "next/font/google";
+import { DM_Serif_Display, Manrope, Marcellus } from "next/font/google";
 import { Providers } from "@/components/layout/providers";
 
-const vollkorn = Vollkorn({
+const dmSerifDisplay = DM_Serif_Display({
   subsets: ["latin"],
-  variable: "--font-vollkorn",
+  weight: "400",
+  variable: "--font-dm-serif-display",
   display: "swap",
 });
 
@@ -43,7 +44,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en-NG" suppressHydrationWarning>
-      <body className={`${vollkorn.variable} ${manrope.variable} ${marcellus.variable}`} suppressHydrationWarning>
+      <body className={`${dmSerifDisplay.variable} ${manrope.variable} ${marcellus.variable}`} suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

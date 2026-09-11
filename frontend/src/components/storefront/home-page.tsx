@@ -53,7 +53,7 @@ export function HomePage() {
       <section className="min-h-[calc(100svh-7.0625rem)] border-b border-black/8 bg-white sm:min-h-[calc(100svh-8.0625rem)]">
         <div className="mx-auto grid min-h-[calc(100svh-7.0625rem)] max-w-7xl gap-10 px-4 py-10 sm:min-h-[calc(100svh-8.0625rem)] sm:px-6 lg:grid-cols-[1fr_.9fr] lg:items-center lg:px-8 lg:py-12">
           <div>
-            <h1 className="landing-display max-w-2xl text-5xl font-bold leading-[.98] tracking-[-.055em] sm:text-6xl lg:text-7xl">{primaryBanner?.title || "Good products. Honest condition. Fair prices."}</h1>
+            <h1 className="landing-display max-w-2xl text-5xl leading-[.96] tracking-[-.04em] sm:text-6xl lg:text-7xl">{primaryBanner?.title || "Good products. Honest condition. Fair prices."}</h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-[var(--muted)]">{primaryBanner?.subtitle || "Shop computers, appliances, televisions, furniture, and bicycles with clear condition notes before you pay."}</p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <a href={primaryBanner?.href || "/shop"} className="cta-primary px-7">Shop all products <ArrowRight className="size-4" /></a>
