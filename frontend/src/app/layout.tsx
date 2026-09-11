@@ -1,10 +1,10 @@
 import "../globals.css";
-import { Fraunces, Manrope } from "next/font/google";
+import { Manrope, Vollkorn } from "next/font/google";
 import { Providers } from "@/components/layout/providers";
 
-const fraunces = Fraunces({
+const vollkorn = Vollkorn({
   subsets: ["latin"],
-  variable: "--font-fraunces",
+  variable: "--font-vollkorn",
   display: "swap",
 });
 
@@ -36,7 +36,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en-NG" suppressHydrationWarning>
-      <body className={`${fraunces.variable} ${manrope.variable}`} suppressHydrationWarning>
+      <body className={`${vollkorn.variable} ${manrope.variable}`} suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>
