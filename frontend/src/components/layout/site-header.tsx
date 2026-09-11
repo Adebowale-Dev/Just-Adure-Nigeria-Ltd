@@ -171,7 +171,7 @@ export function SiteHeader() {
           {isMobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
         </button>
         <a href="/" className="flex min-w-0 shrink items-center gap-1.5 sm:shrink-0 sm:gap-2" aria-label={`${storeName} home`}>
-          <span className="brand-wordmark whitespace-nowrap text-lg tracking-[-.02em] text-[var(--ink)] min-[360px]:text-xl sm:text-3xl">JUST ADURE</span>
+          <span className="brand-wordmark whitespace-nowrap text-xl tracking-[.035em] text-[var(--ink)] min-[360px]:text-2xl sm:text-3xl sm:tracking-[.055em]">JUST ADURE</span>
           <Star className="size-5 shrink-0 fill-[var(--accent)] text-[var(--accent)] sm:size-6" />
         </a>
 

@@ -1,5 +1,5 @@
 import "../globals.css";
-import { Manrope, Vast_Shadow, Vollkorn } from "next/font/google";
+import { Manrope, Marcellus, Vollkorn } from "next/font/google";
 import { Providers } from "@/components/layout/providers";
 
 const vollkorn = Vollkorn({
@@ -14,10 +14,10 @@ const manrope = Manrope({
   display: "swap",
 });
 
-const vastShadow = Vast_Shadow({
+const marcellus = Marcellus({
   subsets: ["latin"],
   weight: "400",
-  variable: "--font-vast-shadow",
+  variable: "--font-marcellus",
   display: "swap",
 });
 
@@ -43,7 +43,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en-NG" suppressHydrationWarning>
-      <body className={`${vollkorn.variable} ${manrope.variable} ${vastShadow.variable}`} suppressHydrationWarning>
+      <body className={`${vollkorn.variable} ${manrope.variable} ${marcellus.variable}`} suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>
