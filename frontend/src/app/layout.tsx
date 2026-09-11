@@ -1,5 +1,18 @@
 import "../globals.css";
+import { Fraunces, Manrope } from "next/font/google";
 import { Providers } from "@/components/layout/providers";
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-fraunces",
+  display: "swap",
+});
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-manrope",
+  display: "swap",
+});
 
 const storeName = process.env.NEXT_PUBLIC_STORE_NAME || "Just Adure Nigeria Ltd";
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -23,7 +36,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en-NG" suppressHydrationWarning>
-      <body suppressHydrationWarning>
+      <body className={`${fraunces.variable} ${manrope.variable}`} suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -32,8 +32,8 @@ button:disabled { cursor: not-allowed; }
 img { max-width: 100%; }
 
 .font-serif { font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif; }
-.landing-page { font-family: Candara, "Gill Sans", "Trebuchet MS", sans-serif; }
-.landing-display { font-family: Didot, "Bodoni 72", "Bodoni MT", Georgia, serif; }
+.landing-page { font-family: var(--font-manrope), sans-serif; }
+.landing-display { font-family: var(--font-fraunces), serif; }
 .header-action { display: grid; width: 2.75rem; height: 2.75rem; place-items: center; border-radius: 999px; }
 .header-action:hover { background: rgba(22, 29, 27, 0.07); }
 .hero-grid {
