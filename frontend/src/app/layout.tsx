@@ -1,17 +1,16 @@
 import "../globals.css";
-import { DM_Serif_Display, Manrope, Marcellus } from "next/font/google";
+import { Marcellus, Noto_Serif, Source_Sans_3 } from "next/font/google";
 import { Providers } from "@/components/layout/providers";
 
-const dmSerifDisplay = DM_Serif_Display({
+const notoSerif = Noto_Serif({
   subsets: ["latin"],
-  weight: "400",
-  variable: "--font-dm-serif-display",
+  variable: "--font-noto-serif",
   display: "swap",
 });
 
-const manrope = Manrope({
+const sourceSans = Source_Sans_3({
   subsets: ["latin"],
-  variable: "--font-manrope",
+  variable: "--font-source-sans",
   display: "swap",
 });
 
@@ -44,7 +43,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en-NG" suppressHydrationWarning>
-      <body className={`${dmSerifDisplay.variable} ${manrope.variable} ${marcellus.variable}`} suppressHydrationWarning>
+      <body className={`${notoSerif.variable} ${sourceSans.variable} ${marcellus.variable}`} suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

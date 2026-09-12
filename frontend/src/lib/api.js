@@ -7,12 +7,33 @@ async function apiGet(path) {
   return payload.data;
 }
 
-async function cartRequest(path, init = {}) {
-  const response = await fetch(`${apiUrl}${path}`, {
-    ...init,
-    credentials: "include",
-    headers: { Accept: "application/json", "Content-Type": "application/json", ...init.headers },
-  });
+const transientApiStatuses = new Set([502, 503, 504]);
+
+function wait(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+async function cartRequest(path, init = {}, { retryTransient = false } = {}) {
+  const attempts = retryTransient ? 3 : 1;
+  let response;
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      response = await fetch(`${apiUrl}${path}`, {
+        ...init,
+        credentials: "include",
+        headers: { Accept: "application/json", "Content-Type": "application/json", ...init.headers },
+      });
+    } catch (error) {
+      if (attempt === attempts - 1) throw new Error("The server is taking longer than expected to respond. Please try again shortly.", { cause: error });
+      await wait(1200 * (attempt + 1));
+      continue;
+    }
+
+    if (!retryTransient || !transientApiStatuses.has(response.status) || attempt === attempts - 1) break;
+    await wait(1200 * (attempt + 1));
+  }
+
   const payload = await response.json();
   if (!response.ok || !payload.data) throw new Error(payload.error?.message ?? `Cart request failed with status ${response.status}`);
   return payload.data;
@@ -49,9 +70,9 @@ export async function archiveAdminProduct(productId) { await cartRequest(`/admin
 export async function updateAdminProductStock(productId, input) { return (await cartRequest(`/admin/products/${productId}/stock`, { method: "PATCH", body: JSON.stringify(input) })).product; }
 export async function getAdminOrders() { return (await cartRequest("/admin/orders", { method: "GET" })).items; }
 export async function updateAdminOrderStatus(orderId, input) { return (await cartRequest(`/admin/orders/${orderId}/status`, { method: "PATCH", body: JSON.stringify(input) })).order; }
-export async function loginUser(input) { return (await cartRequest("/auth/login", { method: "POST", body: JSON.stringify(input) })).user; }
+export async function loginUser(input) { return (await cartRequest("/auth/login", { method: "POST", body: JSON.stringify(input) }, { retryTransient: true })).user; }
 export async function continueWithGoogle(credential) { return (await cartRequest("/auth/google", { method: "POST", headers: { "X-Auth-Intent": "google-sign-in" }, body: JSON.stringify({ credential }) })).user; }
-export async function getCurrentUser() { return (await cartRequest("/auth/me", { method: "GET" })).user; }
+export async function getCurrentUser() { return (await cartRequest("/auth/me", { method: "GET" }, { retryTransient: true })).user; }
 export async function logoutUser() { await fetch(`${apiUrl}/auth/logout`, { method: "POST", credentials: "include" }); }
 export async function getAdminCoupons() { return (await cartRequest("/admin/coupons", { method: "GET" })).items; }
 export async function createAdminCoupon(input) { return (await cartRequest("/admin/coupons", { method: "POST", body: JSON.stringify(input) })).coupon; }

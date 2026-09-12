@@ -93,10 +93,10 @@ export default function App({ initialPath = "/" }) {
   }
 
   return (
-    <>
+    <div className={pathname === "/" ? "landing-site" : undefined}>
       {hideSiteChrome ? null : <SiteHeader />}
       {page}
       {hideFooter ? null : <Footer />}
-    </>
+    </div>
   );
 }
