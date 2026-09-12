@@ -123,9 +123,9 @@ export function ShopPage({ defaultCategory = "", defaultQuery = "" }) {
 
           <div className="mt-5 grid gap-4">
             <label className="grid gap-2 text-sm font-bold">Search
-              <div className="flex rounded-2xl border border-black/10 bg-[#fbfaf6] px-3 py-2">
+              <div className="flex rounded-2xl border border-black/10 bg-[#fbfaf6] px-3 py-2 transition focus-within:border-black/30 focus-within:bg-white">
                 <Search className="mr-2 size-4 text-[var(--muted)]" />
-                <input name="q" value={filters.q} onChange={updateFilter} className="w-full bg-transparent outline-none" placeholder="Dell, fridge, SKU..." />
+                <input name="q" value={filters.q} onChange={updateFilter} className="shop-filter-search-input w-full border-0 bg-transparent outline-none focus:ring-0" placeholder="Dell, fridge, SKU..." />
               </div>
             </label>
 

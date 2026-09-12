@@ -28,6 +28,8 @@ button, input, textarea, select { font: inherit; }
   outline-offset: 3px;
 }
 .header-search-input:focus-visible { outline: none; }
+.shop-filter-search-input:focus,
+.shop-filter-search-input:focus-visible { outline: none; box-shadow: none; }
 button:disabled { cursor: not-allowed; }
 img { max-width: 100%; }
 
