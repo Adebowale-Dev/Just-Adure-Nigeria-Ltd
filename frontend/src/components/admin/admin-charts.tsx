@@ -1,6 +1,6 @@
 "use client";
 
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatNaira } from "@/lib/utils.js";
 
 type RevenuePoint = {
@@ -87,19 +87,13 @@ export function AdminRevenueChart({ data }: { data: RevenuePoint[] }) {
       <div className="mt-6 h-72">
         {chartData.length ? (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ left: 0, right: 10, top: 10, bottom: 0 }}>
-              <defs>
-                <linearGradient id="adminRevenueFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.48} />
-                  <stop offset="95%" stopColor="var(--accent)" stopOpacity={0.04} />
-                </linearGradient>
-              </defs>
+            <LineChart data={chartData} margin={{ left: 0, right: 10, top: 10, bottom: 0 }}>
               <CartesianGrid stroke="#eee7dc" strokeDasharray="4 4" vertical={false} />
               <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fill: "#747b74", fontSize: 12, fontWeight: 700 }} />
               <YAxis tickLine={false} axisLine={false} tick={{ fill: "#747b74", fontSize: 12, fontWeight: 700 }} />
               <Tooltip content={<RevenueTooltip />} cursor={{ stroke: "var(--accent-dark)", strokeWidth: 1 }} />
-              <Area type="monotone" dataKey="revenue" stroke="var(--accent-dark)" strokeWidth={3} fill="url(#adminRevenueFill)" />
-            </AreaChart>
+              <Line type="monotone" dataKey="revenue" stroke="var(--accent-dark)" strokeWidth={3} dot={{ r: 3, fill: "var(--accent)", strokeWidth: 0 }} activeDot={{ r: 6, fill: "var(--accent-dark)", stroke: "white", strokeWidth: 3 }} />
+            </LineChart>
           </ResponsiveContainer>
         ) : <EmptyChart label="Revenue chart will appear once paid orders are available for this report range." />}
       </div>

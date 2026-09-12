@@ -117,10 +117,18 @@ export function DropdownMenuContent({ children, className, align = "end" }) {
     event.stopPropagation();
   }
 
+  function closeAfterSelection(event) {
+    const menuItem = event.target instanceof Element ? event.target.closest('[role="menuitem"]') : null;
+    if (menuItem && !menuItem.hasAttribute("disabled") && menuItem.getAttribute("aria-disabled") !== "true") {
+      context.setOpen(false);
+    }
+  }
+
   return (
     <div
       role="menu"
       style={fixedStyle}
+      onClick={closeAfterSelection}
       onWheel={containMenuScroll}
       onTouchMove={(event) => event.stopPropagation()}
       className={cn(

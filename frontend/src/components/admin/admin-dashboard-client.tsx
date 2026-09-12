@@ -1,5 +1,5 @@
 import { useEffect, useState, useTransition } from "react";
-import { Activity, AlertTriangle, BarChart3, Boxes, ChevronDown, ClipboardList, Image, Mail, MessageSquareText, PackageCheck, RotateCcw, Save, Settings, ShieldCheck, Star, Tags, TrendingUp } from "lucide-react";
+import { Activity, AlertTriangle, BarChart3, Boxes, ChevronDown, ClipboardList, Image, Mail, MessageSquareText, PackageCheck, RotateCcw, Save, Settings, ShieldCheck, Star, Tags, TrendingUp, Truck } from "lucide-react";
 import {
   createAdminCoupon,
   getAdminCoupons,
@@ -201,30 +201,64 @@ function StatCard({ label, value }) {
 }
 
 const adminSections = [
-  { href: "/admin", key: "overview", label: "Overview", description: "See what needs attention today" },
-  { href: "/admin/orders", key: "orders", label: "Orders", description: "Process and update customer orders" },
-  { href: "/admin/products", key: "products", label: "Products", description: "Add and edit catalogue items" },
-  { href: "/admin/inventory", key: "inventory", label: "Stock", description: "Check quantities and low stock" },
-  { href: "/admin/delivery", key: "delivery", label: "Delivery", description: "Manage areas, fees, and timing" },
-  { href: "/admin/returns", key: "returns", label: "Returns", description: "Review returns and refunds" },
-  { href: "/admin/support", key: "support", label: "Support", description: "Reply to customer requests" },
-  { href: "/admin/reviews", key: "reviews", label: "Reviews", description: "Approve customer feedback" },
-  { href: "/admin/coupons", key: "coupons", label: "Discounts", description: "Create and manage coupon codes" },
-  { href: "/admin/reports", key: "reports", label: "Reports", description: "Understand sales and payments" },
-  { href: "/admin/content", key: "content", label: "Store content", description: "Update homepage messages" },
-  { href: "/admin/staff", key: "staff", label: "Staff access", description: "Manage staff roles and access" },
-  { href: "/admin/settings", key: "settings", label: "Settings", description: "Update store-wide details" },
+  { href: "/admin", key: "overview", label: "Overview", description: "See what needs attention today", icon: BarChart3 },
+  { href: "/admin/orders", key: "orders", label: "Orders", description: "Process and update customer orders", icon: ClipboardList },
+  { href: "/admin/products", key: "products", label: "Products", description: "Add and edit catalogue items", icon: PackageCheck },
+  { href: "/admin/inventory", key: "inventory", label: "Stock", description: "Check quantities and low stock", icon: Boxes },
+  { href: "/admin/delivery", key: "delivery", label: "Delivery", description: "Manage areas, fees, and timing", icon: Truck },
+  { href: "/admin/returns", key: "returns", label: "Returns", description: "Review returns and refunds", icon: RotateCcw },
+  { href: "/admin/support", key: "support", label: "Support", description: "Reply to customer requests", icon: MessageSquareText },
+  { href: "/admin/reviews", key: "reviews", label: "Reviews", description: "Approve customer feedback", icon: Star },
+  { href: "/admin/coupons", key: "coupons", label: "Discounts", description: "Create and manage coupon codes", icon: Tags },
+  { href: "/admin/reports", key: "reports", label: "Reports", description: "Understand sales and payments", icon: BarChart3 },
+  { href: "/admin/content", key: "content", label: "Store content", description: "Update homepage messages", icon: Image },
+  { href: "/admin/settings", key: "settings", label: "Settings", description: "Update store-wide details", icon: Settings },
+];
+
+const dailyActions = [
+  { href: "/admin/products", label: "Add a product", description: "Enter the price, condition, stock, details, and upload clear photos.", icon: PackageCheck },
+  { href: "/admin/orders", label: "Process orders", description: "Confirm payment and move each customer order to its next stage.", icon: ClipboardList },
+  { href: "/admin/delivery", label: "Manage delivery", description: "Check delivery areas, charges, pickup options, and timing.", icon: Boxes },
+  { href: "/admin/inventory", label: "Check stock", description: "Update quantities and see products that need attention.", icon: Tags },
+  { href: "/admin/support", label: "Help customers", description: "Read enquiries and reply to customer support requests.", icon: MessageSquareText },
+];
+
+const adminSectionGroups = [
+  { label: "Daily work", keys: ["overview", "orders", "products", "inventory", "delivery"] },
+  { label: "Customers", keys: ["returns", "support", "reviews"] },
+  { label: "Business tools", keys: ["coupons", "reports", "content", "settings"] },
 ];
 
 function AdminSectionNav({ activeSection }) {
   return (
-    <nav className="mb-6 rounded-[1.6rem] border border-black/8 bg-white p-3 shadow-[0_14px_45px_rgba(28,34,31,.05)]" aria-label="Admin sections">
-      <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Choose an admin workspace">
-        {adminSections.map((item) => (
-          <a key={item.key} href={item.href} className={`shrink-0 rounded-full px-4 py-2.5 text-sm font-black transition ${activeSection === item.key ? "bg-[var(--accent)] text-[var(--ink)] shadow-[0_10px_24px_rgba(244,133,61,.22)]" : "text-[var(--muted)] hover:bg-[#fff3e8] hover:text-[var(--ink)]"}`}>{item.label}</a>
-        ))}
-      </div>
-    </nav>
+    <>
+      <nav className="mb-6 rounded-[1.4rem] border border-black/8 bg-white p-3 shadow-[0_14px_45px_rgba(28,34,31,.05)] md:hidden" aria-label="Admin sections">
+        <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Choose an admin workspace">
+          {adminSections.map((item) => (
+            <a key={item.key} href={item.href} className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2.5 text-sm font-black transition ${activeSection === item.key ? "bg-[var(--accent)] text-[var(--ink)]" : "text-[var(--muted)] hover:bg-[#fff3e8]"}`}><item.icon className="size-4" />{item.label}</a>
+          ))}
+        </div>
+      </nav>
+      <nav className="sticky top-[8.0625rem] hidden h-[calc(100dvh-8.0625rem)] flex-col border-r border-black/10 bg-white md:flex" aria-label="Admin sidebar">
+        <div className="border-b border-black/8 px-3 py-4">
+          <a href="/admin" className="flex items-center gap-3">
+            <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-black/10 bg-[#fbfaf6] text-[var(--accent-dark)]"><PackageCheck className="size-[1.1rem]" /></span>
+            <span className="min-w-0"><strong className="block truncate text-sm font-black">Just Adure</strong><span className="block truncate text-xs text-[var(--muted)]">Store administration</span></span>
+          </a>
+        </div>
+        <div className="flex-1 overflow-y-auto px-2 py-3">
+        {adminSectionGroups.map((group) => <div key={group.label} className="py-3 first:pt-0">
+          <p className="px-3 pb-2 text-[10px] font-black uppercase tracking-[.16em] text-[var(--muted)]">{group.label}</p>
+          <div className="grid gap-1">
+            {group.keys.map((key) => adminSections.find((item) => item.key === key)).filter(Boolean).map((item) => (
+              <a key={item.key} href={item.href} aria-current={activeSection === item.key ? "page" : undefined} className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold transition ${activeSection === item.key ? "bg-[#f1eee8] text-[var(--ink)]" : "text-[var(--muted)] hover:bg-[#f7f5f0] hover:text-[var(--ink)]"}`}><item.icon className={`size-[1.05rem] shrink-0 ${activeSection === item.key ? "text-[var(--accent-dark)]" : ""}`} />{item.label}</a>
+            ))}
+          </div>
+        </div>)}
+        </div>
+        <div className="border-t border-black/8 p-3"><a href="/" className="flex items-center justify-between rounded-xl px-3 py-3 text-sm font-black text-[var(--ink)] hover:bg-[#fff3e8]"><span>View storefront</span><span aria-hidden="true">↗</span></a></div>
+      </nav>
+    </>
   );
 }
 
@@ -654,11 +688,13 @@ export function AdminDashboardClient({ section = "overview" }: { section?: strin
     });
   }
   return (
-    <main className="min-h-screen bg-[#f6f3ec] px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-      <section className="mx-auto max-w-7xl">
+    <main className="min-h-screen bg-[#f6f3ec] px-4 py-8 sm:px-6 md:px-0 md:py-0">
+      <section className="w-full">
         {error ? <div className="mb-6 rounded-2xl border border-[var(--accent)]/30 bg-[#fff8ed] p-4 text-sm font-bold"><AlertTriangle className="mb-2 size-5 text-[var(--accent-dark)]" />{error}</div> : null}
         {message ? <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-900">{message}</div> : null}
-        <AdminSectionNav activeSection={activeSection} />
+        <div className="md:grid md:min-h-[calc(100dvh-8.0625rem)] md:grid-cols-[14rem_minmax(0,1fr)] md:items-start lg:grid-cols-[16rem_minmax(0,1fr)]">
+          <AdminSectionNav activeSection={activeSection} />
+          <div className="min-w-0 md:p-6 lg:p-8 xl:p-10">
 
         {showSection("overview") ? <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard label="Total revenue" value={formatNaira(stats?.totalRevenueKobo ?? 0)} />
@@ -667,9 +703,15 @@ export function AdminDashboardClient({ section = "overview" }: { section?: strin
           <StatCard label="Low stock alerts" value={stats?.lowStockProducts ?? "..."} />
         </div> : null}
 
-        {showSection("overview") ? <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {adminSections.filter((item) => item.key !== "overview").map((item) => <a key={item.key} href={item.href} className="group rounded-[1.5rem] border border-black/8 bg-white p-5 shadow-[0_14px_40px_rgba(28,34,31,.04)] transition hover:-translate-y-1 hover:border-[var(--accent)]/40 hover:shadow-[0_18px_55px_rgba(28,34,31,.08)]"><p className="text-xs font-black uppercase tracking-[.14em] text-[var(--accent-dark)]">Workspace</p><h2 className="mt-2 text-xl font-black text-[var(--ink)]">{item.label}</h2><p className="mt-3 text-sm font-bold leading-6 text-[var(--muted)]">{item.description}</p><span className="mt-5 inline-flex text-sm font-black text-[var(--accent-dark)] group-hover:underline">Open {item.label.toLowerCase()}</span></a>)}
-        </div> : null}
+        {showSection("overview") ? <div className="mt-6"><AdminRevenueChart data={reports?.revenueByDate ?? []} /></div> : null}
+
+        {showSection("overview") ? <section className="mt-8">
+          <div><p className="section-kicker">Daily work</p><h2 className="mt-2 text-2xl font-black tracking-[-.03em]">Choose a task</h2></div>
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            {dailyActions.map(({ href, label, description, icon: Icon }, index) => <a key={href} href={href} className="group rounded-[1.5rem] border border-black/8 bg-white p-5 shadow-[0_14px_40px_rgba(28,34,31,.04)] transition hover:-translate-y-1 hover:border-[var(--accent)]/40"><span className="grid size-10 place-items-center rounded-xl bg-[#fff3e8] text-[var(--accent-dark)]"><Icon className="size-5" /></span><p className="mt-5 text-xs font-black uppercase tracking-[.12em] text-[var(--muted)]">Step {index + 1}</p><h3 className="mt-1 text-lg font-black">{label}</h3><p className="mt-2 text-sm font-bold leading-6 text-[var(--muted)]">{description}</p></a>)}
+          </div>
+          <details className="mt-6 rounded-2xl border border-black/8 bg-white p-5"><summary className="cursor-pointer font-black text-[var(--ink)]">More business tools</summary><div className="mt-4 flex flex-wrap gap-2">{adminSections.filter((item) => !["overview", "products", "orders", "delivery", "inventory", "support"].includes(item.key)).map((item) => <a key={item.key} href={item.href} className="rounded-full bg-[#f6f3ec] px-4 py-2 text-sm font-black hover:bg-[#fff3e8]">{item.label}</a>)}</div></details>
+        </section> : null}
 
 
         {showSection("reports") ? <section className="mt-8 overflow-hidden rounded-[2.2rem] border border-black/8 bg-[#f7f2e9] shadow-[0_24px_80px_rgba(28,34,31,.08)]">
@@ -736,9 +778,7 @@ export function AdminDashboardClient({ section = "overview" }: { section?: strin
             </div>
           </div>
         </section> : null}
-        {showSection("products") ? <CatalogueLookupsAdmin onLookupsChanged={loadAdminData} /> : null}
-
-        {showSection("products") ? <div id="admin-products" className="scroll-mt-32"><ProductManagementAdmin products={products} onProductsChanged={loadAdminData} /></div> : null}
+        {showSection("products") ? <div id="admin-products" className="scroll-mt-32"><div><p className="section-kicker">Step 1</p><h2 className="mt-1 text-2xl font-black">Enter product details</h2></div><ProductManagementAdmin products={products} onProductsChanged={loadAdminData} /></div> : null}
 
         {showSection("inventory") || showSection("orders") ? <div className="mt-10 grid gap-8 xl:grid-cols-[1fr_1fr]">
           {showSection("inventory") ? <section className="rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
@@ -760,7 +800,9 @@ export function AdminDashboardClient({ section = "overview" }: { section?: strin
 
 
 
-        {showSection("products") ? <ProductImagesAdmin products={products} onProductsChanged={loadAdminData} /> : null}
+        {showSection("products") ? <div><div className="mt-10"><p className="section-kicker">Step 2</p><h2 className="mt-1 text-2xl font-black">Upload actual product photos</h2><p className="mt-2 text-sm font-bold text-[var(--muted)]">Select the product you saved in Step 1, then upload clear images and choose the main photo.</p></div><ProductImagesAdmin products={products} onProductsChanged={loadAdminData} /></div> : null}
+
+        {showSection("products") ? <details className="mt-10 rounded-[1.5rem] border border-black/8 bg-white p-5"><summary className="cursor-pointer text-lg font-black">Step 3: Add a missing category or brand</summary><p className="mt-2 text-sm font-bold text-[var(--muted)]">Most admins can skip this step. Open it only when the correct category, car manufacturer, or condition is not already available.</p><CatalogueLookupsAdmin onLookupsChanged={loadAdminData} /></details> : null}
 
         {showSection("delivery") ? <DeliveryZonesAdmin /> : null}
 
@@ -947,7 +989,9 @@ export function AdminDashboardClient({ section = "overview" }: { section?: strin
             {staff.length === 0 ? <p className="text-sm font-bold text-[var(--muted)]">Staff management is visible after logging in as a super administrator.</p> : null}
           </div>
         </section> : null}
-        {showSection("overview") ? <div className="mt-8 rounded-2xl bg-white/70 p-5 text-sm text-[var(--muted)]"><BarChart3 className="mb-2 size-5 text-[var(--accent-dark)]" />Reports are now connected. Product image uploads and deeper staff permission screens can build on this protected admin foundation.</div> : null}
+        {showSection("overview") ? <div className="mt-8 rounded-2xl bg-white/70 p-5 text-sm text-[var(--muted)]"><BarChart3 className="mb-2 size-5 text-[var(--accent-dark)]" />Reports are connected and update from real store activity.</div> : null}
+          </div>
+        </div>
       </section>
     </main>
   );
