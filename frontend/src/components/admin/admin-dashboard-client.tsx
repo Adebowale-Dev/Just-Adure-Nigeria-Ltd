@@ -239,7 +239,8 @@ function AdminSectionNav({ activeSection }) {
           ))}
         </div>
       </nav>
-      <nav className="sticky top-[8.0625rem] hidden h-[calc(100dvh-8.0625rem)] flex-col border-r border-black/10 bg-white md:flex" aria-label="Admin sidebar">
+      <div className="hidden md:block">
+      <nav className="fixed bottom-0 left-0 top-[8.0625rem] z-40 flex w-56 flex-col border-r border-black/10 bg-white lg:w-64" aria-label="Admin sidebar">
         <div className="border-b border-black/8 px-3 py-4">
           <a href="/admin" className="flex items-center gap-3">
             <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-black/10 bg-[#fbfaf6] text-[var(--accent-dark)]"><PackageCheck className="size-[1.1rem]" /></span>
@@ -258,6 +259,7 @@ function AdminSectionNav({ activeSection }) {
         </div>
         <div className="border-t border-black/8 p-3"><a href="/" className="flex items-center justify-between rounded-xl px-3 py-3 text-sm font-black text-[var(--ink)] hover:bg-[#fff3e8]"><span>View storefront</span><span aria-hidden="true">↗</span></a></div>
       </nav>
+      </div>
     </>
   );
 }
@@ -780,7 +782,7 @@ export function AdminDashboardClient({ section = "overview" }: { section?: strin
         </section> : null}
         {showSection("products") ? <div id="admin-products" className="scroll-mt-32"><div><p className="section-kicker">Step 1</p><h2 className="mt-1 text-2xl font-black">Enter product details</h2></div><ProductManagementAdmin products={products} onProductsChanged={loadAdminData} /></div> : null}
 
-        {showSection("inventory") || showSection("orders") ? <div className="mt-10 grid gap-8 xl:grid-cols-[1fr_1fr]">
+        {showSection("inventory") || showSection("orders") ? <div className="mt-10 grid min-w-0 gap-8">
           {showSection("inventory") ? <section className="rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
             <div className="flex items-center gap-3"><Boxes className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Inventory</h2></div>
             <div className="mt-6 grid gap-4">
@@ -789,11 +791,11 @@ export function AdminDashboardClient({ section = "overview" }: { section?: strin
             </div>
           </section> : null}
 
-          {showSection("orders") ? <section id="admin-orders" className="scroll-mt-32 rounded-[2rem] border border-black/8 bg-white p-6 text-[var(--ink)] shadow-[0_18px_50px_rgba(28,34,31,.06)]">
-            <div className="flex items-center gap-3"><ClipboardList className="size-5 text-[var(--accent)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Orders</h2></div>
-            <div className="mt-6 grid gap-4">
-              {orders.slice(0, 8).map((order) => <article key={order.id} className="rounded-2xl bg-[#fbfaf6] p-4"><p className="font-black">{order.orderNumber}</p><p className="mt-1 text-sm text-[var(--muted)]">{order.customer.email} | {formatNaira(order.totalKobo)} | {order.paymentStatus}</p><div className="mt-4 flex flex-col gap-3 sm:flex-row"><AdminDropdown dark value={orderDrafts[order.id] ?? order.orderStatus} options={orderStatuses.map((status) => ({ value: status, label: statusLabel(status) }))} onValueChange={(value) => setOrderDrafts((current) => ({ ...current, [order.id]: value }))} /><button type="button" disabled={isPending} onClick={() => saveOrderStatus(order)} className="cta-primary bg-[var(--accent)] py-2 text-[var(--ink)]"><PackageCheck className="size-4" /> Update</button></div></article>)}
-              {orders.length === 0 ? <p className="text-sm font-bold text-[var(--muted)]">No orders yet.</p> : null}
+          {showSection("orders") ? <section id="admin-orders" className="min-w-0 scroll-mt-32 text-[var(--ink)]">
+            <div className="flex items-end justify-between gap-4 border-b border-black/10 pb-5"><div><div className="flex items-center gap-3"><ClipboardList className="size-5 text-[var(--accent)]" /><h2 className="text-3xl font-black tracking-[-.04em]">Orders</h2></div><p className="mt-2 text-sm font-bold text-[var(--muted)]">Review purchases and move each order through fulfilment.</p></div><span className="shrink-0 text-sm font-black text-[var(--muted)]">{orders.length} total</span></div>
+            <div className="divide-y divide-black/8">
+              {orders.slice(0, 8).map((order) => <article key={order.id} className="grid min-w-0 gap-4 py-5 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,.55fr)_auto] lg:items-center"><div className="min-w-0"><p className="font-black">{order.orderNumber}</p><p className="mt-1 truncate text-sm text-[var(--muted)]">{order.customer.email}</p></div><div className="flex flex-wrap gap-x-5 gap-y-1 text-sm"><p><span className="text-[var(--muted)]">Total</span> <strong>{formatNaira(order.totalKobo)}</strong></p><p><span className="text-[var(--muted)]">Payment</span> <strong>{statusLabel(order.paymentStatus)}</strong></p></div><div className="flex min-w-0 flex-col gap-3 sm:flex-row lg:min-w-[22rem]"><AdminDropdown dark value={orderDrafts[order.id] ?? order.orderStatus} options={orderStatuses.map((status) => ({ value: status, label: statusLabel(status) }))} onValueChange={(value) => setOrderDrafts((current) => ({ ...current, [order.id]: value }))} /><button type="button" disabled={isPending} onClick={() => saveOrderStatus(order)} className="cta-primary shrink-0 justify-center bg-[var(--accent)] py-2 text-[var(--ink)]"><PackageCheck className="size-4" /> Update</button></div></article>)}
+              {orders.length === 0 ? <p className="py-8 text-sm font-bold text-[var(--muted)]">No orders yet.</p> : null}
             </div>
           </section> : null}
         </div> : null}

@@ -75,6 +75,7 @@ export function SiteHeader() {
   const [cartCount, setCartCount] = useState(0);
   const [language, setLanguage] = useState("EN");
   const [isPending, startTransition] = useTransition();
+  const isStaffUser = user?.roles?.some((role) => role !== "customer");
 
   function loadNotifications(nextUser = user) {
     if (!nextUser) return;
@@ -249,10 +250,17 @@ export function SiteHeader() {
           <nav className="mx-auto grid max-w-7xl gap-2" aria-label="Mobile navigation">
             <a href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="rounded-xl px-3 py-3 font-bold hover:bg-[#fff3e8]">Contact support</a>
             <a href="/order-tracking" onClick={() => setIsMobileMenuOpen(false)} className="rounded-xl px-3 py-3 font-bold hover:bg-[#fff3e8]">Track an order</a>
-            <div className="mt-1 grid grid-cols-2 gap-2">
-              <a href="/login" onClick={() => setIsMobileMenuOpen(false)} className="rounded-xl border border-[var(--accent)] px-3 py-3 text-center font-black text-[var(--accent-dark)]">Sign in</a>
-              <a href="/register" onClick={() => setIsMobileMenuOpen(false)} className="rounded-xl bg-[var(--accent)] px-3 py-3 text-center font-black text-white">Register</a>
-            </div>
+            {user ? (
+              <div className="mt-1 grid grid-cols-2 gap-2">
+                <a href={isStaffUser ? "/admin" : "/account"} onClick={() => setIsMobileMenuOpen(false)} className="rounded-xl border border-[var(--accent)] px-3 py-3 text-center font-black text-[var(--accent-dark)]">{isStaffUser ? "Admin dashboard" : "My profile"}</a>
+                <button type="button" disabled={isPending} onClick={handleLogout} className="rounded-xl bg-[var(--accent)] px-3 py-3 text-center font-black text-white disabled:cursor-not-allowed disabled:opacity-60">Log out</button>
+              </div>
+            ) : (
+              <div className="mt-1 grid grid-cols-2 gap-2">
+                <a href="/login" onClick={() => setIsMobileMenuOpen(false)} className="rounded-xl border border-[var(--accent)] px-3 py-3 text-center font-black text-[var(--accent-dark)]">Sign in</a>
+                <a href="/register" onClick={() => setIsMobileMenuOpen(false)} className="rounded-xl bg-[var(--accent)] px-3 py-3 text-center font-black text-white">Register</a>
+              </div>
+            )}
           </nav>
         </div>
       ) : null}

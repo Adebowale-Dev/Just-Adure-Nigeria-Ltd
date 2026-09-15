@@ -1,4 +1,4 @@
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Archive, PackagePlus, Save } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { archiveAdminProduct, createAdminProduct, getBrands, getCategories, getConditionGrades, updateAdminProduct } from "@/lib/api.js";
@@ -63,7 +63,7 @@ function formToPayload(form) {
   return {
     name: form.name,
     slug: form.slug || slugify(form.name),
-    sku: form.sku,
+    sku: form.sku || `JA-${Date.now().toString(36).toUpperCase()}`,
     brandId: form.brandId,
     categoryId: form.categoryId,
     productType: form.productType,
@@ -128,6 +128,8 @@ function productToForm(product) {
 }
 
 export function ProductManagementAdmin({ products = [], onProductsChanged }) {
+  const formRef = useRef<HTMLFormElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const [lookups, setLookups] = useState({ categories: [], brands: [], grades: [] });
   const [selectedProductId, setSelectedProductId] = useState("");
   const [form, setForm] = useState(initialForm);
@@ -164,8 +166,10 @@ export function ProductManagementAdmin({ products = [], onProductsChanged }) {
     setForm(product ? productToForm(product) : initialForm);
   }
 
-  function resetForm() {
+  function resetForm({ announce = false, focusForm = false } = {}) {
     setSelectedProductId("");
+    setError("");
+    setMessage(announce ? "Ready to create a new product." : "");
     setForm({
       ...initialForm,
       brandId: lookups.brands[0]?.id ?? "",
@@ -173,6 +177,12 @@ export function ProductManagementAdmin({ products = [], onProductsChanged }) {
       categorySlug: lookups.categories[0]?.slug ?? "",
       conditionGradeId: lookups.grades[0]?.id ?? "",
     });
+    if (focusForm) {
+      requestAnimationFrame(() => {
+        formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        nameInputRef.current?.focus({ preventScroll: true });
+      });
+    }
   }
 
   function saveProduct(event) {
@@ -219,30 +229,38 @@ export function ProductManagementAdmin({ products = [], onProductsChanged }) {
   return (
     <section className="surface-card mt-8 p-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div><div className="flex items-center gap-3"><PackagePlus className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Product management</h2></div><p className="mt-2 text-sm leading-6 text-[var(--muted)]">Create and edit UK-used products with honest condition, pricing, stock and warranty details.</p></div>
-        <button type="button" onClick={resetForm} className="cta-outline">New product</button>
+        <div><div className="flex items-center gap-3"><PackagePlus className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Add a product</h2></div><p className="mt-2 text-sm leading-6 text-[var(--muted)]">Fill in the simple details below, save the product, then add its photos.</p></div>
+        <button type="button" onClick={() => resetForm({ announce: true, focusForm: true })} className="cta-outline">New product</button>
       </div>
       {error ? <p className="mt-4 rounded-2xl border border-[var(--accent)]/30 bg-[#fff8ed] p-4 text-sm font-bold text-[var(--accent-dark)]">{error}</p> : null}
       {message ? <p className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-900">{message}</p> : null}
 
-      <label className="mt-6 grid gap-2 text-sm font-bold">Edit existing product<AdminDropdown value={selectedProductId} placeholder="Create a new product" options={[{ value: "", label: "Create a new product" }, ...products.map((product) => ({ value: product.id, label: `${product.name} | ${product.sku}` }))]} onValueChange={selectProductId} /></label>
+      <details className="mt-6 rounded-2xl border border-black/8 bg-[#fbfaf6] p-4">
+        <summary className="cursor-pointer text-sm font-black">Need to edit a product already on the website?</summary>
+        <label className="mt-4 grid gap-2 text-sm font-bold">Choose product<AdminDropdown value={selectedProductId} placeholder="Choose a product" options={products.map((product) => ({ value: product.id, label: product.name }))} onValueChange={selectProductId} /></label>
+      </details>
 
-      <form onSubmit={saveProduct} className="mt-6 grid gap-4 md:grid-cols-3">
-        <label className="grid gap-2 text-sm font-bold">Name<input name="name" value={form.name} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
-        <label className="grid gap-2 text-sm font-bold">Slug<input name="slug" value={form.slug} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
-        <label className="grid gap-2 text-sm font-bold">SKU<input name="sku" value={form.sku} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 uppercase outline-none" /></label>
-        <label className="grid gap-2 text-sm font-bold">Brand<AdminDropdown value={form.brandId} placeholder="Select brand" options={lookups.brands.map((brand) => ({ value: brand.id, label: brand.name }))} onValueChange={(value) => setForm((current) => ({ ...current, brandId: value }))} /></label>
-        <label className="grid gap-2 text-sm font-bold">Category<AdminDropdown value={form.categoryId} placeholder="Select category" options={lookups.categories.map((category) => ({ value: category.id, label: category.name }))} onValueChange={(value) => setForm((current) => ({ ...current, categoryId: value, categorySlug: lookups.categories.find((category) => category.id === value)?.slug ?? "" }))} /></label>
-        <label className="grid gap-2 text-sm font-bold">Product type<AdminDropdown value={form.productType} placeholder="Select product type" options={[{ value: "used", label: "Used" }, { value: "brand_new", label: "Brand New" }]} onValueChange={(value) => setForm((current) => ({ ...current, productType: value }))} /></label>
+      <form ref={formRef} onSubmit={saveProduct} className="mt-6 grid scroll-mt-28 gap-4 md:grid-cols-3">
+        <div className="md:col-span-3"><p className="section-kicker">1. What are you selling?</p><p className="mt-1 text-sm text-[var(--muted)]">Start with the information customers use to identify the product.</p></div>
+        <label className="grid gap-2 text-sm font-bold md:col-span-3">Product name<input ref={nameInputRef} name="name" value={form.name} onChange={updateField} required placeholder="Example: Samsung 55-inch Smart TV" className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
+        <label className="grid gap-2 text-sm font-bold">Category<AdminDropdown value={form.categoryId} placeholder="What kind of product?" options={lookups.categories.map((category) => ({ value: category.id, label: category.name }))} onValueChange={(value) => setForm((current) => ({ ...current, categoryId: value, categorySlug: lookups.categories.find((category) => category.id === value)?.slug ?? "" }))} /></label>
+        <label className="grid gap-2 text-sm font-bold">Brand<AdminDropdown value={form.brandId} placeholder="Choose the brand" options={lookups.brands.map((brand) => ({ value: brand.id, label: brand.name }))} onValueChange={(value) => setForm((current) => ({ ...current, brandId: value }))} /></label>
+        <label className="grid gap-2 text-sm font-bold">Is it new or used?<AdminDropdown value={form.productType} placeholder="Choose one" options={[{ value: "used", label: "UK used" }, { value: "brand_new", label: "Brand new" }]} onValueChange={(value) => setForm((current) => ({ ...current, productType: value }))} /></label>
         {form.productType === "used" ? <label className="grid gap-2 text-sm font-bold">Condition grade<AdminDropdown value={form.conditionGradeId} placeholder="Select condition grade" options={lookups.grades.map((grade) => ({ value: grade.id, label: grade.name }))} onValueChange={(value) => setForm((current) => ({ ...current, conditionGradeId: value }))} /></label> : null}
-        <label className="grid gap-2 text-sm font-bold">Price (NGN)<input name="priceNaira" type="number" min={0} value={form.priceNaira} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
-        <label className="grid gap-2 text-sm font-bold">Previous price<input name="previousPriceNaira" type="number" min={0} value={form.previousPriceNaira} onChange={updateField} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
-        <label className="grid gap-2 text-sm font-bold">Stock<input name="stockQuantity" type="number" min={0} value={form.stockQuantity} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
-        <label className="grid gap-2 text-sm font-bold md:col-span-3">Short description<input name="shortDescription" value={form.shortDescription} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
-        <label className="grid gap-2 text-sm font-bold md:col-span-3">Full description<textarea name="description" value={form.description} onChange={updateField} required rows={4} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
-        <label className="grid gap-2 text-sm font-bold">Colour<input name="colour" value={form.colour} onChange={updateField} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
-        <label className="grid gap-2 text-sm font-bold">Model<input name="modelNumber" value={form.modelNumber} onChange={updateField} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
-        <label className="grid gap-2 text-sm font-bold">Low-stock alert<input name="lowStockThreshold" type="number" min={0} value={form.lowStockThreshold} onChange={updateField} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
+        <div className="mt-3 border-t border-black/8 pt-5 md:col-span-3"><p className="section-kicker">2. Price and customer details</p><p className="mt-1 text-sm text-[var(--muted)]">Enter the amount, quantity available, and a clear description.</p></div>
+        <label className="grid gap-2 text-sm font-bold">Selling price (₦)<input name="priceNaira" type="number" min={0} value={form.priceNaira} onChange={updateField} required placeholder="Example: 250000" className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
+        <label className="grid gap-2 text-sm font-bold">Old price (optional)<input name="previousPriceNaira" type="number" min={0} value={form.previousPriceNaira} onChange={updateField} placeholder="Leave empty if none" className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
+        <label className="grid gap-2 text-sm font-bold">How many are available?<input name="stockQuantity" type="number" min={0} value={form.stockQuantity} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
+        <label className="grid gap-2 text-sm font-bold md:col-span-3">Short description<input name="shortDescription" value={form.shortDescription} onChange={updateField} required placeholder="One clear sentence customers will see on the product card" className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
+        <label className="grid gap-2 text-sm font-bold md:col-span-3">More about the product<textarea name="description" value={form.description} onChange={updateField} required rows={4} placeholder="Describe its condition, important features, and anything the buyer should know" className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
+        <details className="rounded-2xl border border-black/8 bg-[#fbfaf6] p-4 md:col-span-3">
+          <summary className="cursor-pointer text-sm font-black">Optional product information</summary>
+          <div className="mt-4 grid gap-4 md:grid-cols-3">
+            <label className="grid gap-2 text-sm font-bold">Colour<input name="colour" value={form.colour} onChange={updateField} className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none" /></label>
+            <label className="grid gap-2 text-sm font-bold">Model number<input name="modelNumber" value={form.modelNumber} onChange={updateField} className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none" /></label>
+            <label className="grid gap-2 text-sm font-bold">Low-stock warning<input name="lowStockThreshold" type="number" min={0} value={form.lowStockThreshold} onChange={updateField} className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none" /></label>
+          </div>
+        </details>
         {isVehicle ? <>
           <div className="md:col-span-3 mt-2 border-t border-black/8 pt-5"><p className="section-kicker">Vehicle details</p><p className="mt-1 text-sm text-[var(--muted)]">These details help buyers compare cars accurately.</p></div>
           <label className="grid gap-2 text-sm font-bold">Year<input name="vehicleYear" type="number" min={1950} max={2100} value={form.vehicleYear} onChange={updateField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
@@ -254,11 +272,16 @@ export function ProductManagementAdmin({ products = [], onProductsChanged }) {
           <label className="grid gap-2 text-sm font-bold">Engine<input name="vehicleEngine" value={form.vehicleEngine} onChange={updateField} placeholder="2.0L" className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
           <label className="grid gap-2 text-sm font-bold">Drivetrain<input name="vehicleDrivetrain" value={form.vehicleDrivetrain} onChange={updateField} placeholder="FWD, RWD, AWD" className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
         </> : null}
-        <label className="grid gap-2 text-sm font-bold md:col-span-3">Known defects<textarea name="visibleDefects" value={form.visibleDefects} onChange={updateField} rows={2} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
-        <label className="grid gap-2 text-sm font-bold md:col-span-2">Accessories included<input name="includedAccessories" value={form.includedAccessories} onChange={updateField} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
-        <label className="grid gap-2 text-sm font-bold">Warranty<input name="warrantyInformation" value={form.warrantyInformation} onChange={updateField} className="rounded-2xl border border-black/10 px-4 py-3 outline-none" /></label>
+        <details className="rounded-2xl border border-black/8 bg-[#fbfaf6] p-4 md:col-span-3">
+          <summary className="cursor-pointer text-sm font-black">Optional condition, accessories and warranty</summary>
+          <div className="mt-4 grid gap-4 md:grid-cols-3">
+            <label className="grid gap-2 text-sm font-bold md:col-span-3">Known defects<textarea name="visibleDefects" value={form.visibleDefects} onChange={updateField} rows={2} className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none" /></label>
+            <label className="grid gap-2 text-sm font-bold md:col-span-2">Accessories included<input name="includedAccessories" value={form.includedAccessories} onChange={updateField} className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none" /></label>
+            <label className="grid gap-2 text-sm font-bold">Warranty<input name="warrantyInformation" value={form.warrantyInformation} onChange={updateField} className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none" /></label>
+          </div>
+        </details>
         <label className="flex items-center gap-3 text-sm font-bold"><input name="isFeatured" type="checkbox" checked={form.isFeatured} onChange={updateField} /> Featured product</label>
-        <div className="flex flex-wrap gap-3 md:col-span-2"><button type="submit" disabled={isPending} className="cta-primary"><Save className="size-4" /> {selectedProductId ? "Save product" : "Create product"}</button>{selectedProduct ? <button type="button" disabled={isPending} onClick={archiveProduct} className="cta-outline text-[var(--accent-dark)]"><Archive className="size-4" /> Archive</button> : null}</div>
+        <div className="flex flex-wrap gap-3 md:col-span-2"><button type="submit" disabled={isPending} className="cta-primary"><Save className="size-4" /> {selectedProductId ? "Save changes" : "Save product and add photos"}</button>{selectedProduct ? <button type="button" disabled={isPending} onClick={archiveProduct} className="cta-outline text-[var(--accent-dark)]"><Archive className="size-4" /> Remove from store</button> : null}</div>
       </form>
 
       <div className="mt-6 rounded-2xl bg-[#fbfaf6] p-4 text-sm font-bold text-[var(--muted)]">{products.length} product records loaded. Current form total: {formatNaira(nairaToKobo(form.priceNaira) ?? 0)}</div>
