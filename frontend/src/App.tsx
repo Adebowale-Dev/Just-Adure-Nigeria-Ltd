@@ -51,8 +51,6 @@ export default function App({ initialPath = "/" }) {
     page = <CustomerProfileClient />;
   } else if (pathname === "/admin") {
     page = <AdminDashboardClient section="overview" />;
-  } else if (["/returns", "/refunds", "/return-refund", "/returns-refunds", "/admin/return", "/admin/refund", "/admin/return-refund", "/admin/returns-refunds"].includes(pathname)) {
-    page = <AdminDashboardClient section="returns" />;
   } else if (pathname.startsWith("/admin/")) {
     page = <AdminDashboardClient section={pathname.replace("/admin/", "")} />;
   } else if (pathname === "/shop") {
@@ -85,7 +83,7 @@ export default function App({ initialPath = "/" }) {
     page = <ShopPage defaultCategory={decodeURIComponent(pathname.replace("/category/", ""))} />;
   } else if (pathname.startsWith("/product/")) {
     page = <ProductDetailsPage slug={decodeURIComponent(pathname.replace("/product/", ""))} />;
-  } else if (["/about", "/faq", "/frequently-asked-questions", "/delivery-information", "/delivery-returns", "/return-and-refund-policy", "/privacy", "/privacy-policy", "/terms", "/terms-and-conditions", "/warranty-information"].includes(pathname)) {
+  } else if (["/about", "/faq", "/frequently-asked-questions", "/delivery-information", "/delivery-returns", "/return-and-refund-policy", "/returns", "/refunds", "/return-refund", "/returns-refunds", "/privacy", "/privacy-policy", "/terms", "/terms-and-conditions", "/warranty-information"].includes(pathname)) {
     const pageTitle = pathname.replace("/", "").replaceAll("-", " ");
     page = <BasicPage title={pageTitle === "faq" ? "frequently asked questions" : pageTitle} />;
   } else {

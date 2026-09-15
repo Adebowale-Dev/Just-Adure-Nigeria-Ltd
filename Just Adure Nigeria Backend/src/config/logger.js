@@ -5,6 +5,13 @@ const redaction = {
     paths: [
         "req.headers.authorization",
         "req.headers.cookie",
+        "res.headers.set-cookie",
+        "req.body",
+        "req.query",
+        "MONGODB_URL",
+        "JWT_ACCESS_SECRET",
+        "JWT_REFRESH_SECRET",
+        "ADMIN_PASSWORD",
         "password",
         "token",
         "accessToken",

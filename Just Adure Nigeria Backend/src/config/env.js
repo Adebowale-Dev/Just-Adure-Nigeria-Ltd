@@ -31,4 +31,24 @@ if (!parsed.success) {
         .join("; ");
     throw new Error(`Invalid environment configuration: ${details}`);
 }
+if (parsed.data.JWT_ACCESS_SECRET === parsed.data.JWT_REFRESH_SECRET) {
+    throw new Error("Invalid environment configuration: access and refresh secrets must be different.");
+}
+if (parsed.data.NODE_ENV === "production") {
+    if (new URL(parsed.data.API_URL).protocol !== "https:" || new URL(parsed.data.WEB_URL).protocol !== "https:") {
+        throw new Error("Invalid environment configuration: production API_URL and WEB_URL must use HTTPS.");
+    }
+    if (/localhost|127\.0\.0\.1/i.test(parsed.data.MONGODB_URL)) {
+        throw new Error("Invalid environment configuration: production MONGODB_URL must use the hosted database.");
+    }
+    const productionSecrets = [
+        ["JWT_ACCESS_SECRET", parsed.data.JWT_ACCESS_SECRET],
+        ["JWT_REFRESH_SECRET", parsed.data.JWT_REFRESH_SECRET],
+        ["PAYSTACK_SECRET_KEY", parsed.data.PAYSTACK_SECRET_KEY],
+        ["BREVO_API_KEY", parsed.data.BREVO_API_KEY],
+        ["CLOUDINARY_API_SECRET", parsed.data.CLOUDINARY_API_SECRET],
+    ];
+    const invalid = productionSecrets.find(([, value]) => /placeholder|change[-_ ]?me|example/i.test(value));
+    if (invalid) throw new Error(`Invalid environment configuration: ${invalid[0]} must use a production secret.`);
+}
 export const env = parsed.data;

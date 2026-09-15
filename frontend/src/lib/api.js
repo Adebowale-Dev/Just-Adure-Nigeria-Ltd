@@ -22,7 +22,7 @@ async function cartRequest(path, init = {}, { retryTransient = false } = {}) {
       response = await fetch(`${apiUrl}${path}`, {
         ...init,
         credentials: "include",
-        headers: { Accept: "application/json", "Content-Type": "application/json", ...init.headers },
+        headers: { Accept: "application/json", "Content-Type": "application/json", "X-CSRF-Token": "1", ...init.headers },
       });
     } catch (error) {
       if (attempt === attempts - 1) throw new Error("The server is taking longer than expected to respond. Please try again shortly.", { cause: error });
@@ -73,7 +73,14 @@ export async function updateAdminOrderStatus(orderId, input) { return (await car
 export async function loginUser(input) { return (await cartRequest("/auth/login", { method: "POST", body: JSON.stringify(input) }, { retryTransient: true })).user; }
 export async function continueWithGoogle(credential) { return (await cartRequest("/auth/google", { method: "POST", headers: { "X-Auth-Intent": "google-sign-in" }, body: JSON.stringify({ credential }) })).user; }
 export async function getCurrentUser() { return (await cartRequest("/auth/me", { method: "GET" }, { retryTransient: true })).user; }
-export async function logoutUser() { await fetch(`${apiUrl}/auth/logout`, { method: "POST", credentials: "include" }); }
+export async function logoutUser() {
+  const response = await fetch(`${apiUrl}/auth/logout`, {
+    method: "POST",
+    credentials: "include",
+    headers: { Accept: "application/json", "X-CSRF-Token": "1" },
+  });
+  if (!response.ok) throw new Error(`Logout failed with status ${response.status}`);
+}
 export async function getAdminCoupons() { return (await cartRequest("/admin/coupons", { method: "GET" })).items; }
 export async function createAdminCoupon(input) { return (await cartRequest("/admin/coupons", { method: "POST", body: JSON.stringify(input) })).coupon; }
 export async function updateAdminCoupon(couponId, input) { return (await cartRequest(`/admin/coupons/${couponId}`, { method: "PATCH", body: JSON.stringify(input) })).coupon; }

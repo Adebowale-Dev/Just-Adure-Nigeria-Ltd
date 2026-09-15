@@ -15,7 +15,7 @@ for (const file of testFiles) {
     process.exit(1);
   }
   console.log(`\n--- ${file.replace(`${testsDir}\\`, "").replace(`${testsDir}/`, "")} ---`);
-  const result = spawnSync(process.execPath, [vitestEntry, "run", file], {
+  const result = spawnSync(process.execPath, [vitestEntry, "run", file, "--pool=threads"], {
     cwd: process.cwd(),
     stdio: "inherit",
   });

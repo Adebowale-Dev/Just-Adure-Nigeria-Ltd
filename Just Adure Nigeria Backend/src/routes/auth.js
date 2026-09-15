@@ -14,11 +14,15 @@ const nigerianPhoneSchema = z
     .string()
     .trim()
     .regex(/^(\+234|0)[789][01]\d{8}$/, "Enter a valid Nigerian phone number.");
+const passwordSchema = z.string().min(10).max(128)
+    .regex(/[a-z]/, "Password must include a lowercase letter.")
+    .regex(/[A-Z]/, "Password must include an uppercase letter.")
+    .regex(/\d/, "Password must include a number.");
 const registerSchema = z.object({
     name: z.string().trim().min(2).max(120),
     email: z.string().trim().email().toLowerCase(),
     phone: nigerianPhoneSchema,
-    password: z.string().min(8).max(128),
+    password: passwordSchema,
 });
 const loginSchema = z.object({
     email: z.string().trim().email().toLowerCase(),
@@ -32,7 +36,7 @@ const tokenSchema = z.object({
 });
 const resetPasswordSchema = z.object({
     token: z.string().trim().min(32),
-    password: z.string().min(8).max(128),
+    password: passwordSchema,
 });
 const googleCredentialSchema = z.object({
     credential: z.string().trim().min(100),
@@ -58,8 +62,8 @@ function publicUser(user) {
     };
 }
 function setAuthCookies(response, user) {
-    const accessToken = signToken({ sub: String(user._id), type: "access", roles: user.roles }, env.JWT_ACCESS_SECRET, env.ACCESS_TOKEN_TTL_MINUTES * 60);
-    const refreshToken = signToken({ sub: String(user._id), type: "refresh", roles: user.roles }, env.JWT_REFRESH_SECRET, env.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60);
+    const accessToken = signToken({ sub: String(user._id), type: "access", roles: user.roles, sessionVersion: user.sessionVersion ?? 0 }, env.JWT_ACCESS_SECRET, env.ACCESS_TOKEN_TTL_MINUTES * 60);
+    const refreshToken = signToken({ sub: String(user._id), type: "refresh", roles: user.roles, sessionVersion: user.sessionVersion ?? 0 }, env.JWT_REFRESH_SECRET, env.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60);
     response.cookie(authCookieNames.access, accessToken, authCookieOptions(env.ACCESS_TOKEN_TTL_MINUTES * 60 * 1000));
     response.cookie(authCookieNames.refresh, refreshToken, authCookieOptions(env.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000));
 }
@@ -223,7 +227,7 @@ authRouter.post("/register", async (request, response, next) => {
 authRouter.post("/login", async (request, response, next) => {
     try {
         const input = loginSchema.parse(request.body);
-        const user = await User.findOne({ email: input.email }).select("+passwordHash");
+        const user = await User.findOne({ email: input.email }).select("+passwordHash +sessionVersion");
         if (!user || !user.isActive) {
             throw new AppError(401, "INVALID_CREDENTIALS", "Invalid email address or password.");
         }
@@ -281,7 +285,7 @@ authRouter.post("/google", async (request, response, next) => {
         }
 
         const email = profile.email.trim().toLowerCase();
-        let user = await User.findOne({ $or: [{ googleSubject: profile.sub }, { email }] }).select("+googleSubject");
+        let user = await User.findOne({ $or: [{ googleSubject: profile.sub }, { email }] }).select("+googleSubject +sessionVersion");
         if (user && !user.isActive) {
             throw new AppError(403, "ACCOUNT_DISABLED", "This account is currently disabled.");
         }
@@ -449,6 +453,7 @@ authRouter.post("/reset-password", async (request, response, next) => {
         user.passwordHash = await hashPassword(input.password);
         user.passwordResetTokenHash = undefined;
         user.passwordResetTokenExpiresAt = undefined;
+        user.sessionVersion = (user.sessionVersion ?? 0) + 1;
         await user.save();
         response.json({ data: { message: "Password reset successfully. You can now log in." } });
     }
@@ -495,8 +500,8 @@ authRouter.get("/me", async (request, response, next) => {
                 return;
             }
         }
-        const user = await User.findById(payload.sub);
-        if (!user || !user.isActive) {
+        const user = await User.findById(payload.sub).select("+sessionVersion");
+        if (!user || !user.isActive || (payload.sessionVersion ?? 0) !== (user.sessionVersion ?? 0)) {
             response.json({ data: { user: null } });
             return;
         }

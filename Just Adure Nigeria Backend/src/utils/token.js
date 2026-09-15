@@ -31,6 +31,10 @@ export function verifyToken(token, secret, expectedType) {
         throw new Error("Invalid token signature.");
     }
     const payload = JSON.parse(base64UrlDecode(body));
+    const tokenHeader = JSON.parse(base64UrlDecode(header));
+    if (tokenHeader.alg !== "HS256" || tokenHeader.typ !== "JWT" || !Number.isFinite(payload.exp) || !Number.isFinite(payload.iat) || typeof payload.sub !== "string") {
+        throw new Error("Invalid token claims.");
+    }
     const now = Math.floor(Date.now() / 1000);
     if (payload.type !== expectedType) {
         throw new Error("Invalid token type.");

@@ -1,10 +1,6 @@
 import mongoose from "mongoose";
 import { env } from "../config/env.js";
 
-function maskMongoUrl(url) {
-    return url.replace(/(mongodb(?:\+srv)?:\/\/[^:]+:)[^@]+(@)/, "$1****$2");
-}
-
 function box(lines) {
     const width = Math.max(...lines.map((line) => line.length), 54);
     const border = `+${"-".repeat(width + 2)}+`;
@@ -16,7 +12,7 @@ export function printMongoAttempt() {
     if (env.NODE_ENV !== "development") return;
     console.log("Attempting to connect to MongoDB...");
     console.log("MongoDB URI candidate detected: MONGODB_URL");
-    console.log(`Connection string: ${maskMongoUrl(env.MONGODB_URL)}`);
+    console.log("Connection string: [REDACTED]");
 }
 
 export function printMongoConnected() {

@@ -85,12 +85,14 @@ const deliveryZoneUpdateSchema = deliveryZoneBaseSchema.partial().refine((value)
   message: "Maximum delivery days must be greater than or equal to minimum delivery days.",
   path: ["maxDeliveryDays"],
 });
+const safeInternalHref = z.string().trim().min(1).max(200).refine((value) => value.startsWith("/") && !value.startsWith("//"), "Use a safe internal path beginning with /." );
+const safeImageUrl = z.string().trim().url().refine((value) => new URL(value).protocol === "https:", "Image URLs must use HTTPS.");
 const homepageBannerSchema = z.object({
   title: z.string().trim().min(2).max(160),
   subtitle: z.string().trim().max(300).optional(),
-  imageUrl: z.string().trim().url().or(z.literal("")).optional(),
+  imageUrl: safeImageUrl.or(z.literal("")).optional(),
   ctaLabel: z.string().trim().min(1).max(80).default("Shop now"),
-  ctaHref: z.string().trim().min(1).max(200).default("/shop"),
+  ctaHref: safeInternalHref.default("/shop"),
   isActive: z.boolean().default(true),
   sortOrder: z.number().int().min(0).default(0),
 });
@@ -99,9 +101,9 @@ const homepageContentSchema = z.object({
   heroTitle: z.string().trim().min(2).max(180).optional(),
   heroSubtitle: z.string().trim().min(2).max(400).optional(),
   heroPrimaryCtaLabel: z.string().trim().min(1).max(80).optional(),
-  heroPrimaryCtaHref: z.string().trim().min(1).max(200).optional(),
+  heroPrimaryCtaHref: safeInternalHref.optional(),
   heroSecondaryCtaLabel: z.string().trim().min(1).max(80).optional(),
-  heroSecondaryCtaHref: z.string().trim().min(1).max(200).optional(),
+  heroSecondaryCtaHref: safeInternalHref.optional(),
   promoTitle: z.string().trim().min(2).max(160).optional(),
   promoSubtitle: z.string().trim().min(2).max(160).optional(),
   trustTitle: z.string().trim().min(2).max(160).optional(),
@@ -110,7 +112,7 @@ const homepageContentSchema = z.object({
 });
 const storeSettingsSchema = z.object({
   storeName: z.string().trim().min(2).max(120).optional(),
-  logoUrl: z.string().trim().url().or(z.literal("")).optional(),
+  logoUrl: safeImageUrl.or(z.literal("")).optional(),
   contactEmail: z.string().trim().email().toLowerCase().optional(),
   phoneNumber: z.string().trim().min(7).max(30).optional(),
   whatsappNumber: z.string().trim().min(7).max(30).optional(),

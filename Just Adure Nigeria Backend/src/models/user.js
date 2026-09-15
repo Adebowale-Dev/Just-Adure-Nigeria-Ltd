@@ -34,6 +34,7 @@ const userSchema = new Schema({
     passwordResetTokenHash: { type: String, select: false },
     passwordResetTokenExpiresAt: { type: Date, select: false },
     isActive: { type: Boolean, required: true, default: true },
+    sessionVersion: { type: Number, required: true, default: 0, select: false },
     addresses: { type: [addressSchema], required: true, default: [] },
     lastLoginAt: { type: Date },
 }, { timestamps: true });

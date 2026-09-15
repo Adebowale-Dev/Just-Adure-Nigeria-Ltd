@@ -10,6 +10,9 @@ export async function connectMongo(required = env.NODE_ENV === "production") {
         printMongoAttempt();
         await mongoose.connect(env.MONGODB_URL, {
             serverSelectionTimeoutMS: env.NODE_ENV === "production" ? 30_000 : 15_000,
+            maxPoolSize: env.NODE_ENV === "production" ? 20 : 10,
+            minPoolSize: 0,
+            maxIdleTimeMS: 30_000,
         });
         printMongoConnected();
         return true;

@@ -30,4 +30,21 @@ describe("API foundation", () => {
             .expect(401);
         expect(response.body.error.code).toBe("INVALID_PAYSTACK_SIGNATURE");
     });
+    it("rejects cross-site browser writes", async () => {
+        const response = await request(app)
+            .post("/api/v1/auth/login")
+            .set("Origin", "https://attacker.example")
+            .set("X-CSRF-Token", "1")
+            .send({ email: "buyer@example.com", password: "password" })
+            .expect(403);
+        expect(response.body.error.code).toBe("UNTRUSTED_ORIGIN");
+    });
+    it("requires the CSRF header for trusted browser writes", async () => {
+        const response = await request(app)
+            .post("/api/v1/auth/login")
+            .set("Origin", "http://localhost:3000")
+            .send({ email: "buyer@example.com", password: "password" })
+            .expect(403);
+        expect(response.body.error.code).toBe("CSRF_PROTECTION");
+    });
 });

@@ -9,7 +9,7 @@ function sanitizeValue(value, path = "request") {
   if (!value || typeof value !== "object") return value;
 
   for (const key of Object.keys(value)) {
-    if (key.startsWith("$") || key.includes(".")) {
+    if (key.startsWith("$") || key.includes(".") || ["__proto__", "prototype", "constructor"].includes(key)) {
       throw new AppError(400, "INVALID_REQUEST_INPUT", `Invalid field name in ${path}.`);
     }
     sanitizeValue(value[key], `${path}.${key}`);

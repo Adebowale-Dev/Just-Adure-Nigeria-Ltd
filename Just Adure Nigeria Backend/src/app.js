@@ -14,6 +14,7 @@ import { errorHandler, notFoundHandler } from "./middleware/error-handler.js";
 import { requireDatabaseReady } from "./middleware/database-ready.js";
 import { requestContext } from "./middleware/request-context.js";
 import { sanitizeMongoInput } from "./middleware/mongo-sanitize.js";
+import { isTrustedOrigin, protectBrowserWrites } from "./middleware/browser-security.js";
 import { adminRouter } from "./routes/admin.js";
 import { authRouter } from "./routes/auth.js";
 import { accountRouter } from "./routes/account.js";
@@ -47,7 +48,7 @@ app.use(pinoHttp({
 }));
 app.use(helmet());
 app.use(cors({
-    origin: env.WEB_URL,
+    origin: (origin, callback) => callback(null, !origin || isTrustedOrigin(origin)),
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "X-CSRF-Token", "X-Auth-Intent", "Idempotency-Key", "X-Request-ID"],
@@ -58,6 +59,7 @@ app.use(compression());
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: false, limit: "64kb" }));
 app.use(cookieParser());
+app.use("/api/v1", protectBrowserWrites);
 app.use(sanitizeMongoInput);
 app.use(developmentRequestLogger);
 app.get("/", (_request, response) => response.redirect("/api/docs"));
@@ -75,6 +77,29 @@ app.use("/api/v1", rateLimit({
     },
 }));
 app.use(systemRouter);
+app.use("/api/v1", (request, response, next) => {
+    if (/^\/(auth|admin|account|orders|notifications|cart|wishlist|checkout|payments|support)(\/|$)/.test(request.path)) {
+        response.set("Cache-Control", "no-store");
+    }
+    next();
+});
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 15,
+    skipSuccessfulRequests: true,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: { error: { code: "AUTH_RATE_LIMITED", message: "Too many sign-in attempts. Please try again in 15 minutes." } },
+});
+const recoveryLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    limit: 10,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: { error: { code: "AUTH_RATE_LIMITED", message: "Too many account requests. Please try again later." } },
+});
+app.use(["/api/v1/auth/login", "/api/v1/auth/google"], authLimiter);
+app.use(["/api/v1/auth/register", "/api/v1/auth/forgot-password", "/api/v1/auth/reset-password", "/api/v1/auth/resend-verification"], recoveryLimiter);
 app.use("/api/v1", requireDatabaseReady);
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1", accountRouter);

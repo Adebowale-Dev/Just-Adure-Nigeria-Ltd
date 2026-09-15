@@ -34,7 +34,7 @@ function authCookieOptions(maxAgeMs) {
 }
 
 function issueAccessCookie(response, user) {
-  const accessToken = signToken({ sub: String(user._id), type: "access", roles: user.roles }, env.JWT_ACCESS_SECRET, env.ACCESS_TOKEN_TTL_MINUTES * 60);
+  const accessToken = signToken({ sub: String(user._id), type: "access", roles: user.roles, sessionVersion: user.sessionVersion ?? 0 }, env.JWT_ACCESS_SECRET, env.ACCESS_TOKEN_TTL_MINUTES * 60);
   response.cookie(authCookieNames.access, accessToken, authCookieOptions(env.ACCESS_TOKEN_TTL_MINUTES * 60 * 1000));
 }
 
@@ -43,8 +43,8 @@ export async function getAuthenticatedUser(request, response) {
   if (accessToken) {
     try {
       const payload = verifyToken(accessToken, env.JWT_ACCESS_SECRET, "access");
-      const user = await User.findById(payload.sub).select("roles permissions isActive");
-      if (user?.isActive) return user;
+      const user = await User.findById(payload.sub).select("roles permissions isActive +sessionVersion");
+      if (user?.isActive && (payload.sessionVersion ?? 0) === (user.sessionVersion ?? 0)) return user;
     } catch {
       // Access tokens are short-lived. Fall back to refresh token below.
     }
@@ -55,8 +55,8 @@ export async function getAuthenticatedUser(request, response) {
 
   try {
     const payload = verifyToken(refreshToken, env.JWT_REFRESH_SECRET, "refresh");
-    const user = await User.findById(payload.sub).select("roles permissions isActive");
-    if (!user?.isActive) return null;
+    const user = await User.findById(payload.sub).select("roles permissions isActive +sessionVersion");
+    if (!user?.isActive || (payload.sessionVersion ?? 0) !== (user.sessionVersion ?? 0)) return null;
     issueAccessCookie(response, user);
     return user;
   } catch {

@@ -34,6 +34,9 @@ async function paystackRequest(path, options = {}) {
 }
 
 export async function initializePaystackPayment({ orderId, callbackUrl }) {
+  if (callbackUrl && new URL(callbackUrl).origin !== new URL(env.WEB_URL).origin) {
+    throw new AppError(400, "INVALID_CALLBACK_URL", "Payment callbacks must return to the store website.");
+  }
   const order = await Order.findById(orderId);
   if (!order) throw new AppError(404, "ORDER_NOT_FOUND", "Order was not found.");
   if (order.paymentStatus === "successful") throw new AppError(409, "ORDER_ALREADY_PAID", "This order has already been paid.");
