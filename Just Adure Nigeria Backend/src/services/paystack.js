@@ -4,7 +4,6 @@ import { AppError } from "../errors/app-error.js";
 import { Order } from "../models/order.js";
 import { Payment } from "../models/payment.js";
 import { Product } from "../models/catalogue.js";
-import { markCouponUsed } from "./coupons.js";
 import { notifyPaymentSuccessful } from "./email.js";
 import { notifyAdmins, notifyCustomer } from "./notifications.js";
 
@@ -153,7 +152,6 @@ async function finalizePaidOrder(order) {
     }
   }
 
-  await markCouponUsed(order.couponId);
 
   order.paymentStatus = "successful";
   order.orderStatus = "paid";

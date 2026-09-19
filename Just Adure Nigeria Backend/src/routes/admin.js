@@ -4,7 +4,6 @@ import { z } from "zod";
 import { AppError } from "../errors/app-error.js";
 import { requireAuth, requirePermissions, requireRoles } from "../middleware/auth.js";
 import { Brand, Category, ConditionGrade, DeliveryZone, Product, productAvailability } from "../models/catalogue.js";
-import { Coupon, couponTypes } from "../models/coupon.js";
 import { Order, orderStatuses } from "../models/order.js";
 import { Payment } from "../models/payment.js";
 import { Review, reviewStatuses } from "../models/review.js";
@@ -12,7 +11,6 @@ import { ReturnRequest, returnRequestStatuses } from "../models/return-request.j
 import { SupportTicket, supportTicketStatuses } from "../models/support-ticket.js";
 import { NewsletterSubscriber, newsletterSubscriberStatuses } from "../models/newsletter-subscriber.js";
 import { uploadProductImage } from "../services/cloudinary.js";
-import { serializeCoupon } from "../services/coupons.js";
 import { serializeReview } from "./reviews.js";
 import { serializeReturnRequest } from "./returns.js";
 import { serializeSupportTicket } from "./support.js";
@@ -206,37 +204,6 @@ const imageUploadSchema = z.object({
   altText: z.string().trim().min(2).max(160),
 });
 const productImageAttachSchema = imageSchema.extend({ isPrimary: z.boolean().default(false) });
-const couponBaseSchema = z.object({
-  code: z.string().trim().min(2).max(60).transform((value) => value.toUpperCase()),
-  name: z.string().trim().min(2).max(120),
-  description: z.string().trim().max(300).optional(),
-  type: z.enum(couponTypes),
-  valueKobo: z.number().int().min(1).optional(),
-  percentage: z.number().int().min(1).max(100).optional(),
-  minOrderAmountKobo: z.number().int().min(0).default(0),
-  maxDiscountKobo: z.number().int().min(0).optional(),
-  usageLimit: z.number().int().min(1).optional(),
-  usageLimitPerCustomer: z.number().int().min(1).optional(),
-  startsAt: z.coerce.date().optional(),
-  expiresAt: z.coerce.date().optional(),
-  isActive: z.boolean().default(true),
-  firstOrderOnly: z.boolean().default(false),
-  productIds: z.array(objectIdSchema).default([]),
-  categoryIds: z.array(objectIdSchema).default([]),
-});
-const couponSchema = couponBaseSchema
-  .refine((value) => value.type !== "fixed" || value.valueKobo, {
-    message: "Fixed coupons require valueKobo.",
-    path: ["valueKobo"],
-  })
-  .refine((value) => value.type !== "percentage" || value.percentage, {
-    message: "Percentage coupons require percentage.",
-    path: ["percentage"],
-  });
-const couponUpdateSchema = couponBaseSchema.partial().refine((value) => value.expiresAt === undefined || value.startsAt === undefined || value.expiresAt > value.startsAt, {
-  message: "Coupon expiration must be after the start date.",
-  path: ["expiresAt"],
-});
 function objectIdString(value) {
   if (value instanceof mongoose.Types.ObjectId) return value.toHexString();
   if (value && typeof value === "object" && "_id" in value) return objectIdString(value._id);
@@ -722,7 +689,7 @@ adminRouter.patch("/newsletter-subscribers/:id", requireRoles("admin", "super_ad
  *       200:
  *         description: Homepage content returned
  */
-adminRouter.get("/homepage-content", requirePermissions("products:manage", "coupons:manage"), async (_request, response, next) => {
+adminRouter.get("/homepage-content", requirePermissions("products:manage"), async (_request, response, next) => {
   try {
     const content = await getHomepageContent();
     response.json({ data: { content: serializeHomepageContent(content) } });
@@ -743,7 +710,7 @@ adminRouter.get("/homepage-content", requirePermissions("products:manage", "coup
  *       200:
  *         description: Homepage content updated
  */
-adminRouter.patch("/homepage-content", requirePermissions("products:manage", "coupons:manage"), async (request, response, next) => {
+adminRouter.patch("/homepage-content", requirePermissions("products:manage"), async (request, response, next) => {
   try {
     const input = homepageContentSchema.parse(request.body);
     const content = await getHomepageContent();
@@ -1253,76 +1220,6 @@ adminRouter.delete("/products/:id", requirePermissions("products:manage"), async
 });
 
 
-/**
- * @openapi
- * /api/v1/admin/coupons:
- *   get:
- *     tags: [Admin]
- *     summary: List coupons for administrators
- *     security:
- *       - cookieAuth: []
- *     responses:
- *       200:
- *         description: Coupon list returned
- */
-adminRouter.get("/coupons", requirePermissions("coupons:manage"), async (_request, response, next) => {
-  try {
-    const coupons = await Coupon.find({}).sort({ createdAt: -1 }).limit(100).lean();
-    response.json({ data: { items: coupons.map(serializeCoupon) } });
-  } catch (error) {
-    next(error);
-  }
-});
-
-/**
- * @openapi
- * /api/v1/admin/coupons:
- *   post:
- *     tags: [Admin]
- *     summary: Create a coupon
- *     security:
- *       - cookieAuth: []
- *     responses:
- *       201:
- *         description: Coupon created
- */
-adminRouter.post("/coupons", requirePermissions("coupons:manage"), async (request, response, next) => {
-  try {
-    const input = couponSchema.parse(request.body);
-    const coupon = await Coupon.create(input);
-    await logAdminActivity(request, { action: "coupon.created", resourceType: "coupon", resourceId: coupon._id, details: { code: coupon.code, type: coupon.type } });
-    response.status(201).json({ data: { coupon: serializeCoupon(coupon) } });
-  } catch (error) {
-    if (error?.code === 11000) next(new AppError(409, "COUPON_ALREADY_EXISTS", "A coupon with that code already exists."));
-    else next(error);
-  }
-});
-
-/**
- * @openapi
- * /api/v1/admin/coupons/{id}:
- *   patch:
- *     tags: [Admin]
- *     summary: Update a coupon
- *     security:
- *       - cookieAuth: []
- *     responses:
- *       200:
- *         description: Coupon updated
- */
-adminRouter.patch("/coupons/:id", requirePermissions("coupons:manage"), async (request, response, next) => {
-  try {
-    const { id } = z.object({ id: objectIdSchema }).parse(request.params);
-    const input = couponUpdateSchema.parse(request.body);
-    const coupon = await Coupon.findByIdAndUpdate(id, input, { returnDocument: "after", runValidators: true });
-    if (!coupon) throw new AppError(404, "COUPON_NOT_FOUND", "Coupon was not found.");
-    await logAdminActivity(request, { action: "coupon.updated", resourceType: "coupon", resourceId: coupon._id, details: { code: coupon.code, fields: Object.keys(input) } });
-    response.json({ data: { coupon: serializeCoupon(coupon) } });
-  } catch (error) {
-    if (error?.code === 11000) next(new AppError(409, "COUPON_ALREADY_EXISTS", "A coupon with that code already exists."));
-    else next(error);
-  }
-});
 /**
  * @openapi
  * /api/v1/admin/orders:

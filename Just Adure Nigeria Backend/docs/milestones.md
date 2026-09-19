@@ -81,7 +81,7 @@ Deliverables:
 - Persistent guest and customer carts with merge-on-login
 - Wishlist
 - Delivery-zone configuration and quote provider
-- Coupon validation and order total calculation
+- Order total calculation
 - Guest and customer checkout
 - Transactional order creation, stock reservations, and reservation expiry worker
 - Nigerian phone/address validation and naira formatting
@@ -89,7 +89,7 @@ Deliverables:
 Verification:
 
 - Concurrent inventory and oversell tests
-- Price-tampering, coupon-limit, delivery-rule, cart-merge, and expiry tests
+- Price-tampering, delivery-rule, cart-merge, and expiry tests
 - End-to-end browsing-to-pending-order test
 
 ## Milestone 5: Paystack integration
@@ -99,7 +99,7 @@ Deliverables:
 - Backend-only Paystack initialization and direct verification
 - Signed raw-body webhook handler
 - Idempotent payment-event processing
-- Atomic payment, order, coupon, and inventory finalization
+- Atomic payment, order, and inventory finalization
 - Payment result page and recovery/polling states
 - Fake Paystack adapter for tests and local workflows
 
@@ -141,12 +141,11 @@ Verification:
 - Duplicate dispatch prevention tests
 - Responsive email preview review
 
-## Milestone 8: Reviews, promotions, delivery, and homepage management
+## Milestone 8: Reviews, delivery, and homepage management
 
 Deliverables:
 
 - Verified-purchase review submission and moderation
-- Coupon administration and usage reporting
 - Delivery-zone administration
 - Homepage banners and featured-product administration
 - Newsletter subscription/unsubscribe and contact-message administration
@@ -154,7 +153,6 @@ Deliverables:
 Verification:
 
 - Review eligibility and moderation tests
-- Coupon edge-case tests
 - Delivery precedence tests
 - Admin permission and audit-log checks
 

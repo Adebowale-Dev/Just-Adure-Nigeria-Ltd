@@ -130,6 +130,8 @@ function sectionId(title: string) {
 export function BasicPage({ title }: { title: string }) {
   const requestedKey = normalizeTitle(title);
   const key = { faq: "frequently asked questions", privacy: "privacy policy", terms: "terms and conditions" }[requestedKey] ?? requestedKey;
+  const isFaqPage = key === "frequently asked questions";
+  const isCompactInformationPage = ["delivery information", "frequently asked questions", "return and refund policy"].includes(key);
   const content: InformationPage = pageContent[key] ?? {
     eyebrow: "Store information",
     title: key || "Information",
@@ -140,16 +142,16 @@ export function BasicPage({ title }: { title: string }) {
   return (
     <main className="bg-[#f7f5ef] text-[var(--ink)]">
       <header className="border-b border-black/8 bg-white">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+        <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${isFaqPage ? "w-full py-8 sm:py-10" : isCompactInformationPage ? "w-full py-6 sm:py-8" : "max-w-6xl py-12 sm:py-16"}`}>
           <p className="flex items-center gap-1 text-sm font-bold text-[var(--muted)]"><a href="/" className="hover:text-[var(--accent-dark)]">Home</a><ChevronRight className="size-4" />{content.eyebrow}</p>
-          <p className="section-kicker mt-8">{content.eyebrow}</p>
-          <h1 className="mt-4 max-w-4xl font-serif text-4xl font-bold leading-tight tracking-[-.045em] sm:text-6xl">{content.title}</h1>
-          <p className="mt-5 max-w-3xl text-lg leading-8 text-[var(--muted)]">{content.intro}</p>
+          <p className={`section-kicker ${isCompactInformationPage ? "mt-4" : "mt-8"}`}>{content.eyebrow}</p>
+          <h1 className={`max-w-4xl font-serif leading-tight ${isFaqPage ? "mt-3 text-3xl font-semibold tracking-tight sm:text-5xl" : isCompactInformationPage ? "mt-2 text-3xl font-semibold tracking-tight sm:text-4xl" : "mt-4 text-4xl font-bold tracking-[-.045em] sm:text-6xl"}`}>{content.title}</h1>
+          <p className={`max-w-3xl text-[var(--muted)] ${isFaqPage ? "mt-3 text-base leading-7" : isCompactInformationPage ? "mt-2 text-sm leading-6" : "mt-5 text-lg leading-8"}`}>{content.intro}</p>
           {content.updated ? <p className="mt-5 text-sm font-bold text-[var(--muted)]">Last updated: {content.updated}</p> : null}
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[15rem_1fr] lg:px-8 lg:py-16">
+      <div className={`mx-auto grid px-4 py-12 sm:px-6 lg:px-8 lg:py-16 ${isCompactInformationPage ? "w-full gap-6 lg:grid-cols-[17rem_minmax(0,1fr)] lg:gap-8" : "max-w-6xl gap-10 lg:grid-cols-[15rem_1fr]"}`}>
         <aside className="h-fit rounded-2xl border border-black/8 bg-white p-5 lg:sticky lg:top-28">
           <p className="text-xs font-black uppercase tracking-[.16em] text-[var(--accent-dark)]">On this page</p>
           <nav className="mt-4 grid gap-1" aria-label={`${content.title} sections`}>
@@ -157,14 +159,14 @@ export function BasicPage({ title }: { title: string }) {
           </nav>
         </aside>
 
-        <article className="overflow-hidden rounded-2xl border border-black/8 bg-white px-6 sm:px-9">
+        <article className={`min-w-0 overflow-hidden rounded-2xl border border-black/8 bg-white px-6 ${isCompactInformationPage ? "sm:px-10 lg:px-12" : "sm:px-9"}`}>
           {content.sections.map((section, index) => (
             <section key={section.title} id={sectionId(section.title)} className="scroll-mt-32 border-b border-black/8 py-8 last:border-0 sm:py-10">
               <div className="grid gap-4 sm:grid-cols-[2.5rem_1fr]">
                 <span className="grid size-9 place-items-center rounded-full bg-[#fff0e3] text-sm font-black text-[var(--accent-dark)]">{index + 1}</span>
                 <div>
-                  <h2 className="text-xl font-black tracking-[-.02em] sm:text-2xl">{section.title}</h2>
-                  <p className="mt-3 max-w-3xl leading-7 text-[var(--muted)]">{section.body}</p>
+                  <h2 className={isFaqPage ? "text-xl font-semibold tracking-tight" : isCompactInformationPage ? "text-lg font-semibold tracking-tight" : "text-xl font-black tracking-[-.02em] sm:text-2xl"}>{section.title}</h2>
+                  <p className={`mt-3 text-[var(--muted)] ${isFaqPage ? "text-base leading-7" : isCompactInformationPage ? "max-w-3xl text-sm leading-6" : "max-w-3xl leading-7"}`}>{section.body}</p>
                   {section.items ? <ul className="mt-4 grid gap-2 text-sm leading-6 text-[var(--muted)]">{section.items.map((item) => <li key={item} className="flex gap-3"><span className="mt-2 size-1.5 shrink-0 rounded-full bg-[var(--accent)]" />{item}</li>)}</ul> : null}
                 </div>
               </div>
@@ -174,8 +176,8 @@ export function BasicPage({ title }: { title: string }) {
       </div>
 
       <section className="border-t border-black/8 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col gap-5 px-4 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-          <div><h2 className="text-xl font-black">Still need help?</h2><p className="mt-1 text-sm text-[var(--muted)]">Contact our team before placing an order if anything is unclear.</p></div>
+        <div className={`mx-auto flex flex-col gap-5 px-4 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8 ${isCompactInformationPage ? "w-full" : "max-w-6xl"}`}>
+          <div><h2 className={isCompactInformationPage ? "text-lg font-semibold" : "text-xl font-black"}>Still need help?</h2><p className="mt-1 text-sm text-[var(--muted)]">Contact our team before placing an order if anything is unclear.</p></div>
           <a href="/contact" className="cta-primary shrink-0">Contact support <ArrowRight className="size-4" /></a>
         </div>
       </section>

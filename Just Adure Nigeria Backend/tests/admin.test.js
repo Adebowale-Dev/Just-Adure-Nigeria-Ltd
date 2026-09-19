@@ -7,7 +7,6 @@ import { Brand, Category, ConditionGrade, DeliveryZone, Product } from "../src/m
 import { AdminActivityLog } from "../src/models/admin-activity-log.js";
 import { HomepageContent } from "../src/models/homepage-content.js";
 import { NewsletterSubscriber } from "../src/models/newsletter-subscriber.js";
-import { Coupon } from "../src/models/coupon.js";
 import { Order } from "../src/models/order.js";
 import { Payment } from "../src/models/payment.js";
 import { ReturnRequest } from "../src/models/return-request.js";
@@ -26,7 +25,6 @@ async function clearCollections() {
     NewsletterSubscriber.deleteMany({}),
     Payment.deleteMany({}),
     ReturnRequest.deleteMany({}),
-    Coupon.deleteMany({}),
     Order.deleteMany({}),
     Product.deleteMany({}),
     DeliveryZone.deleteMany({}),
@@ -185,35 +183,10 @@ describe("admin API", () => {
     const dashboard = await request(app).get("/api/v1/admin/dashboard").set("Cookie", cookies).expect(200);
     expect(dashboard.body.data.stats).toMatchObject({ totalOrders: 1, paidOrders: 1, totalRevenueKobo: 680_000_00 });
   });
-  it("allows an admin to create, update, and list coupons", async () => {
+  it("does not expose coupon management routes", async () => {
     const cookies = await createAdminCookies();
-
-    const create = await request(app)
-      .post("/api/v1/admin/coupons")
-      .set("Cookie", cookies)
-      .send({
-        code: "launch10",
-        name: "Launch 10 percent",
-        type: "percentage",
-        percentage: 10,
-        minOrderAmountKobo: 100_000_00,
-        maxDiscountKobo: 50_000_00,
-        usageLimit: 25,
-      })
-      .expect(201);
-
-    expect(create.body.data.coupon).toMatchObject({ code: "LAUNCH10", type: "percentage", percentage: 10 });
-
-    const update = await request(app)
-      .patch(`/api/v1/admin/coupons/${create.body.data.coupon.id}`)
-      .set("Cookie", cookies)
-      .send({ isActive: false })
-      .expect(200);
-
-    expect(update.body.data.coupon).toMatchObject({ code: "LAUNCH10", isActive: false });
-
-    const list = await request(app).get("/api/v1/admin/coupons").set("Cookie", cookies).expect(200);
-    expect(list.body.data.items).toHaveLength(1);
+    await request(app).get("/api/v1/admin/coupons").set("Cookie", cookies).expect(404);
+    await request(app).post("/api/v1/admin/coupons").set("Cookie", cookies).send({ code: "TEST" }).expect(404);
   });
   it("allows a super admin to create staff accounts", async () => {
     const cookies = await createAdminCookies("super_admin", "super@example.com");
@@ -325,11 +298,6 @@ describe("admin API", () => {
       .send({ status: "processing" })
       .expect(200);
 
-    await request(app)
-      .post("/api/v1/admin/coupons")
-      .set("Cookie", orderCookies)
-      .send({ code: "ORDERMANAGER", name: "Should fail", type: "percentage", percentage: 10 })
-      .expect(403);
   });
 
   it("allows super administrators to update staff permissions and status", async () => {

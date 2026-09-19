@@ -34,7 +34,7 @@ The web application uses React/Vite routes and view components so public, accoun
 
 | Route | Page |
 | --- | --- |
-| `/checkout` | Contact, address, delivery quote, coupon, and final order review |
+| `/checkout` | Contact, address, delivery quote, and final order review |
 | `/payment/result` | Safe polling/verification result after Paystack redirect |
 | `/order/confirmation/[orderNumber]` | Guest or customer confirmation using authorized access context |
 | `/order/track` | Guest tracking lookup with order number and secure verification data |
@@ -68,7 +68,6 @@ The web application uses React/Vite routes and view components so public, accoun
 | `/admin/payments` | Payment records and reconciliation filters |
 | `/admin/customers` | Customer search and account state |
 | `/admin/customers/[id]` | Customer details and order history |
-| `/admin/coupons` | Coupon management |
 | `/admin/delivery-zones` | State/city delivery fees and estimates |
 | `/admin/banners` | Homepage banner and feature merchandising |
 | `/admin/reviews` | Review moderation |

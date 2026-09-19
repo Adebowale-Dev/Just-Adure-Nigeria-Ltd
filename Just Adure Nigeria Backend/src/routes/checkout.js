@@ -8,7 +8,6 @@ import { authCookieNames } from "../middleware/auth.js";
 import { Cart } from "../models/cart.js";
 import { DeliveryZone, Product } from "../models/catalogue.js";
 import { Order } from "../models/order.js";
-import { applyCouponToTotals, serializeCoupon } from "../services/coupons.js";
 import { notifyOrderReceived } from "../services/email.js";
 import { notifyAdmins, notifyCustomer } from "../services/notifications.js";
 import { verifyToken } from "../utils/token.js";
@@ -42,7 +41,7 @@ const deliveryFeeSchema = z.object({
 const checkoutSchema = z.object({
   customer: addressSchema,
   deliveryMethod: z.enum(["delivery", "pickup"]).default("delivery"),
-  couponCode: z.string().trim().max(60).transform((value) => value || undefined).optional(),
+  couponCode: z.never().optional(),
   orderNotes: z.string().trim().max(500).optional(),
 });
 
@@ -237,14 +236,7 @@ checkoutRouter.post("/checkout", async (request, response, next) => {
 
     const items = cart.items.map(snapshotCartItem);
     const subtotalKobo = items.reduce((total, item) => total + item.lineSubtotalKobo, 0);
-    const { coupon, discountKobo } = await applyCouponToTotals({
-      couponCode: input.couponCode,
-      items,
-      subtotalKobo,
-      userId,
-      customerEmail: input.customer.email,
-    });
-    const totalKobo = subtotalKobo - discountKobo + deliveryFeeKobo;
+    const totalKobo = subtotalKobo + deliveryFeeKobo;
     const expiresAt = new Date(Date.now() + env.STOCK_RESERVATION_MINUTES * 60 * 1000);
     const reservations = await reserveProducts(items, expiresAt);
 
@@ -254,9 +246,7 @@ checkoutRouter.post("/checkout", async (request, response, next) => {
       customer: input.customer,
       items,
       subtotalKobo,
-      discountKobo,
-      couponId: coupon?._id,
-      couponCode: coupon?.code,
+      discountKobo: 0,
       deliveryFeeKobo,
       totalKobo,
       currency: "NGN",
@@ -286,7 +276,6 @@ checkoutRouter.post("/checkout", async (request, response, next) => {
           currency: order.currency,
           subtotalKobo: order.subtotalKobo,
           discountKobo: order.discountKobo,
-          coupon: coupon ? serializeCoupon(coupon) : null,
           deliveryFeeKobo: order.deliveryFeeKobo,
           totalKobo: order.totalKobo,
           reservationExpiresAt: expiresAt,

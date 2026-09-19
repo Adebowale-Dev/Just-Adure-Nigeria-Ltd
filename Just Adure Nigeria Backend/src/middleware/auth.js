@@ -9,7 +9,7 @@ export const rolePermissionMap = {
   inventory_manager: ["dashboard:view", "reports:view", "products:read", "inventory:manage"],
   order_manager: ["dashboard:view", "reports:view", "orders:read", "orders:update", "returns:manage"],
   customer_support: ["dashboard:view", "orders:read", "support:manage", "returns:manage", "reviews:moderate"],
-  content_manager: ["dashboard:view", "products:read", "products:manage", "coupons:manage", "reviews:moderate"],
+  content_manager: ["dashboard:view", "products:read", "products:manage", "reviews:moderate"],
 };
 
 export const authCookieNames = {

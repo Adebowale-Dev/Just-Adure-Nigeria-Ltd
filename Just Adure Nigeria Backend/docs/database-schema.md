@@ -76,7 +76,7 @@ A user has one wishlist. Wishlist items uniquely join the wishlist to products.
 
 ### Order
 
-Stores order number, optional user, guest email, guest phone, status, currency, subtotal, discount, delivery fee, total, coupon snapshot, delivery-address snapshot, delivery-zone snapshot, notes, reservation expiry, paid time, cancellation time, and timestamps.
+Stores order number, optional user, guest email, guest phone, status, currency, subtotal, delivery fee, total, delivery-address snapshot, delivery-zone snapshot, notes, reservation expiry, paid time, cancellation time, and timestamps. Legacy discount and coupon fields remain for historical orders; new orders do not use them.
 
 Status values are `pending_payment`, `paid`, `processing`, `ready_for_delivery`, `shipped`, `delivered`, `cancelled`, and `refunded`.
 
@@ -96,15 +96,7 @@ Stores order, provider, unique provider reference, amount in kobo, currency, sta
 
 Stores a unique event key, Paystack reference, event type, payload hash, processing status, attempts, processed time, and failure details. It prevents duplicate webhook processing without treating provider payloads as trusted business state.
 
-## Promotions and delivery
-
-### Coupon
-
-Stores normalized code, discount type, value, optional maximum discount, minimum spend, start/end times, total and per-customer limits, active status, and optional product/category restrictions.
-
-### CouponUsage
-
-Links coupon, order, and optional user/email. Usage becomes final only after successful payment; abandoned pending orders do not permanently consume a coupon.
+## Delivery
 
 ### DeliveryZone
 
@@ -151,15 +143,14 @@ Product 1---* ProductSpecification
 Order 1---* OrderItem *---0..1 Product
 Order 1---* Payment
 Order 1---* OrderStatusHistory
-Coupon 1---* CouponUsage *---1 Order
 Product 1---* Review *---1 User
 ```
 
 ## Required transaction boundaries
 
-- Create an order, validate totals, create coupon intent, and reserve inventory.
+- Create an order, validate totals, and reserve inventory.
 - Release inventory for expired or cancelled unpaid orders.
-- Finalize verified payment, transition the order, consume coupon usage, and convert reserved stock to sold stock.
+- Finalize verified payment, transition the order, and convert reserved stock to sold stock.
 - Process a refund and apply any approved restock.
 - Apply an administrative stock adjustment and record its audit movement.
 

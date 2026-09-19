@@ -31,7 +31,6 @@ Completed backend work includes:
 - Inventory reservation to reduce the risk of selling one-off products twice.
 - Order management and order tracking.
 - Delivery zones and delivery fee management.
-- Coupon and discount support.
 - Wishlist and back-in-stock support.
 - Product reviews with verified buyer support.
 - Return and refund request management.
@@ -69,7 +68,6 @@ Completed frontend work includes:
 - Admin product image management.
 - Admin category, brand, and condition grade management.
 - Admin delivery zone management.
-- Admin coupon management.
 - Admin review moderation.
 - Admin returns/refunds management.
 - Admin support ticket management.

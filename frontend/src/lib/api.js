@@ -81,9 +81,6 @@ export async function logoutUser() {
   });
   if (!response.ok) throw new Error(`Logout failed with status ${response.status}`);
 }
-export async function getAdminCoupons() { return (await cartRequest("/admin/coupons", { method: "GET" })).items; }
-export async function createAdminCoupon(input) { return (await cartRequest("/admin/coupons", { method: "POST", body: JSON.stringify(input) })).coupon; }
-export async function updateAdminCoupon(couponId, input) { return (await cartRequest(`/admin/coupons/${couponId}`, { method: "PATCH", body: JSON.stringify(input) })).coupon; }
 export async function getAdminReviews() { return (await cartRequest("/admin/reviews", { method: "GET" })).items; }
 export async function updateAdminReview(reviewId, input) { return (await cartRequest(`/admin/reviews/${reviewId}`, { method: "PATCH", body: JSON.stringify(input) })).review; }
 export async function createReturnRequest(orderId, input) { return (await cartRequest(`/orders/${orderId}/returns`, { method: "POST", body: JSON.stringify(input) })).returnRequest; }

@@ -43,7 +43,7 @@ function TextInput({ label, name, value, onChange, placeholder, required = false
   required?: boolean;
 }) {
   return (
-    <label className="grid gap-2 text-sm font-black text-[var(--ink)]">
+    <label className="grid gap-2 text-sm font-semibold text-[var(--ink)]">
       {label}
       <input name={name} value={value} onChange={onChange} required={required} placeholder={placeholder} className="rounded-2xl border border-black/10 bg-[#fbfaf6] px-4 py-3.5 text-[var(--ink)] outline-none transition placeholder:text-black/35 focus:border-[var(--accent-dark)] focus:bg-white focus:shadow-[0_0_0_4px_rgba(255,123,37,.12)]" />
     </label>
@@ -133,7 +133,7 @@ export function CustomerAddressesPage() {
         <section className="mx-auto flex min-h-[calc(100vh-10rem)] max-w-3xl items-center justify-center">
           <div className="w-full rounded-[2rem] border border-[var(--accent)]/30 bg-white p-8 text-center shadow-[0_24px_70px_rgba(18,27,23,.1)] sm:p-10">
             <AlertTriangle className="mx-auto size-10 text-[var(--accent-dark)]" />
-            <h1 className="mt-5 font-serif text-5xl font-bold tracking-[-.05em] text-[var(--ink)]">Login required.</h1>
+            <h1 className="mt-5 font-serif text-3xl font-semibold tracking-tight text-[var(--ink)] sm:text-4xl">Login required.</h1>
             <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[var(--muted)]">{error}</p>
             <a href="/login" className="cta-primary mx-auto mt-7 w-fit">Go to login <ArrowRight className="size-4" /></a>
           </div>
@@ -148,7 +148,7 @@ export function CustomerAddressesPage() {
         <div className="surface-card mb-8 grid gap-5 p-6 lg:grid-cols-[1fr_auto] lg:items-center lg:p-8">
           <div>
             <p className="section-kicker">Address book</p>
-            <h1 className="mt-3 font-serif text-4xl font-bold leading-none tracking-[-.05em] text-[var(--ink)] sm:text-6xl">Saved addresses</h1>
+            <h1 className="mt-3 font-serif text-3xl font-semibold leading-tight tracking-tight text-[var(--ink)] sm:text-4xl">Saved addresses</h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--muted)]">Manage delivery locations for checkout, delivery fees and customer-support follow-up.</p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -171,7 +171,7 @@ export function CustomerAddressesPage() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <p className="section-kicker">Delivery details</p>
-                <h2 className="mt-2 text-2xl font-black tracking-[-.03em] text-[var(--ink)]">{editingAddressId ? "Edit address" : "Add address"}</h2>
+                <h2 className="mt-2 text-xl font-semibold tracking-tight text-[var(--ink)]">{editingAddressId ? "Edit address" : "Add address"}</h2>
                 <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Use the exact phone, city and location details for smooth delivery.</p>
               </div>
               {editingAddressId ? <button type="button" className="cta-outline px-5 py-2.5" onClick={() => { setEditingAddressId(""); setAddress(emptyAddress); }}>Cancel edit</button> : null}
@@ -185,7 +185,7 @@ export function CustomerAddressesPage() {
               <TextInput label="City / LGA" name="city" value={address.city} onChange={updateAddressField} required placeholder="Ikeja" />
               <div className="md:col-span-2"><TextInput label="Address line 1" name="addressLine1" value={address.addressLine1} onChange={updateAddressField} required placeholder="Street address" /></div>
               <div className="md:col-span-2"><TextInput label="Address line 2" name="addressLine2" value={address.addressLine2} onChange={updateAddressField} placeholder="Apartment, landmark or extra detail" /></div>
-              <label className="grid gap-2 text-sm font-black text-[var(--ink)] md:col-span-2">
+              <label className="grid gap-2 text-sm font-semibold text-[var(--ink)] md:col-span-2">
                 Delivery instructions
                 <textarea name="deliveryInstructions" value={address.deliveryInstructions} onChange={updateAddressField} rows={3} placeholder="Optional delivery note" className="resize-none rounded-2xl border border-black/10 bg-[#fbfaf6] px-4 py-3.5 text-[var(--ink)] outline-none transition placeholder:text-black/35 focus:border-[var(--accent-dark)] focus:bg-white focus:shadow-[0_0_0_4px_rgba(255,123,37,.12)]" />
               </label>
@@ -201,7 +201,7 @@ export function CustomerAddressesPage() {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="section-kicker">Delivery locations</p>
-                <h2 className="mt-2 text-2xl font-black tracking-[-.03em] text-[var(--ink)]">Your saved addresses</h2>
+                <h2 className="mt-2 text-xl font-semibold tracking-tight text-[var(--ink)]">Your saved addresses</h2>
               </div>
               <p className="rounded-full bg-[#fbfaf6] px-4 py-2 text-sm font-black text-[var(--muted)]">{account?.addresses?.length ?? 0} saved</p>
             </div>
@@ -215,7 +215,7 @@ export function CustomerAddressesPage() {
                         <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white text-[var(--accent-dark)] shadow-sm"><Home className="size-5" /></div>
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-lg font-black text-[var(--ink)]">{savedAddress.label}</h3>
+                            <h3 className="text-base font-semibold text-[var(--ink)]">{savedAddress.label}</h3>
                             {savedAddress.isDefault ? <span className="rounded-full bg-[#fff3e8] px-3 py-1 text-xs font-black text-[var(--accent-dark)]">Default</span> : null}
                           </div>
                           <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{savedAddress.recipientName}, {savedAddress.phone}<br />{savedAddress.addressLine1}{savedAddress.addressLine2 ? `, ${savedAddress.addressLine2}` : ""}<br />{savedAddress.city}, {savedAddress.state}</p>
@@ -233,7 +233,7 @@ export function CustomerAddressesPage() {
             ) : (
               <div className="mt-6 rounded-3xl border border-dashed border-black/15 bg-[#fbfaf6] p-8 text-center">
                 <MapPin className="mx-auto size-8 text-[var(--accent-dark)]" />
-                <h3 className="mt-4 text-2xl font-black tracking-[-.03em] text-[var(--ink)]">No address saved yet.</h3>
+                <h3 className="mt-4 text-xl font-semibold tracking-tight text-[var(--ink)]">No address saved yet.</h3>
                 <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-[var(--muted)]">Add a delivery address so checkout can calculate location-based delivery fees faster.</p>
               </div>
             )}

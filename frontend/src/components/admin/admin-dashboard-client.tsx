@@ -1,8 +1,6 @@
 import { useEffect, useState, useTransition } from "react";
 import { Activity, AlertTriangle, BarChart3, Boxes, ChevronDown, ClipboardList, Image, Mail, MessageSquareText, PackageCheck, RotateCcw, Save, Settings, ShieldCheck, Star, Tags, TrendingUp, Truck } from "lucide-react";
 import {
-  createAdminCoupon,
-  getAdminCoupons,
   getAdminDashboard,
   getAdminOrders,
   getAdminProducts,
@@ -17,7 +15,6 @@ import {
   getAdminNewsletterSubscribers,
   getAdminReturns,
   getAdminSupportTickets,
-  updateAdminCoupon,
   updateAdminOrderStatus,
   updateAdminProductStock,
   updateAdminReview,
@@ -42,7 +39,7 @@ const reviewStatuses = ["pending", "approved", "rejected", "hidden"];
 const returnStatuses = ["requested", "under_review", "approved", "rejected", "refunded", "closed"];
 const supportStatuses = ["open", "in_progress", "waiting_for_customer", "resolved", "closed"];
 const staffRoles = ["admin", "inventory_manager", "order_manager", "customer_support", "content_manager"];
-const staffPermissions = ["dashboard:view", "reports:view", "products:read", "products:manage", "inventory:manage", "orders:read", "orders:update", "coupons:manage", "reviews:moderate", "returns:manage", "support:manage"];
+const staffPermissions = ["dashboard:view", "reports:view", "products:read", "products:manage", "inventory:manage", "orders:read", "orders:update", "reviews:moderate", "returns:manage", "support:manage"];
 const emptyReport = {
   summary: { totalRevenueKobo: 0, currentMonthRevenueKobo: 0, totalOrders: 0, paidOrders: 0, pendingOrders: 0, cancelledOrders: 0, totalRefundedKobo: 0, productsInStock: 0, lowStockProducts: 0, outOfStockProducts: 0 },
   ordersByStatus: {},
@@ -184,17 +181,6 @@ const initialStaffForm = {
   permissions: ["dashboard:view", "products:read", "inventory:manage"],
 };
 
-const initialCouponForm = {
-  code: "",
-  name: "",
-  type: "percentage",
-  percentage: "10",
-  valueNaira: "",
-  minOrderNaira: "0",
-  maxDiscountNaira: "",
-  usageLimit: "",
-  isActive: true,
-};
 
 function StatCard({ label, value }) {
   return <div className="group overflow-hidden rounded-[1.65rem] border border-black/8 bg-white p-5 shadow-[0_18px_50px_rgba(28,34,31,.06)] transition hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(28,34,31,.1)]"><div className="flex items-center justify-between gap-4"><p className="text-xs font-black uppercase tracking-[.14em] text-[var(--muted)]">{label}</p><TrendingUp className="size-4 text-[var(--accent-dark)] opacity-70" /></div><p className="mt-4 text-3xl font-black tracking-[-.05em] text-[var(--ink)]">{value}</p><div className="mt-5 h-1.5 overflow-hidden rounded-full bg-[#f1eadf]"><span className="block h-full w-2/3 rounded-full bg-[var(--accent)] transition group-hover:w-full" /></div></div>;
@@ -209,7 +195,6 @@ const adminSections = [
   { href: "/admin/returns", key: "returns", label: "Returns", description: "Review returns and refunds", icon: RotateCcw },
   { href: "/admin/support", key: "support", label: "Support", description: "Reply to customer requests", icon: MessageSquareText },
   { href: "/admin/reviews", key: "reviews", label: "Reviews", description: "Approve customer feedback", icon: Star },
-  { href: "/admin/coupons", key: "coupons", label: "Discounts", description: "Create and manage coupon codes", icon: Tags },
   { href: "/admin/reports", key: "reports", label: "Reports", description: "Understand sales and payments", icon: BarChart3 },
   { href: "/admin/content", key: "content", label: "Store content", description: "Update homepage messages", icon: Image },
   { href: "/admin/settings", key: "settings", label: "Settings", description: "Update store-wide details", icon: Settings },
@@ -226,7 +211,7 @@ const dailyActions = [
 const adminSectionGroups = [
   { label: "Daily work", keys: ["overview", "orders", "products", "inventory", "delivery"] },
   { label: "Customers", keys: ["returns", "support", "reviews"] },
-  { label: "Business tools", keys: ["coupons", "reports", "content", "settings"] },
+  { label: "Business tools", keys: ["reports", "content", "settings"] },
 ];
 
 function AdminSectionNav({ activeSection }) {
@@ -281,19 +266,6 @@ function AdminDropdown({ value, options, placeholder = "Select", onValueChange, 
   );
 }
 
-function nairaToKobo(value) {
-  const amount = Number(value || 0);
-  return Math.max(0, Math.round(amount * 100));
-}
-
-function optionalNairaToKobo(value) {
-  return value === "" ? undefined : nairaToKobo(value);
-}
-
-function optionalNumber(value) {
-  return value === "" ? undefined : Number(value);
-}
-
 function statusLabel(status) {
   return status.replaceAll("_", " ");
 }
@@ -314,7 +286,6 @@ export function AdminDashboardClient({ section = "overview" }: { section?: strin
   const [stats, setStats] = useState(null);
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
-  const [coupons, setCoupons] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [returns, setReturns] = useState([]);
   const [supportTickets, setSupportTickets] = useState([]);
@@ -326,7 +297,6 @@ export function AdminDashboardClient({ section = "overview" }: { section?: strin
   const [activityLogs, setActivityLogs] = useState([]);
   const [reports, setReports] = useState(emptyReport);
   const [reportFilters, setReportFilters] = useState({ range: "month", dateFrom: "", dateTo: "", orderStatus: "", paymentStatus: "" });
-  const [couponForm, setCouponForm] = useState(initialCouponForm);
   const [staffForm, setStaffForm] = useState(initialStaffForm);
   const [storeSettingsForm, setStoreSettingsForm] = useState(initialStoreSettingsForm);
   const [homepageContentForm, setHomepageContentForm] = useState(initialHomepageContentForm);
@@ -355,7 +325,6 @@ export function AdminDashboardClient({ section = "overview" }: { section?: strin
     const loadProducts = loadOverview || ["products", "inventory"].includes(activeSection);
     const loadOrders = loadOverview || ["orders", "reports"].includes(activeSection);
     const loadReports = loadOverview || activeSection === "reports";
-    const loadCoupons = loadOverview || activeSection === "coupons";
     const loadReviews = loadOverview || activeSection === "reviews";
     const loadReturns = loadOverview || activeSection === "returns";
     const loadSupport = loadOverview || activeSection === "support";
@@ -367,7 +336,6 @@ export function AdminDashboardClient({ section = "overview" }: { section?: strin
       loadOverview ? safeAdminLoad(getAdminDashboard(), null) : Promise.resolve(stats),
       loadProducts ? safeAdminLoad(getAdminProducts(), []) : Promise.resolve(products),
       loadOrders ? safeAdminLoad(getAdminOrders(), []) : Promise.resolve(orders),
-      loadCoupons ? safeAdminLoad(getAdminCoupons(), []) : Promise.resolve(coupons),
       loadReviews ? safeAdminLoad(getAdminReviews(), []) : Promise.resolve(reviews),
       loadReturns ? safeAdminLoad(getAdminReturns(), []) : Promise.resolve(returns),
       loadSupport ? safeAdminLoad(getAdminSupportTickets(), []) : Promise.resolve(supportTickets),
@@ -378,11 +346,10 @@ export function AdminDashboardClient({ section = "overview" }: { section?: strin
       loadContent ? safeAdminLoad(getAdminHomepageContent(), null) : Promise.resolve(homepageContent),
       loadContent ? safeAdminLoad(getAdminNewsletterSubscribers(), { items: [], summary: { total: 0, subscribed: 0, unsubscribed: 0 } }) : Promise.resolve({ items: newsletterSubscribers, summary: newsletterSummary }),
     ])
-      .then(([nextStats, nextProducts, nextOrders, nextCoupons, nextReviews, nextReturns, nextSupportTickets, nextReports, nextStaff, nextStoreSettings, nextActivityLogs, nextHomepageContent, nextNewsletter]) => {
+      .then(([nextStats, nextProducts, nextOrders, nextReviews, nextReturns, nextSupportTickets, nextReports, nextStaff, nextStoreSettings, nextActivityLogs, nextHomepageContent, nextNewsletter]) => {
         setStats(nextStats);
         setProducts(nextProducts);
         setOrders(nextOrders);
-        setCoupons(nextCoupons);
         setReviews(nextReviews);
         setReturns(nextReturns);
         setSupportTickets(nextSupportTickets);
@@ -562,51 +529,6 @@ export function AdminDashboardClient({ section = "overview" }: { section?: strin
       }
     });
   }
-  function updateCouponField(event) {
-    const { name, value, type, checked } = event.target;
-    setCouponForm((current) => ({ ...current, [name]: type === "checkbox" ? checked : value }));
-  }
-
-  function createCoupon(event) {
-    event.preventDefault();
-    startTransition(async () => {
-      try {
-        setMessage("");
-        setError("");
-        await createAdminCoupon({
-          code: couponForm.code,
-          name: couponForm.name,
-          type: couponForm.type,
-          percentage: couponForm.type === "percentage" ? Number(couponForm.percentage) : undefined,
-          valueKobo: couponForm.type === "fixed" ? nairaToKobo(couponForm.valueNaira) : undefined,
-          minOrderAmountKobo: nairaToKobo(couponForm.minOrderNaira),
-          maxDiscountKobo: optionalNairaToKobo(couponForm.maxDiscountNaira),
-          usageLimit: optionalNumber(couponForm.usageLimit),
-          isActive: couponForm.isActive,
-        });
-        setCouponForm(initialCouponForm);
-        setMessage(`Coupon ${couponForm.code.toUpperCase()} created.`);
-        loadAdminData();
-      } catch (couponError) {
-        setError(couponError instanceof Error ? couponError.message : "Coupon creation failed.");
-      }
-    });
-  }
-
-  function toggleCoupon(coupon) {
-    startTransition(async () => {
-      try {
-        setMessage("");
-        setError("");
-        await updateAdminCoupon(coupon.id, { isActive: !coupon.isActive });
-        setMessage(`Coupon ${coupon.code} ${coupon.isActive ? "disabled" : "enabled"}.`);
-        loadAdminData();
-      } catch (couponError) {
-        setError(couponError instanceof Error ? couponError.message : "Coupon update failed.");
-      }
-    });
-  }
-
   function updateReviewDraft(reviewId, field, value) {
     setReviewDrafts((current) => ({
       ...current,
@@ -889,25 +811,6 @@ export function AdminDashboardClient({ section = "overview" }: { section?: strin
           </div>
         </section> : null}
 
-        {showSection("coupons") ? <section className="mt-8 rounded-[2rem] border border-black/8 bg-white p-6 shadow-[0_18px_50px_rgba(28,34,31,.06)]">
-          <div className="flex items-center gap-3"><Tags className="size-5 text-[var(--accent-dark)]" /><h2 className="text-2xl font-black tracking-[-.03em]">Coupon management</h2></div>
-          <form onSubmit={createCoupon} className="mt-6 grid gap-4 md:grid-cols-4">
-            <label className="grid gap-2 text-sm font-bold">Code<input name="code" value={couponForm.code} onChange={updateCouponField} required placeholder="LAUNCH10" className="rounded-2xl border border-black/10 px-4 py-3 uppercase outline-none focus:border-[var(--accent-dark)]" /></label>
-            <label className="grid gap-2 text-sm font-bold">Name<input name="name" value={couponForm.name} onChange={updateCouponField} required placeholder="Launch discount" className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label>
-            <label className="grid gap-2 text-sm font-bold">Type<AdminDropdown value={couponForm.type} options={[{ value: "percentage", label: "Percentage" }, { value: "fixed", label: "Fixed amount" }]} onValueChange={(value) => setCouponForm((current) => ({ ...current, type: value }))} /></label>
-            {couponForm.type === "percentage" ? <label className="grid gap-2 text-sm font-bold">Percentage<input name="percentage" type="number" min={1} max={100} value={couponForm.percentage} onChange={updateCouponField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label> : <label className="grid gap-2 text-sm font-bold">Fixed discount (NGN)<input name="valueNaira" type="number" min={1} value={couponForm.valueNaira} onChange={updateCouponField} required className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label>}
-            <label className="grid gap-2 text-sm font-bold">Minimum order (NGN)<input name="minOrderNaira" type="number" min={0} value={couponForm.minOrderNaira} onChange={updateCouponField} className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label>
-            <label className="grid gap-2 text-sm font-bold">Max discount (NGN)<input name="maxDiscountNaira" type="number" min={0} value={couponForm.maxDiscountNaira} onChange={updateCouponField} placeholder="Optional" className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label>
-            <label className="grid gap-2 text-sm font-bold">Usage limit<input name="usageLimit" type="number" min={1} value={couponForm.usageLimit} onChange={updateCouponField} placeholder="Optional" className="rounded-2xl border border-black/10 px-4 py-3 outline-none focus:border-[var(--accent-dark)]" /></label>
-            <label className="flex items-center gap-3 rounded-2xl border border-black/10 px-4 py-3 text-sm font-bold"><input name="isActive" type="checkbox" checked={couponForm.isActive} onChange={updateCouponField} /> Active</label>
-            <button type="submit" disabled={isPending} className="cta-primary md:col-span-4"><Tags className="size-4" /> Create coupon</button>
-          </form>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            {coupons.map((coupon) => <article key={coupon.id} className="rounded-2xl border border-black/8 p-4"><div className="flex items-start justify-between gap-4"><div><p className="font-black">{coupon.code}</p><p className="mt-1 text-sm text-[var(--muted)]">{coupon.name} | {coupon.type === "percentage" ? `${coupon.percentage}% off` : `${formatNaira(coupon.valueKobo)} off`}</p><p className="mt-1 text-xs font-bold uppercase tracking-[.12em] text-[var(--muted)]">Used {coupon.usedCount}{coupon.usageLimit ? ` of ${coupon.usageLimit}` : ""}</p></div><button type="button" disabled={isPending} onClick={() => toggleCoupon(coupon)} className="cta-outline py-2">{coupon.isActive ? "Disable" : "Enable"}</button></div></article>)}
-            {coupons.length === 0 ? <p className="text-sm font-bold text-[var(--muted)]">No coupons created yet.</p> : null}
-          </div>
-        </section> : null}
 
 
 

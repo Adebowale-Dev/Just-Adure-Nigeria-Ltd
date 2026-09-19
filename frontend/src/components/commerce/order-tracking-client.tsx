@@ -102,7 +102,7 @@ export function OrderTrackingClient({ initialOrderNumber = "" }) {
         <div className="surface-card mb-8 grid gap-5 p-6 lg:grid-cols-[1fr_auto] lg:items-center lg:p-8">
           <div>
             <p className="section-kicker">Order tracking</p>
-            <h1 className="mt-3 font-serif text-4xl font-bold leading-none tracking-[-.05em] text-[var(--ink)] sm:text-6xl">Track your delivery</h1>
+            <h1 className="mt-3 font-serif text-3xl font-semibold leading-tight tracking-tight text-[var(--ink)] sm:text-4xl">Track your delivery</h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--muted)]">Enter your order number and checkout email to view payment status, delivery progress and item snapshots.</p>
           </div>
           <a href="/shop" className="cta-primary w-fit">Continue shopping <ArrowRight className="size-4" /></a>
@@ -113,15 +113,15 @@ export function OrderTrackingClient({ initialOrderNumber = "" }) {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="section-kicker">Find order</p>
-                <h2 className="mt-2 text-2xl font-black tracking-[-.03em] text-[var(--ink)]">Lookup details</h2>
+                <h2 className="mt-2 text-xl font-semibold tracking-tight text-[var(--ink)]">Lookup details</h2>
                 <p className="mt-2 text-sm leading-6 text-[var(--muted)]">For privacy, both fields must match your checkout record.</p>
               </div>
               <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#fff3e8] text-[var(--accent-dark)]"><Search className="size-5" /></div>
             </div>
 
             <div className="mt-7 grid gap-4">
-              <label className="grid gap-2 text-sm font-black text-[var(--ink)]">Order number<input name="orderNumber" value={form.orderNumber} onChange={updateField} required placeholder="JA-1001" className="rounded-2xl border border-black/10 bg-[#fbfaf6] px-4 py-3.5 outline-none transition placeholder:text-black/35 focus:border-[var(--accent-dark)] focus:bg-white focus:shadow-[0_0_0_4px_rgba(255,123,37,.12)]" /></label>
-              <label className="grid gap-2 text-sm font-black text-[var(--ink)]">Email used at checkout<input name="email" type="email" value={form.email} onChange={updateField} required placeholder="you@example.com" className="rounded-2xl border border-black/10 bg-[#fbfaf6] px-4 py-3.5 outline-none transition placeholder:text-black/35 focus:border-[var(--accent-dark)] focus:bg-white focus:shadow-[0_0_0_4px_rgba(255,123,37,.12)]" /></label>
+              <label className="grid gap-2 text-sm font-semibold text-[var(--ink)]">Order number<input name="orderNumber" value={form.orderNumber} onChange={updateField} required placeholder="JA-1001" className="rounded-2xl border border-black/10 bg-[#fbfaf6] px-4 py-3.5 outline-none transition placeholder:text-black/35 focus:border-[var(--accent-dark)] focus:bg-white focus:shadow-[0_0_0_4px_rgba(255,123,37,.12)]" /></label>
+              <label className="grid gap-2 text-sm font-semibold text-[var(--ink)]">Email used at checkout<input name="email" type="email" value={form.email} onChange={updateField} required placeholder="you@example.com" className="rounded-2xl border border-black/10 bg-[#fbfaf6] px-4 py-3.5 outline-none transition placeholder:text-black/35 focus:border-[var(--accent-dark)] focus:bg-white focus:shadow-[0_0_0_4px_rgba(255,123,37,.12)]" /></label>
             </div>
 
             <button disabled={isPending} className="cta-primary mt-6 w-full disabled:opacity-50" type="submit"><PackageCheck className="size-4" /> {isPending ? "Checking..." : "Track order"}</button>
@@ -142,7 +142,7 @@ export function OrderTrackingClient({ initialOrderNumber = "" }) {
               <div className="grid min-h-[34rem] place-items-center rounded-[1.5rem] border border-dashed border-black/15 bg-[#fbfaf6] p-8 text-center">
                 <div>
                   <div className="mx-auto grid size-16 place-items-center rounded-3xl bg-white text-[var(--accent-dark)] shadow-sm"><Clock3 className="size-8" /></div>
-                  <h2 className="mt-6 font-serif text-4xl font-bold tracking-[-.04em] text-[var(--ink)]">Order details will appear here.</h2>
+                  <h2 className="mt-6 font-serif text-2xl font-semibold tracking-tight text-[var(--ink)] sm:text-3xl">Order details will appear here.</h2>
                   <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[var(--muted)]">Once the order is found, you will see the order status, payment status, product snapshots and delivery timeline.</p>
                 </div>
               </div>
@@ -153,12 +153,12 @@ export function OrderTrackingClient({ initialOrderNumber = "" }) {
                 <div className="grid gap-4 rounded-[1.5rem] bg-[#fbfaf6] p-5 md:grid-cols-[1fr_auto] md:items-center">
                   <div>
                     <p className="section-kicker">{order.orderNumber}</p>
-                    <h2 className="mt-2 text-3xl font-black capitalize tracking-[-.04em] text-[var(--ink)]">{readableStatus(order.orderStatus)}</h2>
+                    <h2 className="mt-2 text-xl font-semibold capitalize tracking-tight text-[var(--ink)] sm:text-2xl">{readableStatus(order.orderStatus)}</h2>
                     <p className="mt-2 text-sm text-[var(--muted)]">Payment: <strong className="capitalize text-[var(--ink)]">{readableStatus(order.paymentStatus)}</strong></p>
                   </div>
                   <div className="rounded-3xl bg-white px-5 py-4 text-right shadow-sm">
                     <p className="text-xs font-black uppercase tracking-[.12em] text-[var(--muted)]">Order total</p>
-                    <p className="mt-1 text-2xl font-black text-[var(--ink)]">{formatNaira(order.totalKobo)}</p>
+                    <p className="mt-1 text-xl font-semibold text-[var(--ink)]">{formatNaira(order.totalKobo)}</p>
                   </div>
                 </div>
 
@@ -168,7 +168,7 @@ export function OrderTrackingClient({ initialOrderNumber = "" }) {
 
                 <div className="mt-6 rounded-[1.5rem] bg-white p-6 text-[var(--ink)]">
                   <Truck className="size-6 text-[var(--accent)]" />
-                  <h3 className="mt-4 text-2xl font-black tracking-[-.03em]">Delivery timeline</h3>
+                  <h3 className="mt-4 text-xl font-semibold tracking-tight">Delivery timeline</h3>
                   <div className="mt-6 grid gap-4">
                     {order.statusHistory.map((history, index) => <div key={`${history.status}-${history.changedAt}`} className="relative border-l border-black/10 pl-5"><span className="absolute -left-[.42rem] top-1 grid size-3 place-items-center rounded-full bg-[var(--accent)]" /><p className="text-xs font-black uppercase tracking-[.14em] text-[var(--muted)]">Step {index + 1}</p><p className="mt-1 font-black capitalize">{readableStatus(history.status)}</p>{history.note ? <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{history.note}</p> : null}</div>)}
                   </div>

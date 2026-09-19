@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { AccountClient } from "@/components/customer/account-client";
 import { CustomerAddressesPage } from "@/components/customer/customer-addresses-page";
+import { CustomerDashboardShell } from "@/components/customer/customer-dashboard-shell";
 import { CustomerOrdersPage } from "@/components/customer/customer-order-history";
 import { AdminDashboardClient } from "@/components/admin/admin-dashboard-client";
 import { BasicPage } from "@/components/storefront/basic-page";
@@ -51,6 +52,8 @@ export default function App({ initialPath = "/" }) {
     page = <CustomerProfileClient />;
   } else if (pathname === "/admin") {
     page = <AdminDashboardClient section="overview" />;
+  } else if (pathname === "/admin/coupons") {
+    page = <NotFoundPage />;
   } else if (pathname.startsWith("/admin/")) {
     page = <AdminDashboardClient section={pathname.replace("/admin/", "")} />;
   } else if (pathname === "/shop") {
@@ -88,6 +91,10 @@ export default function App({ initialPath = "/" }) {
     page = <BasicPage title={pageTitle === "faq" ? "frequently asked questions" : pageTitle} />;
   } else {
     page = <NotFoundPage />;
+  }
+
+  if (["/profile", "/wishlist", "/account/orders", "/account/addresses"].includes(pathname)) {
+    page = <CustomerDashboardShell activePath={pathname}>{page}</CustomerDashboardShell>;
   }
 
   return (

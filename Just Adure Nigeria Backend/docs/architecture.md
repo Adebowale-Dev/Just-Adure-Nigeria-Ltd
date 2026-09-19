@@ -38,7 +38,7 @@ Express API ---------------- Cloudinary
 - Express application and REST endpoints
 - Mongoose database access
 - Authentication and role-based authorization
-- Product, inventory, cart, checkout, order, coupon, review, and delivery rules
+- Product, inventory, cart, checkout, order, review, and delivery rules
 - Paystack initialization, verification, callback, and webhook processing
 - Brevo email dispatch and reusable template rendering
 - Cloudinary signed upload operations and asset lifecycle
@@ -47,7 +47,7 @@ Express API ---------------- Cloudinary
 
 ## 3. Runtime components
 
-MongoDB is the source of truth for users, products, stock, carts, orders, payments, coupons, reviews, delivery configuration, email logs, and audit records. Financial and inventory operations use MongoDB sessions and transactions where multi-document consistency is required.
+MongoDB is the source of truth for users, products, stock, carts, orders, payments, reviews, delivery configuration, email logs, and audit records. Financial and inventory operations use MongoDB sessions and transactions where multi-document consistency is required.
 
 Cloudinary stores product images. MongoDB stores each image's public identifier, secure URL, dimensions, order, and metadata. The API authorizes uploads and constrains file type, size, and transformations.
 
@@ -75,7 +75,7 @@ Because UK-used products can be one-off units, inventory tracks both stock and r
 Only the API communicates with Paystack using secret credentials.
 
 1. The client submits checkout data and an idempotency key.
-2. The API validates stock, coupon eligibility, and delivery fees.
+2. The API validates stock and delivery fees.
 3. The API creates an order and stock reservations transactionally.
 4. The API initializes Paystack with a server-calculated amount in kobo and unique reference.
 5. The client redirects to the returned authorization URL.
@@ -83,7 +83,7 @@ Only the API communicates with Paystack using secret credentials.
 7. The API verifies the transaction directly with Paystack.
 8. The webhook validates the raw-body HMAC SHA-512 signature before processing.
 9. A unique payment reference and processed-event record make processing idempotent.
-10. Payment, order, inventory, coupon, and audit changes are committed together.
+10. Payment, order, inventory, and audit changes are committed together.
 
 Redirect verification and webhook delivery may race. Both use the same idempotent payment-finalization service.
 

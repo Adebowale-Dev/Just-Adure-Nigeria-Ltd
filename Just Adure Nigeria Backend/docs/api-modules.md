@@ -80,7 +80,7 @@ Catalogue filters include category, subcategory, brand, condition, minimum/maxim
 
 | Method | Route | Access | Purpose |
 | --- | --- | --- | --- |
-| POST | `/api/v1/checkout/quote` | Guest/customer | Recalculate products, coupon, and delivery fee |
+| POST | `/api/v1/checkout/quote` | Guest/customer | Recalculate products and delivery fee |
 | POST | `/api/v1/orders` | Guest/customer | Create pending order and reserve inventory |
 | POST | `/api/v1/orders/:orderNumber/payments/paystack` | Guest/customer order token | Initialize trusted Paystack transaction |
 | GET | `/api/v1/payments/paystack/:reference/verify` | Guest/customer order token | Server-side verification and safe status result |
@@ -152,12 +152,10 @@ All routes below require `admin` or `super_admin`; destructive role/security ope
 | GET | `/api/v1/admin/customers/:id` | Customer profile and order summary |
 | PATCH | `/api/v1/admin/customers/:id/status` | Activate or suspend customer |
 
-## Admin promotions, delivery, content, and reviews
+## Admin delivery, content, and reviews
 
 | Method | Route | Purpose |
 | --- | --- | --- |
-| GET/POST | `/api/v1/admin/coupons` | List or create coupons |
-| GET/PATCH/DELETE | `/api/v1/admin/coupons/:id` | Read, update, or deactivate coupon |
 | GET/POST | `/api/v1/admin/delivery-zones` | List or create zones |
 | PATCH/DELETE | `/api/v1/admin/delivery-zones/:id` | Update or deactivate zone |
 | GET/POST | `/api/v1/admin/banners` | List or create homepage banners |
@@ -173,7 +171,7 @@ The API will use domain modules rather than large controllers:
 - `catalogue`: products, categories, brands, specifications, public queries
 - `inventory`: availability, reservations, expiry, movements, adjustments
 - `cart`: guest/customer carts and merging
-- `checkout`: trusted totals, coupons, delivery quote, order creation
+- `checkout`: trusted totals, delivery quote, order creation
 - `payments`: Paystack adapter, verification, webhook, idempotent finalization
 - `orders`: order queries, status transitions, tracking, invoices
 - `delivery`: zone provider and future logistics adapters
